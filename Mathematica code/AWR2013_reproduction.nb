@@ -1,0 +1,855 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[     29673,        847]
+NotebookOptionsPosition[     28237,        814]
+NotebookOutlinePosition[     28579,        829]
+CellTagsIndexPosition[     28536,        826]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["For a general optimal control problem", "Section",
+ CellChangeTimes->{{3.742748879760954*^9, 
+  3.742748889496527*^9}},ExpressionUUID->"8fd3e01e-fe9b-4a45-8b28-\
+72856e5c6e34"],
+
+Cell[TextData[{
+ StyleBox["Need to minimize functional such as ", "Text"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   StyleBox[
+    RowBox[{"J", " ", "=", " ", 
+     RowBox[{
+      SuperscriptBox[
+       SubscriptBox["\[Integral]", "0"], "T"], 
+      RowBox[{
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"L", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"x", 
+             RowBox[{"(", "t", ")"}]}], ",", 
+            RowBox[{"u", 
+             RowBox[{"(", "t", ")"}]}]}], ")"}]}], " ", "-", " ", 
+         RowBox[{"\[Lambda]", 
+          RowBox[{"(", "t", ")"}], " ", 
+          RowBox[{"(", 
+           RowBox[{
+            RowBox[{"dx", "/", "dt"}], " ", "-", " ", 
+            RowBox[{"f", 
+             RowBox[{"(", 
+              RowBox[{
+               RowBox[{"x", 
+                RowBox[{"(", "t", ")"}]}], ",", 
+               RowBox[{"u", 
+                RowBox[{"(", "t", ")"}]}]}], ")"}]}]}], " "}]}]}], "}"}], " ",
+        "dt"}]}]}], "Subsection",
+    FontSize->16], TraditionalForm]], "Subsubsection",
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "27f33d05-48ba-4c58-85b7-b311f49aa5f5"], "Subsubsection"],
+ StyleBox[" ", "Subsubsection"],
+ StyleBox["where we assume that the Langrangian L and the cost function f do \
+not depend ", "Text"],
+ StyleBox["explicitly", "Text",
+  FontWeight->"Bold"],
+ StyleBox[" on time nor on derivatives of x and u. Also, the final time T is \
+fixed.", "Text"]
+}], "Subsection",
+ CellChangeTimes->{{3.7427488963374157`*^9, 3.7427490105984507`*^9}, {
+  3.7427490643169947`*^9, 3.74274918864039*^9}, {3.742755302564336*^9, 
+  3.742755308909359*^9}, {3.7428278291946683`*^9, 
+  3.742827855114133*^9}},ExpressionUUID->"1c6ffc6a-810a-4c49-b66e-\
+7890e4310742"],
+
+Cell[TextData[{
+ StyleBox["The solution to this optimization, with these assumption, yields \
+these 4 conditions:\n1) H = L + \[Lambda] f = constant, where H is the \
+Hamiltonian,\n2) ", "Text"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["d\[Lambda]", "dt"], "=", 
+    RowBox[{"-", 
+     RowBox[{"(", 
+      RowBox[{
+       FractionBox[
+        RowBox[{"\[PartialD]", "L"}], 
+        RowBox[{"\[PartialD]", "x"}]], "+", 
+       RowBox[{"\[Lambda]", " ", 
+        FractionBox[
+         RowBox[{"\[PartialD]", "f"}], 
+         RowBox[{"\[PartialD]", "x"}]]}]}], ")"}]}]}], TraditionalForm]], 
+  "Text",ExpressionUUID->"354419fc-b5c2-428e-ac0a-6c545c48a0dc"], "Text"],
+ StyleBox[",\n3) ", "Text"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     FractionBox[
+      RowBox[{"\[PartialD]", "L"}], 
+      RowBox[{"\[PartialD]", "u"}]], "+", 
+     RowBox[{"\[Lambda]", " ", 
+      FractionBox[
+       RowBox[{"\[PartialD]", "f"}], 
+       RowBox[{"\[PartialD]", "u"}]]}]}], "=", "0"}], TraditionalForm]], 
+  "Text",ExpressionUUID->"d5d23980-03fd-41aa-bb83-4266fd00291f"], "Text"],
+ StyleBox[",\n4) ", "Text"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["dx", "dt"], "=", 
+    RowBox[{
+     RowBox[{"f", "(", 
+      RowBox[{"x", ",", "u"}], ")"}], "."}]}], TraditionalForm]], "Text",
+  ExpressionUUID->"7c5d11e6-f75e-4584-8246-a3e42c9b8435"], "Text"]
+}], "Subsection",
+ CellChangeTimes->{{3.742749197111537*^9, 3.742749284435687*^9}, {
+   3.742749316293145*^9, 3.7427494540212817`*^9}, {3.7427503561041217`*^9, 
+   3.742750360248218*^9}, {3.742751733697369*^9, 3.742751733698369*^9}, {
+   3.7427553133252945`*^9, 3.7427553391732025`*^9}, {3.7427558005237675`*^9, 
+   3.7427558151870255`*^9}, 
+   3.7428171821118183`*^9},ExpressionUUID->"70a10f31-de7a-44e3-8e61-\
+ba484188b8c0"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Stefano\[CloseCurlyQuote]s equations (AWR 2013)", "Section",
+ CellChangeTimes->{{3.7427494593098683`*^9, 
+  3.7427494678139887`*^9}},ExpressionUUID->"a68fc430-03dd-468c-9793-\
+a50312e6761f"],
+
+Cell[CellGroupData[{
+
+Cell["No upper limit on g(t)", "Subsection",
+ CellChangeTimes->{{3.7427510527156134`*^9, 
+  3.7427510629309053`*^9}},ExpressionUUID->"7e11c902-560f-4859-952e-\
+6d1b9be5325b"],
+
+Cell[TextData[{
+ "In the case of photosynthesis, the photosynthetic rate A(x(t),g(t)) needs \
+to be maximized (replacing L(x(t),g(t)). It depends on the stomatal \
+conductance g(t) and the soil moisture x(t). However, during drydown the cost \
+function is the reduction of soil moisture with time ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["dx", "dt"], "=", 
+    RowBox[{"f", "(", 
+     RowBox[{"g", ",", "x"}], ")"}]}], TraditionalForm]],ExpressionUUID->
+  "332be4bb-5b7d-4228-a6d0-1a3b17a2e5b8"],
+ ". Based on ecohydrological approaches, f = -",
+ Cell[BoxData[
+  FormBox[
+   FractionBox[
+    RowBox[{"(", 
+     RowBox[{"L", " ", "+", " ", "E"}], ")"}], 
+    RowBox[{"n", " ", 
+     SubscriptBox["Z", "r"]}]], TraditionalForm]],ExpressionUUID->
+  "0aa14f98-ea2e-4994-907e-07ef4ad30aed"],
+ " where L is the soil leakage term, E is the evapotranspiration term, n is \
+the soil porosity, and ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["Z", "r"], " "}], TraditionalForm]],ExpressionUUID->
+  "40623dc1-c7c1-464b-968e-b8db9b8a56b1"],
+ "is the rooting depth.\nIf g << ",
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["g", "a"], TraditionalForm]],ExpressionUUID->
+  "eae62d26-baba-48bb-bf6c-703b08a38b4e"],
+ " where ",
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["g", "a"], TraditionalForm]],ExpressionUUID->
+  "6e55a5c2-d2a9-4d75-8054-895c453e4a50"],
+ " is the boundary-layer conductance, then E(t) = \[Nu] a g(t) D. The value \
+\[Nu] is there to convert to the appropriate units, a = 1.6 is the ratio of \
+water vapor to CO2 diffusivity, and D is the vapor pressure deficit of water. \
+The leakage L is written as a power law of soil moisture L(t) = \[Gamma] ",
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox[
+    RowBox[{"x", "(", "t", ")"}], "c"], TraditionalForm]],ExpressionUUID->
+  "57758dca-223f-4777-981c-8b873b668495"],
+ "\nA = ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox[
+    RowBox[{
+     RowBox[{"g", "(", "t", ")"}], 
+     SubscriptBox["c", "a"], "k"}], 
+    RowBox[{
+     RowBox[{"g", "(", "t", ")"}], " ", "+", " ", "k"}]], TraditionalForm]],
+  ExpressionUUID->"6ab2d652-bbaf-4d6a-ad92-135922b5dd29"],
+ ", where ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["c", "a"], " "}], TraditionalForm]],ExpressionUUID->
+  "273cbf3f-6ae9-4e68-9f34-4d4412802671"],
+ "is the atmospheric CO2 concentration and k is the carboxylation efficiency."
+}], "Text",
+ CellChangeTimes->{{3.742750303175398*^9, 3.742750324958408*^9}, {
+  3.7427503637106314`*^9, 3.7427505348349857`*^9}, {3.7427510672119303`*^9, 
+  3.742751130629698*^9}, {3.7427512110956025`*^9, 3.742751301696836*^9}, {
+  3.7427513326325607`*^9, 3.7427514349233465`*^9}, {3.7427542749622307`*^9, 
+  3.742754297142459*^9}},ExpressionUUID->"4476f968-418e-431f-83af-\
+dbf3f60bfad4"],
+
+Cell[TextData[{
+ "With these terms defined we can know the following conditions:\n1) ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     FractionBox[
+      RowBox[{
+       RowBox[{"g", "(", "t", ")"}], " ", 
+       SubscriptBox["c", "a"], " ", "k"}], 
+      RowBox[{
+       RowBox[{"g", "(", "t", ")"}], " ", "+", " ", "k"}]], "-", 
+     RowBox[{
+      RowBox[{"\[Lambda]", "(", "t", ")"}], " ", 
+      FractionBox[
+       RowBox[{
+        RowBox[{"\[Gamma]", " ", 
+         SuperscriptBox[
+          RowBox[{"x", "(", "t", ")"}], "c"]}], "+", 
+        RowBox[{"\[Nu]", " ", "a", " ", 
+         RowBox[{"g", "(", "t", ")"}], " ", "D"}]}], 
+       RowBox[{"n", " ", 
+        SubscriptBox["Z", "r"]}]]}]}], " ", "=", " ", "constant"}], 
+   TraditionalForm]],ExpressionUUID->"7d703563-d4e6-4598-9460-f2aa50f97136"],
+ ",\n2) ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox[
+     RowBox[{"d\[Lambda]", "(", "t", ")"}], "dt"], "=", " ", 
+    RowBox[{
+     RowBox[{"-", " ", 
+      RowBox[{"(", 
+       RowBox[{"0", " ", "+", 
+        FractionBox[
+         RowBox[{" ", 
+          RowBox[{"\[Lambda]", 
+           RowBox[{"(", "t", ")"}], " ", "\[Gamma]", " ", "c", " ", 
+           SuperscriptBox[
+            RowBox[{"x", "(", "t", ")"}], 
+            RowBox[{"c", "-", "1"}]]}]}], 
+         RowBox[{"n", " ", 
+          SubscriptBox["Z", "r"]}]]}], ")"}]}], "=", 
+     RowBox[{"-", 
+      FractionBox[
+       RowBox[{" ", 
+        RowBox[{"\[Lambda]", 
+         RowBox[{"(", "t", ")"}], " ", "\[Gamma]", " ", "c", " ", 
+         SuperscriptBox[
+          RowBox[{"x", "(", "t", ")"}], 
+          RowBox[{"c", "-", "1"}]]}]}], 
+       RowBox[{"n", " ", 
+        SubscriptBox["Z", "r"]}]]}]}]}], TraditionalForm]],ExpressionUUID->
+  "4b029328-4788-411f-b311-37a70fe5b786"],
+ ",\n3) ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     FractionBox[
+      RowBox[{
+       SubscriptBox["c", "a"], 
+       SuperscriptBox["k", "2"]}], 
+      SuperscriptBox[
+       RowBox[{"[", 
+        RowBox[{
+         RowBox[{"g", "(", "t", ")"}], "+", "k"}], "]"}], "2"]], "-", 
+     FractionBox[
+      RowBox[{"\[Nu]", " ", "a", " ", "D", " ", 
+       RowBox[{"\[Lambda]", "(", "t", ")"}]}], 
+      RowBox[{"n", " ", 
+       SubscriptBox["Z", "r"]}]]}], "=", "0"}], TraditionalForm]],
+  ExpressionUUID->"33a3c367-b484-4e66-8b88-677d5198f9b8"],
+ ",\n4) ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox[
+     RowBox[{"dx", "(", "t", ")"}], "dt"], "=", 
+    RowBox[{"-", 
+     FractionBox[
+      RowBox[{
+       RowBox[{"\[Gamma]", " ", 
+        SuperscriptBox[
+         RowBox[{"x", "(", "t", ")"}], "c"]}], "+", 
+       RowBox[{"\[Nu]", " ", "a", " ", 
+        RowBox[{"g", "(", "t", ")"}], " ", "D"}]}], 
+      RowBox[{"n", " ", 
+       SubscriptBox["Z", "r"]}]]}]}], TraditionalForm]],ExpressionUUID->
+  "bb819c23-dce5-4313-a61a-64d354e72b52"],
+ "."
+}], "Text",
+ CellChangeTimes->{{3.7427514483151636`*^9, 3.7427515225728893`*^9}, {
+  3.742751622046966*^9, 3.7427516221119375`*^9}, {3.742751658126295*^9, 
+  3.7427517579601583`*^9}, {3.742754172164736*^9, 3.7427542491717463`*^9}, {
+  3.742754313086854*^9, 3.742754444635618*^9}, {3.74275534530933*^9, 
+  3.742755350540884*^9}, {3.742817322823646*^9, 
+  3.7428173234937315`*^9}},ExpressionUUID->"c35088cf-322c-4b65-9a86-\
+52b4d3badf01"],
+
+Cell[CellGroupData[{
+
+Cell["\<\
+Leakage independent of soil moisture, no deep percolation, and no competing \
+plants (c = 0 or \[Gamma] = 0) \[RightArrow] Loss function depends only on \
+transpiration\
+\>", "Subsubsection",
+ CellChangeTimes->{{3.742754743406382*^9, 3.7427547637184925`*^9}, {
+  3.7428272924469414`*^9, 
+  3.742827358807407*^9}},ExpressionUUID->"09cbc29b-ce93-4e6d-bf56-\
+fa8457356f75"],
+
+Cell[TextData[{
+ "From 2), ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox[
+     RowBox[{"d\[Lambda]", "(", "t", ")"}], "dt"], "=", " ", "0"}], 
+   TraditionalForm]],ExpressionUUID->"0993e2c7-4ded-4049-9e97-803e12ec276e"],
+ " \[RightArrow] \[Lambda](t) = ",
+ Cell[BoxData[
+  FormBox[
+   SubscriptBox["\[Lambda]", "0"], TraditionalForm]],ExpressionUUID->
+  "89252775-61ad-44c4-8221-0d80f22a1c27"],
+ "\nTherefore, from 3), ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      SubscriptBox["g", "opt"], "(", "t", ")"}], " ", "=", " ", 
+     RowBox[{"k", " ", "[", 
+      RowBox[{
+       RowBox[{"\[Sqrt]", 
+        RowBox[{"(", 
+         FractionBox[
+          SubscriptBox["c", "a"], 
+          RowBox[{"\[Alpha]", " ", "D", " ", 
+           SubscriptBox["\[Lambda]", "0"]}]], ")"}]}], "-", "1"}], "]"}]}], 
+    " ", ","}], TraditionalForm]],ExpressionUUID->
+  "f5624b4b-6dbe-42fe-9c1d-137ba55ecb56"],
+ " where",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{" ", 
+    RowBox[{"\[Alpha]", " ", "=", " ", 
+     RowBox[{"\[Nu]", " ", "a", " ", 
+      SuperscriptBox[
+       RowBox[{"(", 
+        RowBox[{"n", " ", 
+         SubscriptBox["Z", "r"]}], ")"}], "1"], "   "}]}]}], 
+   TraditionalForm]],ExpressionUUID->"88be463a-4038-4a1d-9839-ce007ad40500"],
+ ".\nAnd, from 4) x(t) = ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    SubscriptBox["x", "0"], " ", "-", " ", 
+    RowBox[{
+     RowBox[{"(", 
+      RowBox[{"\[Beta]", " ", "+", " ", 
+       RowBox[{"\[Alpha]", " ", 
+        RowBox[{
+         SubscriptBox["g", "opt"], "(", "t", ")"}], " ", "D"}]}], ")"}], 
+     "t"}]}], TraditionalForm]],ExpressionUUID->
+  "88638405-a883-4357-80d9-5ac998192385"],
+ ", where \[Beta] = ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    FractionBox["\[Gamma]", 
+     RowBox[{"n", " ", 
+      SubscriptBox["Z", "r"]}]], "."}], TraditionalForm]],
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "3e36e684-031c-4a71-9d42-7e1359c65fdf"],
+ "\n"
+}], "Text",
+ CellChangeTimes->{{3.7427547706062894`*^9, 3.7427548540080476`*^9}, {
+  3.7427548927129683`*^9, 3.7427549236650305`*^9}, {3.7427549640251727`*^9, 
+  3.742754967833391*^9}, {3.74275501001452*^9, 3.7427550940322423`*^9}, {
+  3.742755144955448*^9, 3.7427551872296963`*^9}, {3.742755353061705*^9, 
+  3.742755356293193*^9}, {3.7428169832694025`*^9, 3.742816984439602*^9}, {
+  3.742829283544227*^9, 3.7428292939821577`*^9}, {3.742829375926928*^9, 
+  3.7428293777706895`*^9}, {3.742829455369179*^9, 3.7428295026846066`*^9}, {
+  3.7428295477540445`*^9, 
+  3.742829550931469*^9}},ExpressionUUID->"97d9662b-db0e-421b-969e-\
+50e2a282eade"]
+}, Open  ]]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell[TextData[{
+ StyleBox["If soil moisture places an upper bound on g(t): ", "Subsection"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     SubscriptBox["g", "b"], "(", "x", ")"}], "=", 
+    RowBox[{
+     FractionBox[
+      SubscriptBox["k", "SR"], 
+      RowBox[{"\[Nu]", " ", "a", " ", "D"}]], 
+     RowBox[{
+      SubscriptBox["x", "b"], "(", "t", ")"}]}]}], TraditionalForm]], 
+  "Subsection",
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "431e71de-5c08-4bca-9946-01cd2bccf3a3"], "Subsection"],
+ StyleBox[" where ", "Subsection"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   SubscriptBox["k", "SR"], TraditionalForm]], "Subsection",
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "ad9bdebb-cc92-4d2b-9ccf-f762c898e2e3"], "Subsection"],
+ StyleBox[" is the linearity constant between E and x(t) such as ", 
+  "Subsection"],
+ StyleBox[Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{
+     SubscriptBox["E", "SR"], "[", 
+     RowBox[{"x", "(", "t", ")"}], "]"}], " ", "=", " ", 
+    RowBox[{
+     SubscriptBox["k", "SR"], 
+     RowBox[{"x", "(", "t", ")"}]}]}], TraditionalForm]], "Subsection",
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "6874dd2c-a812-49b1-a1ab-c0f1d4667718"], "Subsection"]
+}], "Subsection",
+ CellChangeTimes->{{3.742827383046191*^9, 3.74282739800683*^9}, {
+  3.7428274652553177`*^9, 3.742827568233749*^9}, {3.7428276207560062`*^9, 
+  3.7428276214904175`*^9}, {3.7428297322551117`*^9, 
+  3.7428297323715053`*^9}},ExpressionUUID->"0efbe00c-87b8-4ed1-90ea-\
+5cabff37324f"],
+
+Cell[TextData[{
+ "In this equation I diverge from Stefano\[CloseCurlyQuote]s approach as I \
+feel this is clearer. To constrain ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"g", 
+     RowBox[{"(", "t", ")"}]}], "<", 
+    RowBox[{
+     SubscriptBox["g", "b"], "(", "x", ")"}]}], TraditionalForm]],
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "7e9ece3d-ec69-4d98-b8e0-8848253a8ef8"],
+ ", we define a slack function that I call s(x,t) where ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    RowBox[{"g", 
+     RowBox[{"(", "t", ")"}]}], "-", 
+    RowBox[{
+     SubscriptBox["g", "b"], "(", "x", ")"}], "+", 
+    RowBox[{
+     SuperscriptBox["s", "2"], "(", 
+     RowBox[{"x", ",", "g", ",", "t"}], ")"}], " "}], TraditionalForm]],
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "349c9455-bf28-4e84-800c-ecfe07352d81"],
+ "= 0.\nNow we need to maximize ",
+ Cell[BoxData[
+  FormBox[
+   RowBox[{
+    StyleBox["J", "Subsection",
+     FontSize->16], 
+    StyleBox[" ", "Subsection",
+     FontSize->16], 
+    StyleBox["=", "Subsection",
+     FontSize->16], 
+    StyleBox[" ", "Subsection",
+     FontSize->16], 
+    RowBox[{
+     StyleBox[
+      SuperscriptBox[
+       SubscriptBox["\[Integral]", "0"], "T"], "Subsection",
+      FontSize->16], 
+     RowBox[{
+      RowBox[{
+       StyleBox["{", "Subsection",
+        FontSize->16], 
+       RowBox[{
+        StyleBox[
+         RowBox[{
+          StyleBox[
+           StyleBox[
+            StyleBox[
+             StyleBox[
+              StyleBox[
+               StyleBox["A", "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], "Subsection",
+              FontSize->16], "Subsection",
+             FontSize->16], "Subsection",
+            FontSize->16], "Subsection",
+           FontSize->16], "(", 
+          RowBox[{
+           RowBox[{"x", "(", "t", ")"}], ",", 
+           RowBox[{
+            StyleBox[
+             StyleBox[
+              StyleBox[
+               StyleBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox["g", "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], "Subsection",
+              FontSize->16], "Subsection",
+             FontSize->16], "(", "t", ")"}]}], ")"}], "Subsection",
+         FontSize->16], 
+        StyleBox[" ", "Subsection",
+         FontSize->16], 
+        StyleBox["-", "Subsection",
+         FontSize->16], 
+        StyleBox[" ", "Subsection",
+         FontSize->16], 
+        RowBox[{
+         StyleBox[
+          RowBox[{"\[Lambda]", "(", "t", ")"}], "Subsection",
+          FontSize->16], 
+         StyleBox[" ", "Subsection",
+          FontSize->16], 
+         StyleBox[
+          StyleBox["\[Times]", "Subsection",
+           FontSize->16], "Subsection",
+          FontSize->16], 
+         RowBox[{
+          StyleBox["(", "Subsection",
+           FontSize->16], 
+          RowBox[{
+           StyleBox[
+            RowBox[{"dx", "/", "dt"}], "Subsection",
+            FontSize->16], 
+           StyleBox[" ", "Subsection",
+            FontSize->16], 
+           StyleBox["-", "Subsection",
+            FontSize->16], 
+           StyleBox[" ", "Subsection",
+            FontSize->16], 
+           StyleBox[
+            RowBox[{"f", "(", 
+             RowBox[{
+              RowBox[{"x", "(", "t", ")"}], ",", 
+              RowBox[{
+               StyleBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox["g", "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "(", "t", ")"}]}], ")"}], "Subsection",
+            FontSize->16], 
+           StyleBox[
+            StyleBox[
+             RowBox[{" ", 
+              StyleBox[
+               StyleBox[
+                StyleBox[" ", "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16]}]], "Subsection",
+            FontSize->16], 
+           StyleBox[
+            StyleBox["-", "Subsection",
+             FontSize->16], "Subsection",
+            FontSize->16], 
+           StyleBox[
+            StyleBox[" ", "Subsection",
+             FontSize->16], "Subsection",
+            FontSize->16], 
+           RowBox[{
+            StyleBox[
+             RowBox[{
+              StyleBox["\[Mu]", "Subsection",
+               FontSize->16], 
+              StyleBox["(", "Subsection",
+               FontSize->16], 
+              StyleBox[
+               StyleBox[
+                StyleBox[
+                 StyleBox["t", "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], 
+              StyleBox[
+               StyleBox[
+                StyleBox[
+                 StyleBox[")", "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16]}], "Subsection",
+             FontSize->16], 
+            StyleBox[
+             StyleBox[
+              StyleBox[
+               StyleBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[
+                    StyleBox[
+                    StyleBox["\[Times]", "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], "Subsection",
+              FontSize->16], "Subsection",
+             FontSize->16], 
+            RowBox[{
+             StyleBox[
+              StyleBox[
+               StyleBox[
+                StyleBox[
+                 StyleBox["(", "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], "Subsection",
+              FontSize->16], 
+             RowBox[{
+              StyleBox[
+               RowBox[{
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox["g", "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], 
+                StyleBox["(", "Subsection",
+                 FontSize->16], 
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox["t", "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], 
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[
+                    StyleBox[")", "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16]}], "Subsection",
+               FontSize->16], 
+              StyleBox[
+               StyleBox["-", "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], 
+              StyleBox[
+               StyleBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[" ", "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], "Subsection",
+               FontSize->16], 
+              RowBox[{
+               SubscriptBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[
+                    StyleBox["g", "Subsection",
+                    FontSize->16], "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "b"], 
+               StyleBox[
+                StyleBox["(", "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], 
+               StyleBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox["t", "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16], 
+               StyleBox[
+                StyleBox[
+                 StyleBox[
+                  StyleBox[
+                   StyleBox[")", "Subsection",
+                    FontSize->16], "Subsection",
+                   FontSize->16], "Subsection",
+                  FontSize->16], "Subsection",
+                 FontSize->16], "Subsection",
+                FontSize->16]}], 
+              StyleBox[" ", "Subsection",
+               FontSize->16], 
+              StyleBox["+", "Subsection",
+               FontSize->16], 
+              StyleBox[" ", "Subsection",
+               FontSize->16], 
+              StyleBox[
+               RowBox[{"s", "(", 
+                RowBox[{
+                 RowBox[{"x", "(", "t", ")"}], ",", 
+                 RowBox[{"g", "(", "t", ")"}], ",", "t"}], ")"}], "Subsection",
+               FontSize->16]}]}]}]}]}]}]}], 
+       StyleBox["}", "Subsection",
+        FontSize->16]}], 
+      StyleBox[
+       StyleBox[
+        RowBox[{
+         StyleBox[
+          StyleBox[" ", "Subsection",
+           FontSize->16], "Subsection",
+          FontSize->16], " "}]], "Subsection",
+       FontSize->16], 
+      StyleBox["dt", "Subsection",
+       FontSize->16]}]}]}], TraditionalForm]],ExpressionUUID->
+  "3499eda0-3b68-4e73-b92f-519a68363e9c"]
+}], "Text",
+ CellChangeTimes->{{3.742827630241644*^9, 3.742827705850957*^9}, {
+  3.742827736531896*^9, 3.742827755231424*^9}, {3.742827796141281*^9, 
+  3.742827813971299*^9}, {3.7428280481467953`*^9, 
+  3.742828221313741*^9}},ExpressionUUID->"bb60901b-82ea-4f6b-9593-\
+d31a7b282d75"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1904, 934},
+WindowMargins->{{-7, Automatic}, {Automatic, 0}},
+FrontEndVersion->"11.3 for Microsoft Windows (64-bit) (March 6, 2018)",
+StyleDefinitions->"Default.nb"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{}
+*)
+(*CellTagsIndex
+CellTagsIndex->{}
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 182, 3, 67, "Section",ExpressionUUID->"8fd3e01e-fe9b-4a45-8b28-72856e5c6e34"],
+Cell[765, 27, 1737, 47, 55, "Subsection",ExpressionUUID->"1c6ffc6a-810a-4c49-b66e-7890e4310742"],
+Cell[2505, 76, 1827, 48, 148, "Subsection",ExpressionUUID->"70a10f31-de7a-44e3-8e61-ba484188b8c0"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[4369, 129, 196, 3, 67, "Section",ExpressionUUID->"a68fc430-03dd-468c-9793-a50312e6761f"],
+Cell[CellGroupData[{
+Cell[4590, 136, 174, 3, 53, "Subsection",ExpressionUUID->"7e11c902-560f-4859-952e-6d1b9be5325b"],
+Cell[4767, 141, 2764, 70, 148, "Text",ExpressionUUID->"4476f968-418e-431f-83af-dbf3f60bfad4"],
+Cell[7534, 213, 3295, 98, 170, "Text",ExpressionUUID->"c35088cf-322c-4b65-9a86-52b4d3badf01"],
+Cell[CellGroupData[{
+Cell[10854, 315, 380, 8, 44, "Subsubsection",ExpressionUUID->"09cbc29b-ce93-4e6d-bf56-fa8457356f75"],
+Cell[11237, 325, 2583, 74, 131, "Text",ExpressionUUID->"97d9662b-db0e-421b-969e-50e2a282eade"]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[13869, 405, 1520, 40, 61, "Subsection",ExpressionUUID->"0efbe00c-87b8-4ed1-90ea-5cabff37324f"],
+Cell[15392, 447, 12817, 363, 63, "Text",ExpressionUUID->"bb60901b-82ea-4f6b-9593-d31a7b282d75"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
