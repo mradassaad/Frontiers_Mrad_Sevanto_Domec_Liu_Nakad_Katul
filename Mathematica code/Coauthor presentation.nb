@@ -1,0 +1,106 @@
+(* Content-type: application/vnd.wolfram.mathematica *)
+
+(*** Wolfram Notebook File ***)
+(* http://www.wolfram.com/nb *)
+
+(* CreatedBy='Mathematica 11.3' *)
+
+(*CacheID: 234*)
+(* Internal cache information:
+NotebookFileLineBreakTest
+NotebookFileLineBreakTest
+NotebookDataPosition[       158,          7]
+NotebookDataLength[      3393,         96]
+NotebookOptionsPosition[      1683,         53]
+NotebookOutlinePosition[      2794,         85]
+CellTagsIndexPosition[      2718,         80]
+WindowFrame->Normal*)
+
+(* Beginning of Notebook Content *)
+Notebook[{
+
+Cell[CellGroupData[{
+Cell["", "SlideShowNavigationBar", "FirstSlide",
+ CellTags->
+  "SlideShowHeader",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299"],
+
+Cell[TextData[StyleBox["Recapping the approach by Manzoni et al. 2013 in \
+AWR", "Section"]], "Text",
+ CellChangeTimes->{{3.746902274658663*^9, 3.7469022986877613`*^9}, {
+  3.746902344303073*^9, 3.7469023734708424`*^9}},
+ TextAlignment->Center,ExpressionUUID->"e21061c8-9e19-4a3d-b3d2-6d0b152f120d"],
+
+Cell[TextData[StyleBox["The idea: optimizing stomatal conductance g(t) under \
+dynamic soil moisture", "Subsection"]], "Text",
+ CellChangeTimes->{{3.746902378774438*^9, 3.7469024336805344`*^9}, 
+   3.746902470761715*^9},ExpressionUUID->"ef3ffdbe-68e2-46a2-921c-\
+706f3d559a89"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["", "SlideShowNavigationBar",
+ CellTags->
+  "SlideShowHeader",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c"],
+
+Cell[CellGroupData[{
+
+Cell["Slide", "Section",ExpressionUUID->"7566f623-7bee-4c88-9b6a-c8b687eef8af"],
+
+Cell["This is a text cell.", "Text",ExpressionUUID->"81c74be9-1fb7-4427-9f7e-2766fe7637f6"]
+}, Open  ]]
+}, Open  ]]
+},
+WindowSize->{1536, 832},
+WindowMargins->{{92, Automatic}, {Automatic, 49}},
+TaggingRules->{
+ "PresenterSettings" -> {
+   "ShowToolbar" -> True, "ShowNavigationBar" -> False, 
+    "SlideBreakStyles" -> {}, "ShowSlideBreaks" -> True, 
+    "Theme" -> {
+     "ThemeName" -> "Default", "FontSetName" -> "Default", "ColorSetName" -> 
+      "Default"}, "UserModifications" -> {{"Text", TextAlignment -> Center}}}},
+FrontEndVersion->"11.3 for Microsoft Windows (64-bit) (March 6, 2018)",
+StyleDefinitions->FrontEnd`FileName[{"PresenterTools"}, "Default.nb", 
+  CharacterEncoding -> "UTF-8"],
+"Theme" -> "Default"
+]
+(* End of Notebook Content *)
+
+(* Internal cache information *)
+(*CellTagsOutline
+CellTagsIndex->{
+ "SlideShowHeader"->{
+  Cell[580, 22, 136, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299",
+   CellTags->"SlideShowHeader"],
+  Cell[1335, 41, 122, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c",
+   CellTags->"SlideShowHeader"]}
+ }
+*)
+(*CellTagsIndex
+CellTagsIndex->{
+ {"SlideShowHeader", 2409, 72}
+ }
+*)
+(*NotebookFileOutline
+Notebook[{
+Cell[CellGroupData[{
+Cell[580, 22, 136, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299",
+ CellTags->"SlideShowHeader"],
+Cell[719, 26, 299, 4, 50, "Text",ExpressionUUID->"e21061c8-9e19-4a3d-b3d2-6d0b152f120d"],
+Cell[1021, 32, 277, 4, 39, "Text",ExpressionUUID->"ef3ffdbe-68e2-46a2-921c-706f3d559a89"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[1335, 41, 122, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c",
+ CellTags->"SlideShowHeader"],
+Cell[CellGroupData[{
+Cell[1482, 47, 79, 0, 62, "Section",ExpressionUUID->"7566f623-7bee-4c88-9b6a-c8b687eef8af"],
+Cell[1564, 49, 91, 0, 32, "Text",ExpressionUUID->"81c74be9-1fb7-4427-9f7e-2766fe7637f6"]
+}, Open  ]]
+}, Open  ]]
+}
+]
+*)
+
+(* End of internal cache information *)
+
