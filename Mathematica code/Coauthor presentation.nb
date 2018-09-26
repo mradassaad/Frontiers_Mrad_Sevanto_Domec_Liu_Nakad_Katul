@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[      3393,         96]
-NotebookOptionsPosition[      1683,         53]
-NotebookOutlinePosition[      2794,         85]
-CellTagsIndexPosition[      2718,         80]
+NotebookDataLength[     17858,        481]
+NotebookOptionsPosition[     14891,        416]
+NotebookOutlinePosition[     16017,        449]
+CellTagsIndexPosition[     15939,        444]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -30,11 +30,374 @@ AWR", "Section"]], "Text",
   3.746902344303073*^9, 3.7469023734708424`*^9}},
  TextAlignment->Center,ExpressionUUID->"e21061c8-9e19-4a3d-b3d2-6d0b152f120d"],
 
-Cell[TextData[StyleBox["The idea: optimizing stomatal conductance g(t) under \
-dynamic soil moisture", "Subsection"]], "Text",
+Cell[CellGroupData[{
+
+Cell[TextData[StyleBox["The basic idea: optimizing stomatal conductance g(t) \
+under dynamic soil moisture", "Subsection"]], "Subsection",
  CellChangeTimes->{{3.746902378774438*^9, 3.7469024336805344`*^9}, 
-   3.746902470761715*^9},ExpressionUUID->"ef3ffdbe-68e2-46a2-921c-\
-706f3d559a89"]
+   3.746902470761715*^9, {3.74695026081991*^9, 
+   3.746950262622513*^9}},ExpressionUUID->"ef3ffdbe-68e2-46a2-921c-\
+706f3d559a89"],
+
+Cell[TextData[{
+ "To be maximized: carbon gain A[g(t),x(t),t]\nCost function: f[g(t),x(t),t]\n\
+f[g(t),x(t),t] is the water loss function during dry-down: f[g(t),x(t),t] = - \
+",
+ Cell[BoxData[
+  FormBox[
+   FractionBox[
+    RowBox[{"(", 
+     RowBox[{"E", "+", "L"}], ")"}], 
+    RowBox[{"n", " ", "Zr"}]], TraditionalForm]],
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "234cc825-f897-4cac-9185-b736b2b59fe6"],
+ "\nE is the plant transpiration term\nL quantifies losses through drainage \
+below the rooting zone, transpiration by competing plants, and soil \
+evaporation"
+}], "Text",
+ CellChangeTimes->{{3.74695027372589*^9, 3.746950275763337*^9}, {
+  3.746950325074727*^9, 3.7469504351731377`*^9}, {3.746950524389845*^9, 
+  3.74695071589723*^9}},ExpressionUUID->"922bf861-97e2-4795-9542-\
+f9ffa455fe65"],
+
+Cell["Q: Would separating competition from drainage be beneficial?", \
+"Subsubsection",
+ CellChangeTimes->{{3.746950725979003*^9, 
+  3.74695076554545*^9}},ExpressionUUID->"51003304-9779-4bca-94fd-\
+a7e36767d6c2"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Casting the problem as optimal control with constraints", "Subsection",
+ CellChangeTimes->{{3.746950994486998*^9, 3.7469510659710703`*^9}, 
+   3.746951271186309*^9},ExpressionUUID->"57d30f94-3e26-44e6-a095-\
+690697923d25"],
+
+Cell[BoxData[
+ RowBox[{
+  StyleBox[
+   RowBox[{
+    RowBox[{
+     RowBox[{
+      RowBox[{
+       RowBox[{
+        RowBox[{
+         RowBox[{
+          RowBox[{
+           RowBox[{
+            RowBox[{
+             StyleBox[
+              RowBox[{
+               RowBox[{
+                RowBox[{
+                 StyleBox["1", "Text"], 
+                 StyleBox[")", "Text"]}], 
+                StyleBox[" ", "Text"], 
+                StyleBox["H", "Text"]}], 
+               StyleBox[" ", "Text",
+                FontFamily->"Source Sans Pro",
+                FontWeight->"Regular"], 
+               StyleBox["=", "Text",
+                FontFamily->"Source Sans Pro",
+                FontWeight->"Regular"], 
+               StyleBox[" ", "Text",
+                FontFamily->"Source Sans Pro",
+                FontWeight->"Regular"], 
+               RowBox[{"A", 
+                StyleBox[" ", "Text"], 
+                StyleBox["+", "Text"], 
+                StyleBox[" ", "Text"], 
+                RowBox[{
+                "\[Lambda]", " ", "f", "   ", "where", " ", "H", " ", "is", 
+                 " ", "the", " ", "hamiltonian"}]}]}],
+              FontFamily->"Source Sans Pro"], 
+             StyleBox["\n",
+              FontFamily->"Source Code Pro"], 
+             StyleBox["2",
+              FontFamily->"Source Sans Pro"]}], 
+            StyleBox[")",
+             FontFamily->"Source Sans Pro"]}], 
+           StyleBox[
+            StyleBox[" ", "Subsubsection",
+             FontFamily->"Source Sans Pro",
+             FontWeight->"Regular"],
+            FontFamily->"Source Sans Pro"], 
+           StyleBox[
+            StyleBox[Cell[BoxData[
+              FormBox[
+               StyleBox[
+                RowBox[{
+                 FractionBox["d\[Lambda]", "dt"], "=", 
+                 RowBox[{"-", 
+                  RowBox[{"(", 
+                   RowBox[{
+                    FractionBox[
+                    RowBox[{"\[PartialD]", "A"}], 
+                    RowBox[{"\[PartialD]", "x"}]], "+", 
+                    RowBox[{"\[Lambda]", " ", 
+                    FractionBox[
+                    RowBox[{"\[PartialD]", "f"}], 
+                    RowBox[{"\[PartialD]", "x"}]]}]}], ")"}]}]}],
+                FontFamily->"Source Sans Pro",
+                FontSize->18], TraditionalForm]], "Text",ExpressionUUID->
+              "7d01a13f-046f-4868-945a-bb53b3fdcbfd"], "Subsubsection",
+             FontFamily->"Source Sans Pro",
+             FontWeight->"Regular"],
+            FontFamily->"Source Sans Pro"]}], 
+          StyleBox[
+           StyleBox[" ", "Subsubsection",
+            FontFamily->"Source Sans Pro",
+            FontWeight->"Regular"],
+           FontFamily->"Source Sans Pro"], "\[Rule]", 
+          StyleBox[
+           RowBox[{"called", " ", "the", " ", "control", " ", "equation"}],
+           FontFamily->"Source Sans Pro"]}], 
+         StyleBox[
+          StyleBox["\n", "Subsubsection",
+           FontFamily->"Source Sans Pro",
+           FontWeight->"Regular"],
+          FontFamily->"Source Sans Pro"], 
+         StyleBox["3",
+          FontFamily->"Source Sans Pro"]}], 
+        StyleBox[")",
+         FontFamily->"Source Sans Pro"]}], 
+       StyleBox[
+        StyleBox[" ", "Subsubsection",
+         FontFamily->"Source Sans Pro",
+         FontWeight->"Regular"],
+        FontFamily->"Source Sans Pro"], 
+       StyleBox[
+        StyleBox[Cell[BoxData[
+          FormBox[
+           StyleBox[
+            RowBox[{
+             FractionBox[
+              RowBox[{"\[PartialD]", "H"}], 
+              RowBox[{"\[PartialD]", "g"}]], "=", 
+             RowBox[{
+              RowBox[{
+               FractionBox[
+                RowBox[{"\[PartialD]", "A"}], 
+                RowBox[{"\[PartialD]", "g"}]], "+", 
+               RowBox[{"\[Lambda]", " ", 
+                FractionBox[
+                 RowBox[{"\[PartialD]", "f"}], 
+                 RowBox[{"\[PartialD]", "g"}]]}]}], "=", 
+              StyleBox["0",
+               FontSlant->"Plain"]}]}],
+            FontFamily->"Source Sans Pro",
+            FontSize->18], TraditionalForm]], "Text",ExpressionUUID->
+          "0c184443-8374-4fb2-b127-b4bafe1ac14b"], "Subsubsection",
+         FontFamily->"Source Sans Pro",
+         FontWeight->"Regular"],
+        FontFamily->"Source Sans Pro"]}], 
+      StyleBox[
+       StyleBox["\n", "Subsubsection",
+        FontFamily->"Source Sans Pro",
+        FontWeight->"Regular"],
+       FontFamily->"Source Sans Pro"], 
+      StyleBox["4",
+       FontFamily->"Source Sans Pro"]}], 
+     StyleBox[")",
+      FontFamily->"Source Sans Pro"]}], 
+    StyleBox[" ",
+     FontFamily->"Source Sans Pro"], 
+    StyleBox[Cell[BoxData[
+      FormBox[
+       StyleBox[
+        RowBox[{
+         FractionBox["dx", "dt"], "=", 
+         RowBox[{"f", "(", 
+          RowBox[{"x", ",", "u"}], ")"}]}],
+        FontFamily->"Source Sans Pro",
+        FontSize->18], TraditionalForm]], "Text",ExpressionUUID->
+      "ff282daf-0389-4d45-b1df-caa63740dfe6"],
+     FontFamily->"Source Sans Pro"]}],
+   FontSize->18,
+   FontWeight->"Regular",
+   FontColor->GrayLevel[0.5]], 
+  StyleBox[" ",
+   FontFamily->"Source Sans Pro",
+   FontSize->18,
+   FontWeight->"Regular",
+   FontColor->GrayLevel[0.5]], 
+  StyleBox["\[Rule]",
+   FontFamily->"Source Sans Pro",
+   FontSize->18,
+   FontWeight->"Regular",
+   FontColor->GrayLevel[0.5]], " ", 
+  StyleBox[
+   RowBox[{"called", " ", "the", " ", "state", " ", "equation"}],
+   FontFamily->"Source Sans Pro",
+   FontWeight->"Regular",
+   FontColor->RGBColor[
+    0.4226749065384909, 0.4226596475165942, 
+     0.4226443884946975]]}]], "Subsubsection",
+ CellChangeTimes->{{3.746951655423853*^9, 3.7469516677805357`*^9}, {
+  3.7469517166802177`*^9, 3.746951829169588*^9}, {3.7469518640083723`*^9, 
+  3.746952018271145*^9}, {3.746953426247655*^9, 
+  3.746953429575086*^9}},ExpressionUUID->"93992ba9-2c75-4990-90c0-\
+4b1227439e4f"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Expressing A and f in terms of x and g", "Subsection",
+ CellChangeTimes->{{3.7469534088363533`*^9, 
+  3.746953445750618*^9}},ExpressionUUID->"85b95f14-d682-41bb-934f-\
+3e5d16ba234c"],
+
+Cell[TextData[{
+ "Just like in a resistor network, transpiration at the leaf level is driven \
+by a water potential difference represented by the vapor pressure deficit D\n\
+Their are two conductances in series: the stomatal conductance g and the \
+boundary layer conductance ga\nTotal conductance -> ",
+ Cell[BoxData[
+  FormBox[
+   FractionBox["gga", 
+    RowBox[{"g", " ", "+", " ", "ga"}]], TraditionalForm]],
+  FormatType->"TraditionalForm",ExpressionUUID->
+  "e93b00c1-32bd-43eb-8547-e31a1f39fc3c"],
+ "and assuming that g<<<ga, we get a total conductance of g\n",
+ StyleBox["Therefore, E \[TildeTilde] \[Nu]agD where v and a are there for \
+dimensional consistency",
+  FontWeight->"Bold"]
+}], "Text",
+ CellChangeTimes->{{3.746953541096725*^9, 3.746953711819194*^9}, {
+  3.7469537443948298`*^9, 3.746953746059412*^9}, {3.746953834231091*^9, 
+  3.7469538344442472`*^9}},ExpressionUUID->"57adfad4-5ca9-4e5f-a5ed-\
+57ca2d8d7f60"],
+
+Cell[TextData[{
+ "In a similar fashion for photosynthesis A, a resistor network is assumed \
+and that g<<<ga \nA = g (ca - ci)\nTo balance the supply of carbon, we use an \
+expression for the demand of carbon that is linear\nA = k ci - r where r is \
+the respiration\nNeglecting r and canceling ci we get:\n",
+ StyleBox["A = ",
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   FractionBox[
+    RowBox[{"g", " ", "ca", " ", "k"}], 
+    RowBox[{"g", " ", "+", " ", "k"}]], TraditionalForm]],
+  FontWeight->"Bold",ExpressionUUID->"cdd823a1-3719-488e-907a-a502c1faeafa"],
+ "\nBecause we assumed that the carboxylation efficiency is independent of \
+soil moisture, A is independent of soil moisture in this case."
+}], "Text",
+ CellChangeTimes->{{3.746953755509303*^9, 3.7469537643410597`*^9}, {
+  3.746953795447706*^9, 3.7469538329386253`*^9}, {3.746954365881433*^9, 
+  3.74695441469551*^9}, {3.746954487624667*^9, 
+  3.7469546074149647`*^9}},ExpressionUUID->"803e81a3-dc19-4143-a0b1-\
+c59572035e8a"],
+
+Cell[TextData[{
+ "Leakage losses are taken as a power law of soil moisture:\n",
+ StyleBox["L = \[Gamma] ",
+  FontWeight->"Bold"],
+ Cell[BoxData[
+  FormBox[
+   SuperscriptBox["x", "c"], TraditionalForm]],
+  FontWeight->"Bold",ExpressionUUID->"9a6b5465-03a5-4824-ba83-c589e2766f5a"],
+ StyleBox[", where c can be either 0 or 1",
+  FontWeight->"Bold"]
+}], "Text",
+ CellChangeTimes->{{3.7469546877775307`*^9, 
+  3.746954724296671*^9}},ExpressionUUID->"0fb8e48c-835b-48d7-8c3b-\
+73682e6e94dd"]
+}, Open  ]],
+
+Cell[CellGroupData[{
+
+Cell["Recapping expressions in terms of x and g", "Subsection",
+ CellChangeTimes->{{3.74695476008394*^9, 
+  3.746954782158414*^9}},ExpressionUUID->"5d5ef3b9-99ff-4c91-b579-\
+0d4cdd2d9f31"],
+
+Cell[CellGroupData[{
+
+Cell[BoxData[
+ RowBox[{"Column", "[", 
+  RowBox[{
+   RowBox[{"{", "\[IndentingNewLine]", 
+    RowBox[{
+    "\"\<Expressing photosynthesis A, transpiration E, and uncontrolled \
+losses L\>\"", ",", "\[IndentingNewLine]", 
+     RowBox[{"Grid", "[", 
+      RowBox[{
+       RowBox[{"{", "\[IndentingNewLine]", 
+        RowBox[{
+         RowBox[{"Map", "[", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"Style", "[", 
+             RowBox[{"#", ",", 
+              RowBox[{"FontSize", "\[Rule]", "40"}]}], "]"}], "&"}], ",", 
+           RowBox[{"{", 
+            RowBox[{"\"\<A\>\"", ",", "\"\<E\>\"", ",", "\"\<L\>\""}], 
+            "}"}]}], "]"}], ",", "\[IndentingNewLine]", 
+         RowBox[{"Map", "[", 
+          RowBox[{
+           RowBox[{
+            RowBox[{"Style", "[", 
+             RowBox[{"#", ",", 
+              RowBox[{"FontSize", "\[Rule]", "40"}]}], "]"}], "&"}], ",", 
+           RowBox[{"{", 
+            RowBox[{
+            "\"\<\[Nu]*a*g*D\>\"", ",", 
+             "\"\<\!\(\*FractionBox[\(g*ca*k\), \(g + k\)]\)\>\"", ",", 
+             "\"\<\!\(TraditionalForm\`\[Gamma]*\*SuperscriptBox[\(x\), \
+\(c\)]\)\>\""}], "}"}]}], "]"}]}], "\[IndentingNewLine]", "}"}], ",", 
+       RowBox[{"Dividers", "\[Rule]", "All"}]}], "]"}]}], 
+    "\[IndentingNewLine]", "}"}], ",", "Center"}], "]"}]], "Input",
+ CellChangeTimes->{{3.746954805529814*^9, 3.746954913652193*^9}, {
+  3.746955092337895*^9, 3.746955202242942*^9}, {3.746955235633041*^9, 
+  3.746955237757605*^9}},
+ CellLabel->"In[5]:=",ExpressionUUID->"ab4e8322-b398-487f-9a3d-25c8083f47b4"],
+
+Cell[BoxData[
+ TagBox[GridBox[{
+    {"\<\"Expressing photosynthesis A, transpiration E, and uncontrolled \
+losses L\"\>"},
+    {
+     TagBox[GridBox[{
+        {
+         StyleBox["\<\"A\"\>",
+          StripOnInput->False,
+          FontSize->40], 
+         StyleBox["\<\"E\"\>",
+          StripOnInput->False,
+          FontSize->40], 
+         StyleBox["\<\"L\"\>",
+          StripOnInput->False,
+          FontSize->40]},
+        {
+         StyleBox["\<\"\[Nu]*a*g*D\"\>",
+          StripOnInput->False,
+          FontSize->40], 
+         StyleBox["\<\"\\!\\(\\*FractionBox[\\(g*ca*k\\), \\(g + k\\)]\\)\"\>",
+          StripOnInput->False,
+          FontSize->40], 
+         StyleBox["\<\"\\!\\(TraditionalForm\\`\[Gamma]*\\*SuperscriptBox[\\(\
+x\\), \\(c\\)]\\)\"\>",
+          StripOnInput->False,
+          FontSize->40]}
+       },
+       AutoDelete->False,
+       GridBoxDividers->{"Columns" -> {{True}}, "Rows" -> {{True}}},
+       GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}],
+      "Grid"]}
+   },
+   DefaultBaseStyle->"Column",
+   GridBoxAlignment->{"Columns" -> {{Center}}},
+   GridBoxItemSize->{"Columns" -> {{Automatic}}, "Rows" -> {{Automatic}}}],
+  "Column"]], "Output",
+ CellChangeTimes->{
+  3.746954914240815*^9, 3.746955147260273*^9, {3.7469551853647614`*^9, 
+   3.7469552032658587`*^9}, 3.746955242133524*^9},
+ CellLabel->"Out[5]=",ExpressionUUID->"c4a5bac4-6788-4b58-8983-3dbfbd586cb6"]
+}, {2}]]
+}, Open  ]]
 }, Open  ]],
 
 Cell[CellGroupData[{
@@ -51,8 +414,8 @@ Cell["This is a text cell.", "Text",ExpressionUUID->"81c74be9-1fb7-4427-9f7e-276
 }, Open  ]]
 }, Open  ]]
 },
-WindowSize->{1536, 832},
-WindowMargins->{{92, Automatic}, {Automatic, 49}},
+WindowSize->{1013, 960},
+WindowMargins->{{Automatic, 26}, {Automatic, 0}},
 TaggingRules->{
  "PresenterSettings" -> {
    "ShowToolbar" -> True, "ShowNavigationBar" -> False, 
@@ -60,7 +423,8 @@ TaggingRules->{
     "Theme" -> {
      "ThemeName" -> "Default", "FontSetName" -> "Default", "ColorSetName" -> 
       "Default"}, "UserModifications" -> {{"Text", TextAlignment -> Center}}}},
-FrontEndVersion->"11.3 for Microsoft Windows (64-bit) (March 6, 2018)",
+FrontEndVersion->"11.3 for Mac OS X x86 (32-bit, 64-bit Kernel) (March 5, \
+2018)",
 StyleDefinitions->FrontEnd`FileName[{"PresenterTools"}, "Default.nb", 
   CharacterEncoding -> "UTF-8"],
 "Theme" -> "Default"
@@ -71,36 +435,55 @@ StyleDefinitions->FrontEnd`FileName[{"PresenterTools"}, "Default.nb",
 (*CellTagsOutline
 CellTagsIndex->{
  "SlideShowHeader"->{
-  Cell[580, 22, 136, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299",
+  Cell[580, 22, 136, 2, 61, "SlideShowNavigationBar",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299",
    CellTags->"SlideShowHeader"],
-  Cell[1335, 41, 122, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c",
+  Cell[14543, 404, 122, 2, 61, "SlideShowNavigationBar",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c",
    CellTags->"SlideShowHeader"]}
  }
 *)
 (*CellTagsIndex
 CellTagsIndex->{
- {"SlideShowHeader", 2409, 72}
+ {"SlideShowHeader", 15628, 436}
  }
 *)
 (*NotebookFileOutline
 Notebook[{
 Cell[CellGroupData[{
-Cell[580, 22, 136, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299",
+Cell[580, 22, 136, 2, 61, "SlideShowNavigationBar",ExpressionUUID->"7570880d-2d12-4b54-85d1-84b332bc3299",
  CellTags->"SlideShowHeader"],
 Cell[719, 26, 299, 4, 50, "Text",ExpressionUUID->"e21061c8-9e19-4a3d-b3d2-6d0b152f120d"],
-Cell[1021, 32, 277, 4, 39, "Text",ExpressionUUID->"ef3ffdbe-68e2-46a2-921c-706f3d559a89"]
+Cell[CellGroupData[{
+Cell[1043, 34, 338, 5, 46, "Subsection",ExpressionUUID->"ef3ffdbe-68e2-46a2-921c-706f3d559a89"],
+Cell[1384, 41, 812, 19, 122, "Text",ExpressionUUID->"922bf861-97e2-4795-9542-f9ffa455fe65"],
+Cell[2199, 62, 212, 4, 37, "Subsubsection",ExpressionUUID->"51003304-9779-4bca-94fd-a7e36767d6c2"]
 }, Open  ]],
 Cell[CellGroupData[{
-Cell[1335, 41, 122, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c",
+Cell[2448, 71, 228, 3, 46, "Subsection",ExpressionUUID->"57d30f94-3e26-44e6-a095-690697923d25"],
+Cell[2679, 76, 5897, 164, 156, "Subsubsection",ExpressionUUID->"93992ba9-2c75-4990-90c0-4b1227439e4f"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[8613, 245, 188, 3, 46, "Subsection",ExpressionUUID->"85b95f14-d682-41bb-934f-3e5d16ba234c"],
+Cell[8804, 250, 930, 19, 103, "Text",ExpressionUUID->"57adfad4-5ca9-4e5f-a5ed-57ca2d8d7f60"],
+Cell[9737, 271, 998, 20, 168, "Text",ExpressionUUID->"803e81a3-dc19-4143-a0b1-c59572035e8a"],
+Cell[10738, 293, 487, 13, 54, "Text",ExpressionUUID->"0fb8e48c-835b-48d7-8c3b-73682e6e94dd"]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[11262, 311, 188, 3, 46, "Subsection",ExpressionUUID->"5d5ef3b9-99ff-4c91-b579-0d4cdd2d9f31"],
+Cell[CellGroupData[{
+Cell[11475, 318, 1573, 37, 318, "Input",ExpressionUUID->"ab4e8322-b398-487f-9a3d-25c8083f47b4"],
+Cell[13051, 357, 1434, 40, 147, "Output",ExpressionUUID->"c4a5bac4-6788-4b58-8983-3dbfbd586cb6"]
+}, {2}]]
+}, Open  ]]
+}, Open  ]],
+Cell[CellGroupData[{
+Cell[14543, 404, 122, 2, 61, "SlideShowNavigationBar",ExpressionUUID->"59a59d00-2c01-41a9-a06b-d5f8ca5cb98c",
  CellTags->"SlideShowHeader"],
 Cell[CellGroupData[{
-Cell[1482, 47, 79, 0, 62, "Section",ExpressionUUID->"7566f623-7bee-4c88-9b6a-c8b687eef8af"],
-Cell[1564, 49, 91, 0, 32, "Text",ExpressionUUID->"81c74be9-1fb7-4427-9f7e-2766fe7637f6"]
+Cell[14690, 410, 79, 0, 62, "Section",ExpressionUUID->"7566f623-7bee-4c88-9b6a-c8b687eef8af"],
+Cell[14772, 412, 91, 0, 32, "Text",ExpressionUUID->"81c74be9-1fb7-4427-9f7e-2766fe7637f6"]
 }, Open  ]]
 }, Open  ]]
 }
 ]
 *)
-
-(* End of internal cache information *)
 
