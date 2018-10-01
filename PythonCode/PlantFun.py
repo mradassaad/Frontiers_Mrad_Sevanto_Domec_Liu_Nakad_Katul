@@ -40,7 +40,7 @@ UNIT_3 = 273.15 # Degree C -> K
 # read FluxNet forcings and MODIS LAI
 fill_NA = -9999
 nobsinaday = 48 # number of observations in a day
-# Info on FluxNet data: 
+# Info on FluxNet data: http://fluxnet.fluxdata.org/data/aboutdata/data-variables/
 def ReadInput(datapath,sitename,latitude): # optimal or full
     fname = glob.glob(datapath+'FLuxNet/FLX_'+sitename+'*.csv')[0]
     lai_fname = datapath+'MODIS_LAI/LAI_'+sitename+'.csv'
@@ -241,7 +241,6 @@ plt.ylabel('Transpiration (m/s)')
 
 
 #%% ------------------ LEAF WATER POTENTIAL ------------------------
-
 s = 0.5 # relative soil moisture, \in (0,1)
 SRparas = SoilRoot(3.5e-4,-0.00696,3.5,0.4,1,10) 
 Xparas = Xylem(3e-7,-3,2)
