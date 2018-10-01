@@ -1,93 +1,45 @@
 import numpy as np
 import pandas as pd
 from datetime import datetime
-import scipy.stats as stats
 import glob
-import pymc as pm
+import scipy.optimize as opt
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rc('font',size=14)
 
-
+# user defined parameter groups
 class SoilRoot:
-    def __init__(self,ksat,psat,b1,b2,n1,n2,Zr1,Zr2,RAI1,RAI2,z,ch):
-        self.ksat1 = ksat
-        self.ksat2 = ksat
-        self.psat1 = psat
-        self.psat2 = psat
-        self.b1 = b1
-        self.b2 = b2
-        self.n1 = n1
-        self.n2 = n2
-        self.Zr1 = Zr1
-        self.Zr2 = Zr2
-        self.RAI1 = RAI1
-        self.RAI2 = RAI2
-        self.sfc1 = (psat/(-0.03))**(1/b1)
-        self.sw1 = (psat/(-3))**(1/b1)
-        self.sfc2 = (psat/(-0.03))**(1/b2)
-        self.sw2 = (psat/(-3))**(1/b2)
-        self.z = z # measurement height
-        self.ch = ch # canopy height
+    def __init__(self,ksat,psat,b,n,Zr,RAI):
+        self.ksat = ksat # saturated conductivity, m/s
+        self.psat = psat # saturated soil water potential, MPa
+        self.b = b # nonlinearity in soil water retention curve
+        self.n = n # soil porosity
+        self.Zr = Zr # rooting depth, m
+        self.RAI = RAI # root area index
+        self.sfc = (psat/(-0.03))**(1/b)  
+        self.sw = (psat/(-3))**(1/b) 
 
-class XylemLeaf:
-    def __init__(self,gpmax,p50,aa,lww,b0,Cx,Cl):
-        self.gpmax = gpmax
-        self.p50 = p50
-        self.aa = aa
-        self.lww = lww
-        self.b0 = b0
-        self.Cx = Cx
-        self.Cl = Cl
-
-class InitialState:
-    def __init__(self,psir,psix,psil,pisl_avg,s1,s2):
-        self.psir = psir
-        self.psix = psix
-        self.psil = psil
-        self.psil_avg = pisl_avg
-        self.s1 = s1
-        self.s2 = s2
-
-class Climate:
-    def __init__(self,temp,vpd,rnet,lai):
-        self.temp = temp
-        self.vpd = vpd
-        self.rnet = rnet
-        self.lai = lai
+class Xylem:
+    def __init__(self,gpmax,p50,aa):
+        self.gpmax = gpmax # maximum xylem conductance, m/s
+        self.p50 = p50 # leaf water pontential at 50% loss of conductnace, MPa
+        self.aa = aa # nonlinearity of plant vulnerability curve
+     
         
-rhow = 1e3; g = 9.81
-a0 = 1.6; 
-UNIT_1 = a0*18*1e-6 # mol CO2 /m2/s -> m/s, H2O
+# constants
+a0 = 1.6 # ratio between water and carbon conductances
+ca = 400 # atmospheric CO2 concentration, umol/mol
+rhow = 1000 # water density, kg/m3
+g = 9.81 # gravitational acceleration, m/s2
+R = 8.31*1e-3 # Gas constant, kJ/mol/K
+UNIT_1 = 18*1e-6 # mol H2O/m2/s ->  m/s
 UNIT_2 = 1e6 # Pa -> MPa
 UNIT_3 = 273.15 # Degree C -> K
-CCp = 1005; rhoa = 1.225; lelambda = 2450000; p0 = 101325 # Pa
-R = 8.31*1e-3 # Gas constant, kJ/mol/K
-gamma= CCp*p0/0.622/lelambda # Pa/K
-koptj = 155.76 #  umol/m2/s
-Haj = 43.79 # kJ/mol
-Hdj = 200; # kJ/mol
-Toptj = 32.19+UNIT_3 # K
-koptv = 174.33 # umol/m2/s
-Hav = 61.21 # kJ/mol
-Hdv = 200 # kJ/mol
-Toptv = 37.74+UNIT_3 # K
-Coa = 210 # mmol/mol
-kai1 = 0.9
-kai2 = 0.3
-ca = 400; ca0 = 400
-ga = 0.02
-dt = 60*30 # s -> 30 min
-
-karman = 0.4
-g = 9.81
-rhohat = 44.6 # mol/m3
-Cpmol = 1005*28.97*1e-3 # J/kg/K*kg/mol -> J/mol/K
-lambdamol = 40660 # J/mol
-
-fill_NA = -9999
-nobsinaday = 48 # number of observations in a day
-leaf_angle_distr = 1 # spherical distribution for light extinction 
 
 
 # read FluxNet forcings and MODIS LAI
+fill_NA = -9999
+nobsinaday = 48 # number of observations in a day
 # Info on FluxNet data: 
 def ReadInput(datapath,sitename,latitude): # optimal or full
     fname = glob.glob(datapath+'FLuxNet/FLX_'+sitename+'*.csv')[0]
@@ -113,10 +65,9 @@ def ReadInput(datapath,sitename,latitude): # optimal or full
     
     # Transform date format and variabel units
     met['TIMESTAMP_START'] = met['TIMESTAMP_START'].apply(lambda x: datetime.strptime(str(x),'%Y%m%d%H%M'))
-    DOY = np.array([itm.timetuple().tm_yday+itm.timetuple().tm_hour/24+itm.timetuple().tm_min/1440 for itm in met['TIMESTAMP_START']])
+#    DOY = np.array([itm.timetuple().tm_yday+itm.timetuple().tm_hour/24+itm.timetuple().tm_min/1440 for itm in met['TIMESTAMP_START']])
     
-    met['Vegk'] = LightExtinction(DOY,latitude,leaf_angle_distr)
-    met['TEMP'] = met['TEMP']+273.15 # deg C -> K
+    met['TEMP'] = met['TEMP']+UNIT_3 # deg C -> K
     met['VPD'] = met['VPD']/1013.25 # hPa -> kPa/kPa
     
     # start and end at 00:00 in a day
@@ -179,17 +130,6 @@ def Interstorm(df,drydownid):
     print('Selected period: '+str(st[drydownid])+' to '+str(et[drydownid]))
     return df[(df['TIMESTAMP_START']>=st[drydownid]) & (df['TIMESTAMP_START']<et[drydownid])]
 
-def LightExtinction(DOY,lat,x):
-    B = (DOY-81)*2*np.pi/365
-    ET = 9.87*np.sin(2*B)-7.53*np.cos(B)-1.5*np.sin(B)
-    DA = 23.45*np.sin((284+DOY)*2*np.pi/365)# Deviation angle
-    LST = np.mod(DOY*24*60,24*60)
-    AST = LST+ET
-    h = (AST-12*60)/4 # hour angle
-    alpha = np.arcsin((np.sin(np.pi/180*lat)*np.sin(np.pi/180*DA)+np.cos(np.pi/180*lat)*np.cos(np.pi/180.*DA)*np.cos(np.pi/180*h)))*180/np.pi # solar altitude
-    zenith_angle = 90-alpha
-    Vegk = np.sqrt(x**2+np.tan(zenith_angle/180*np.pi)**2)/(x+1.774*(1+1.182)**(-0.733)) # Campbell and Norman 1998
-    return Vegk
 
 # a function to smooth noisy data using polynomial interpolation
 def savitzky_golay(y, window_size, order, deriv=0, rate=1):
@@ -210,15 +150,109 @@ def dailyAvg(data,windowsize):
     data = data[0:windowsize*int(len(data)/windowsize)]
     return np.nanmean(np.reshape(data,[int(len(data)/windowsize),windowsize]),axis=1)
 
+# Compute An as a function of gc under given climate
+def f_An(gc,T,RN): # unifts: mol CO2/m2/s, K, W/m2
+    
+    # photosynthetically active radiation
+    hc = 2e-25 # Planck constant times light speed, J*s times m/s
+    wavelen = 500e-9 # wavelength of light, m
+    EE = hc/wavelen # energy of photon, J
+    NA = 6.02e23 # Avogadro's constant, /mol
+    PAR = RN/(EE*NA)*1e6 # absorbed photon irradiance, umol photons /m2/s, PAR
+    
+    # temperature correction
+    koptj = 155.76 #  umol/m2/s
+    Haj = 43.79 # kJ/mol
+    Hdj = 200; # kJ/mol
+    Toptj = 32.19+UNIT_3 # K
+    koptv = 174.33 # umol/m2/s
+    Hav = 61.21 # kJ/mol
+    Hdv = 200 # kJ/mol
+    Toptv = 37.74+UNIT_3 # K
+    Coa = 210 # mmol/mol
+    kai1 = 0.9
+    kai2 = 0.3
+    Vcmax = koptv*Hdv*np.exp(Hav*(T-Toptv)/T/R/Toptv)/(Hdv-Hav*(1-np.exp(Hav*(T-Toptv)/T/R/Toptv))) # umol/m2/s
+    Jmax = koptj*Hdj*np.exp(Haj*(T-Toptj)/T/R/Toptj)/(Hdj-Haj*(1-np.exp(Haj*(T-Toptj)/T/R/Toptj)))
+    TC = T-UNIT_3 # C
+    Kc = 300*np.exp(0.074*(TC-25)) # umol/mol
+    Ko = 300*np.exp(0.015*(TC-25)) # mmol/mol
+    cp = 36.9+1.18*(TC-25)+0.036*(TC-25)**2
+    J = (kai2*PAR+Jmax-np.sqrt((kai2*PAR+Jmax)**2-4*kai1*kai2*PAR*Jmax))/2/kai1 # umol electrons /m2/s
+    Rd = 0.015*Vcmax # daytime mitochondrial respiration rate
+    
+    # solve carbon assimilation based on Fickian diffusion and the Farquhar model
+    a1 = J/4;a2 = 2*cp # RuBP limited photosynthesis (light limitation)
+    B = (a1-Rd)/gc+a2-ca
+    C = -(a1*cp+a2*Rd)/gc-ca*a2
+    ci = (-B+np.sqrt(B**2-4*C))/2
+    An1 = gc*(ca-ci)
+#    An11 = a1*(ci-cp)/(a2+ci)-Rd # check solution
+#    plt.plot(An1-An11)
+    a1 = Vcmax;a2 = Kc*(1+Coa/Ko) # Rubisco limited photosynthesis
+    B = (a1-Rd)/gc+a2-ca
+    C = -(a1*cp+a2*Rd)/gc-ca*a2
+    ci = (-B+np.sqrt(B**2-4*C))/2
+    An2 = gc*(ca-ci)
+    An = np.min(np.column_stack([An1,An2]),axis=1)
+    An[An<0] = 0
+    return An # unit: umol CO2 /m2/s
 
-datapath = '../Data/'
+def VulnerabilityCurve(Xparas,psil):
+    return Xparas.gpmax/(1+(psil/Xparas.p50)**Xparas.aa) # m/s
+
+def f_soilroot(s,SRparas):
+    K = SRparas.ksat*np.power(s,SRparas.b*2+3) # soil hydraulic conductivity m/s
+    psis =  SRparas.psat*np.power(s,-SRparas.b) # soil water potential MPa
+    gsr = K*np.sqrt(SRparas.RAI)/(rhow*g*SRparas.Zr*np.pi)*UNIT_2 # m/s
+    return psis,gsr
+
+#%% -------------------------- READ DATA ----------------------------
+# read directly from fluxnet dataset 
+datapath = '../Data/FluxNet/'
 sitename = 'US-Blo'
 latitude = 38.8953 # to be modified if changing site
+#df = ReadInput(datapath,sitename,latitude)
+#df.to_csv(datapath+'FLX_'+sitename+'.csv')
 
+# read cleaned data 
+df = pd.read_csv(datapath+'FLX_'+sitename+'.csv')
 drydownid = 2
-df = ReadInput(datapath,sitename,latitude)
-drydown = Interstorm(df,drydownid)
+drydown = Interstorm(df,drydownid) # data during the 2nd dry down period
 
-#%%
+#%% --------------------- CARBON ASSIMILATION -----------------------
+gc = 0.1 # mol CO2 /m2/s
+TEMP = np.array(drydown['TEMP'])
+RN =  np.array(drydown['RNET']) # shortwave radiation on leaves
+An = f_An(gc,TEMP,RN)
+plt.figure()
+plt.plot(An,'-k');plt.xlim([0,48*5])
+plt.xlabel('Time step (half-hour)')
+plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
+
+#%% --------------------- TRANSPIRATION -----------------------------
+VPD = np.array(drydown['VPD']) # kPa/kPa
+LAI = np.array(drydown['LAI'])
+Tr = a0*gc*VPD*LAI*UNIT_1 # m/s
+plt.figure()
+plt.plot(Tr,'-k');plt.xlim([0,48*5])
+plt.xlabel('Time step (half-hour)')
+plt.ylabel('Transpiration (m/s)')
+
+
+#%% ------------------ LEAF WATER POTENTIAL ------------------------
+
+s = 0.5 # relative soil moisture, \in (0,1)
+SRparas = SoilRoot(3.5e-4,-0.00696,3.5,0.4,1,10) 
+Xparas = Xylem(3e-7,-3,2)
+psis,gsr = f_soilroot(s,SRparas)
+psir = psis-Tr/gsr # root water potential, assuming steady state, continuity
+psil0 = -1
+psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas,x)*(psir-x)-tt,psil0) for tt in Tr])
+plt.figure()
+plt.plot(psil,'-k');plt.xlim([0,48*5])
+plt.xlabel('Time step (half-hour)')
+plt.ylabel('Leaf water potential (MPa)')
+
 
 
