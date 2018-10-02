@@ -10,7 +10,7 @@ matplotlib.rc('font',size=14)
 # user defined parameter groups
 class SoilRoot:
     def __init__(self,ksat,psat,b,n,Zr,RAI):
-        self.ksat = ksat # saturated conductivity, m/s
+        self.ksat = ksat # saturated conductivity, m/s/MPa
         self.psat = psat # saturated soil water potential, MPa
         self.b = b # nonlinearity in soil water retention curve
         self.n = n # soil porosity
@@ -21,7 +21,7 @@ class SoilRoot:
 
 class Xylem:
     def __init__(self,gpmax,p50,aa):
-        self.gpmax = gpmax # maximum xylem conductance, m/s
+        self.gpmax = gpmax # maximum xylem conductivity, m/s/MPa
         self.p50 = p50 # leaf water pontential at 50% loss of conductnace, MPa
         self.aa = aa # nonlinearity of plant vulnerability curve
      
@@ -198,6 +198,7 @@ def f_An(gc,T,RN): # unifts: mol CO2/m2/s, K, W/m2
     An[An<0] = 0
     return An # unit: umol CO2 /m2/s
 
+
 def VulnerabilityCurve(Xparas,psil):
     return Xparas.gpmax/(1+(psil/Xparas.p50)**Xparas.aa) # m/s
 
@@ -209,7 +210,7 @@ def f_soilroot(s,SRparas):
 
 #%% -------------------------- READ DATA ----------------------------
 # read directly from fluxnet dataset 
-datapath = '../Data/FluxNet/'
+datapath = '../Data/'
 sitename = 'US-Blo'
 latitude = 38.8953 # to be modified if changing site
 #df = ReadInput(datapath,sitename,latitude)
@@ -246,12 +247,12 @@ SRparas = SoilRoot(3.5e-4,-0.00696,3.5,0.4,1,10)
 Xparas = Xylem(3e-7,-3,2)
 psis,gsr = f_soilroot(s,SRparas)
 psir = psis-Tr/gsr # root water potential, assuming steady state, continuity
-psil0 = -1
-psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas,x)*(psir-x)-tt,psil0) for tt in Tr])
+psil0 = -0.5
+psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas,x)*
+                            (psir[np.where(Tr==tt)]-x)-tt,
+                            psil0) for tt in Tr])
 plt.figure()
 plt.plot(psil,'-k');plt.xlim([0,48*5])
 plt.xlabel('Time step (half-hour)')
 plt.ylabel('Leaf water potential (MPa)')
-
-
 
