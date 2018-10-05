@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[    339170,       6079]
-NotebookOptionsPosition[    330856,       5925]
-NotebookOutlinePosition[    332165,       5961]
-CellTagsIndexPosition[    332085,       5956]
+NotebookDataLength[    339178,       6080]
+NotebookOptionsPosition[    330859,       5926]
+NotebookOutlinePosition[    332173,       5962]
+CellTagsIndexPosition[    332093,       5957]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -5916,15 +5916,16 @@ Cell["", "SlideShowNavigationBar",
  CellTags->
   "SlideShowHeader",ExpressionUUID->"5f4d4c5d-b120-483f-94fb-59c31b3d6675"],
 
-Cell["Case study 1: application", "Title",
- CellChangeTimes->{{3.7469710672384768`*^9, 3.7469710770789976`*^9}},
+Cell["", "Title",
+ CellChangeTimes->{{3.7469710672384768`*^9, 3.7469710770789976`*^9}, 
+   3.7470585824849815`*^9},
  TextAlignment->Center,ExpressionUUID->"073e5dec-7eeb-4ee0-b7f7-ecfffa2c86e7"],
 
 Cell["This is a text cell.", "Text",ExpressionUUID->"bc4d6201-8da7-4d98-aacd-406b451781ac"]
 }, Open  ]]
 },
 WindowSize->{1013, 960},
-WindowMargins->{{Automatic, 68}, {6, Automatic}},
+WindowMargins->{{Automatic, -1459}, {-58, Automatic}},
 TaggingRules->{
  "PresenterSettings" -> {
    "ShowToolbar" -> True, "ShowNavigationBar" -> False, 
@@ -5955,7 +5956,7 @@ CellTagsIndex->{
 *)
 (*CellTagsIndex
 CellTagsIndex->{
- {"SlideShowHeader", 331625, 5946}
+ {"SlideShowHeader", 331633, 5947}
  }
 *)
 (*NotebookFileOutline
@@ -6078,8 +6079,8 @@ Cell[329892, 5892, 456, 13, 73, "Output",ExpressionUUID->"e3c5154a-ea03-415e-9ea
 Cell[CellGroupData[{
 Cell[330430, 5914, 122, 2, 63, "SlideShowNavigationBar",ExpressionUUID->"5f4d4c5d-b120-483f-94fb-59c31b3d6675",
  CellTags->"SlideShowHeader"],
-Cell[330555, 5918, 191, 2, 95, "Title",ExpressionUUID->"073e5dec-7eeb-4ee0-b7f7-ecfffa2c86e7"],
-Cell[330749, 5922, 91, 0, 32, "Text",ExpressionUUID->"bc4d6201-8da7-4d98-aacd-406b451781ac"]
+Cell[330555, 5918, 194, 3, 95, "Title",ExpressionUUID->"073e5dec-7eeb-4ee0-b7f7-ecfffa2c86e7"],
+Cell[330752, 5923, 91, 0, 32, "Text",ExpressionUUID->"bc4d6201-8da7-4d98-aacd-406b451781ac"]
 }, Open  ]]
 }
 ]

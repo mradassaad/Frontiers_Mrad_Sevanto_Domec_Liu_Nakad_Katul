@@ -25,6 +25,13 @@ class Xylem:
         self.p50 = p50 # leaf water pontential at 50% loss of conductnace, MPa
         self.aa = aa # nonlinearity of plant vulnerability curve
      
+class Environment:
+    def __init__(self,SoilM,RNet,Time,VPD,LAI,):
+        self.SoilM = SoilM #soil moisture every 30 minutes
+        self.SoilMIni = SoilM(0) #Soil moisture at start of drydown
+        self.SoilMEnd = SoilM(-1) #Soil moisture at end of drydown
+        self.RNet = RNet #Net radiation every 30 minutes, J/m2/s
+        self.Time = Time #Time
         
 # constants
 a0 = 1.6 # ratio between water and carbon conductances
@@ -208,6 +215,10 @@ def f_soilroot(s,SRparas):
     gsr = K*np.sqrt(SRparas.RAI)/(rhow*g*SRparas.Zr*np.pi)*UNIT_2 # m/s
     return psis,gsr
 
+def Opt(Environment,SoilRoot,Xylem):
+    
+    return
+    
 #%% -------------------------- READ DATA ----------------------------
 # read directly from fluxnet dataset 
 datapath = '../Data/'
