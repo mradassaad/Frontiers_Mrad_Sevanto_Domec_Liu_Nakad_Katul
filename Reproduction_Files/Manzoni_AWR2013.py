@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sympy
 import scipy
+import pdb
 #from scipy.integrate import odeint
 
 
@@ -63,6 +64,7 @@ A=(g*ca*k)/(g+k)
 f=-alpha*D*g-beta*x**c
 H=A+lam*f
 
+
 ## First equation
 dHdg=sympy.diff(H,g)
 #print('\nthis is del H by del g:')
@@ -114,10 +116,15 @@ lam_t=lam_t.subs([(lam0,nb[0])])
 g_t=g_t.subs([(lam0,nb[0])])
 #print('\nthis is the equation of g')
 #print(g_t)
-something=g_t.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),(LAI,4),(D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),(k,0.05),(ca,350),(x0,0.8)])
+pdb.set_trace()
+something=g_t.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),(LAI,4),
+                    (D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),(k,0.05),
+                    (ca,350),(x0,0.8)])
 #print('\nthis is the equation of g when c=1')
 #print(something)
-something1=lam_t.rhs.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),(LAI,4),(D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),(k,0.05),(ca,350),(x0,0.8)])
+something1=lam_t.rhs.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),
+                           (LAI,4),(D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),
+                           (k,0.05),(ca,350),(x0,0.8)])
 #print('\nthis is the equation of lambda when c=1')
 #print(something1)
 
@@ -192,10 +199,14 @@ lam_t=lam_t.subs([(lam0,nb[0])])
 g_t=g_t.subs([(lam0,nb[0])])
 #print('\nthis is the equation of g')
 #print(g_t)
-something2=g_t.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),(LAI,4),(D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),(k,0.05),(ca,350),(x0,0.8)])
+something2=g_t.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),(LAI,4),
+                     (D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),(k,0.05),
+                     (ca,350),(x0,0.8)])
 #print('\nthis is the equation of g when c=0')
 #print(something2)
-something3=lam_t.rhs.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),(LAI,4),(D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),(k,0.05),(ca,350),(x0,0.8)])
+something3=lam_t.rhs.subs([(a,1.6),(T_day,12*3600),(rho_w,1000),(M_w,0.018),
+                           (LAI,4),(D,0.015),(Zr,0.3),(n,0.5),(y,0.001),(T,20),
+                           (k,0.05),(ca,350),(x0,0.8)])
 #print('\nthis is the equation of lambda when c=0')
 #print(something3)
 
