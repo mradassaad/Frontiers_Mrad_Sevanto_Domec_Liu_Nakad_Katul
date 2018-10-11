@@ -17,10 +17,10 @@ def fun(x,y):
     Tday = 12 #h/day
     rhow = 1000 #kg/m3
     nu = LAI*Mw*(Tday/24)/rhow #m3/mol
-    
+
     g = k*(np.sqrt(ca*n*Zr*(a*VPD*y[0]*nu)**(-1)))
 
-    return np.vstack((np.zeros(y[0].shape),-(gamma+nu*a*g*VPD)/(n*Zr)))
+    return np.vstack((np.zeros(y[0].shape), -(gamma+nu*a*g*VPD)/(n*Zr)))
 
 def bc(ya, yb):
     x0 = 0.8
@@ -28,20 +28,21 @@ def bc(ya, yb):
 
 x = np.linspace(0,20,1000)
 
-lam_guess = 1e-3*np.ones((1,x.size))
-x_guess = 0.8*np.ones((1,x.size))
+lam_guess = 1e-3*np.ones((1, x.size))
+x_guess = 0.8*np.ones((1, x.size))
 
-y_guess = np.vstack((lam_guess,x_guess))
+y_guess = np.vstack((lam_guess, x_guess))
 
 res = solve_bvp(fun, bc, x, y_guess)
 
 lam_plot = res.sol(x)[0]
 soilM_plot = res.sol(x)[1]
 plt.subplot(211)
-plt.plot(x,lam_plot)
+plt.plot(x, lam_plot)
 plt.xlabel("days")
 plt.ylabel("$\lambda (t)$")
 plt.subplot(212)
-plt.plot(x,soilM_plot)
+plt.plot(x, soilM_plot)
 plt.xlabel("days")
 plt.ylabel("$x(t)$")
+plt.show()
