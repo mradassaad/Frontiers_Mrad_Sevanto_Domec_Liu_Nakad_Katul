@@ -52,7 +52,7 @@ def bc_wus(ya,yb):
 
 t = np.linspace(0,20,1000)
 
-lam_guess = 1e-3*np.ones((1, t.size))
+lam_guess = 1*np.ones((1, t.size))
 x_guess = 0.8*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
