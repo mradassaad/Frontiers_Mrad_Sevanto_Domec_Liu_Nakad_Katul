@@ -158,52 +158,54 @@ def dailyAvg(data,windowsize):
     return np.nanmean(np.reshape(data,[int(len(data)/windowsize),windowsize]),axis=1)
 
 # Compute An as a function of gc under given climate
-def f_An(gc,T,RN): # unifts: mol CO2/m2/s, K, W/m2
-    
+def f_An(gc,T,RN): # units: mol CO2/m2/s, K, W/m2
+
     # photosynthetically active radiation
-    hc = 2e-25 # Planck constant times light speed, J*s times m/s
-    wavelen = 500e-9 # wavelength of light, m
-    EE = hc/wavelen # energy of photon, J
-    NA = 6.02e23 # Avogadro's constant, /mol
-    PAR = RN/(EE*NA)*1e6 # absorbed photon irradiance, umol photons /m2/s, PAR
+    hc = 2e-25  # Planck constant times light speed, J*s times m/s
+    wavelen = 500e-9  # wavelength of light, m
+    EE = hc/wavelen  # energy of photon, J
+    NA = 6.02e23  # Avogadro's constant, /mol
+    PAR = RN/(EE*NA)*1e6  # absorbed photon irradiance, umol photons /m2/s, PAR
     
     # temperature correction
-    koptj = 155.76 #  umol/m2/s
-    Haj = 43.79 # kJ/mol
-    Hdj = 200; # kJ/mol
-    Toptj = 32.19+UNIT_3 # K
-    koptv = 174.33 # umol/m2/s
-    Hav = 61.21 # kJ/mol
-    Hdv = 200 # kJ/mol
-    Toptv = 37.74+UNIT_3 # K
-    Coa = 210 # mmol/mol
+    koptj = 155.76  # umol/m2/s
+    Haj = 43.79  # kJ/mol
+    Hdj = 200  # kJ/mol
+    Toptj = 32.19+UNIT_3  # K
+    koptv = 174.33  # umol/m2/s
+    Hav = 61.21  # kJ/mol
+    Hdv = 200  # kJ/mol
+    Toptv = 37.74+UNIT_3  # K
+    Coa = 210  # mmol/mol
     kai1 = 0.9
     kai2 = 0.3
-    Vcmax = koptv*Hdv*np.exp(Hav*(T-Toptv)/T/R/Toptv)/(Hdv-Hav*(1-np.exp(Hav*(T-Toptv)/T/R/Toptv))) # umol/m2/s
+    Vcmax = koptv*Hdv*np.exp(Hav*(T-Toptv)/T/R/Toptv)/(Hdv-Hav*(1-np.exp(Hav*(T-Toptv)/T/R/Toptv)))  # umol/m2/s
     Jmax = koptj*Hdj*np.exp(Haj*(T-Toptj)/T/R/Toptj)/(Hdj-Haj*(1-np.exp(Haj*(T-Toptj)/T/R/Toptj)))
-    TC = T-UNIT_3 # C
-    Kc = 300*np.exp(0.074*(TC-25)) # umol/mol
-    Ko = 300*np.exp(0.015*(TC-25)) # mmol/mol
+    TC = T-UNIT_3  # C
+    Kc = 300*np.exp(0.074*(TC-25))  # umol/mol
+    Ko = 300*np.exp(0.015*(TC-25))  # mmol/mol
     cp = 36.9+1.18*(TC-25)+0.036*(TC-25)**2
-    J = (kai2*PAR+Jmax-np.sqrt((kai2*PAR+Jmax)**2-4*kai1*kai2*PAR*Jmax))/2/kai1 # umol electrons /m2/s
-    Rd = 0.015*Vcmax # daytime mitochondrial respiration rate
+    J = (kai2*PAR+Jmax-np.sqrt((kai2*PAR+Jmax)**2-4*kai1*kai2*PAR*Jmax))/2/kai1  # umol electrons /m2/s
+    Rd = 0.015*Vcmax  # daytime mitochondrial respiration rate
     
     # solve carbon assimilation based on Fickian diffusion and the Farquhar model
-    a1 = J/4;a2 = 2*cp # RuBP limited photosynthesis (light limitation)
+    a1 = J/4
+    a2 = 2*cp  # RuBP limited photosynthesis (light limitation)
     B = (a1-Rd)/gc+a2-ca
     C = -(a1*cp+a2*Rd)/gc-ca*a2
     ci = (-B+np.sqrt(B**2-4*C))/2
     An1 = gc*(ca-ci)
 #    An11 = a1*(ci-cp)/(a2+ci)-Rd # check solution
 #    plt.plot(An1-An11)
-    a1 = Vcmax;a2 = Kc*(1+Coa/Ko) # Rubisco limited photosynthesis
+    a1 = Vcmax
+    a2 = Kc*(1+Coa/Ko)  # Rubisco limited photosynthesis
     B = (a1-Rd)/gc+a2-ca
     C = -(a1*cp+a2*Rd)/gc-ca*a2
     ci = (-B+np.sqrt(B**2-4*C))/2
     An2 = gc*(ca-ci)
-    An = np.min(np.column_stack([An1,An2]),axis=1)
+    An = np.min(np.column_stack([An1, An2]), axis=1)
     An[An<0] = 0
-    return An # unit: umol CO2 /m2/s
+    return An  # unit: umol CO2 /m2/s
 
 
 def VulnerabilityCurve(Xparas,psil):

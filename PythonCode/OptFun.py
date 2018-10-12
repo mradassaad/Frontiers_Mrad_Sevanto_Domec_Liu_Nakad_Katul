@@ -46,7 +46,7 @@ def bc(ya, yb):
 
 def bc_wus(ya,yb):
     x0 = 0.8
-    wus_coeff = 200e-6*t_day*unit0  # mol/m2
+    wus_coeff = 800e-6*t_day*unit0  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
