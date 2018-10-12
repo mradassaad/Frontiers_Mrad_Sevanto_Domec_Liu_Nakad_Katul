@@ -207,13 +207,17 @@ def f_An(gc,T,RN): # unifts: mol CO2/m2/s, K, W/m2
 
 
 def VulnerabilityCurve(Xparas,psil):
+
+
     return Xparas.gpmax/(1+(psil/Xparas.p50)**Xparas.aa) # m/s
 
-def f_soilroot(s,SRparas):
-    K = SRparas.ksat*np.power(s,SRparas.b*2+3) # soil hydraulic conductivity m/s
-    psis =  SRparas.psat*np.power(s,-SRparas.b) # soil water potential MPa
-    gsr = K*np.sqrt(SRparas.RAI)/(rhow*g*SRparas.Zr*np.pi)*UNIT_2 # m/s
-    return psis,gsr
+
+def f_soilroot(s, SRparas):
+
+    K = SRparas.ksat*np.power(s, SRparas.b*2+3)  # soil hydraulic conductivity m/s
+    psis =  SRparas.psat*np.power(s, -SRparas.b)  # soil water potential MPa
+    gsr = K*np.sqrt(SRparas.RAI)/(rhow*g*SRparas.Zr*np.pi)*UNIT_2  # m/s
+    return psis, gsr
 
 def Opt(Environment,SoilRoot,Xylem):
     
@@ -253,17 +257,17 @@ plt.ylabel('Transpiration (m/s)')
 
 
 #%% ------------------ LEAF WATER POTENTIAL ------------------------
-s = 0.5 # relative soil moisture, \in (0,1)
-SRparas = SoilRoot(3.5e-4,-0.00696,3.5,0.4,1,10) 
-Xparas = Xylem(3e-7,-3,2)
-psis,gsr = f_soilroot(s,SRparas)
-psir = psis-Tr/gsr # root water potential, assuming steady state, continuity
+s = 0.5  # relative soil moisture, \in (0,1)
+SRparas = SoilRoot(3.5e-4, -0.00696, 3.5, 0.4, 1, 10)
+Xparas = Xylem(3e-7, -3, 2)
+psis, gsr = f_soilroot(s,SRparas)
+psir = psis-Tr/gsr  # root water potential, assuming steady state, continuity
 psil0 = -0.5
-psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas,x)*
-                            (psir[np.where(Tr==tt)]-x)-tt,
+psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas, x) *
+                            (psir[np.where(Tr == tt)]-x)-tt,
                             psil0) for tt in Tr])
 plt.figure()
-plt.plot(psil,'-k');plt.xlim([0,48*5])
+plt.plot(psil, '-k'); plt.xlim([0, 48*5])
 plt.xlabel('Time step (half-hour)')
 plt.ylabel('Leaf water potential (MPa)')
 
