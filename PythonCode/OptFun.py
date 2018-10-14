@@ -22,8 +22,12 @@ beta = gamma / (n * z_r)  # 1/day
 alpha = nu * a / (n * z_r)  # m2/mol
 
 unit1 = 10**3*nu/(n*z_r)  # mol/m2 -> mmol/mol
+unit2 = 18*1e-6  # mol H2O/m2/s ->  m/s
+unit3 = 1e6  # Pa -> MPa
+unit4 = 273.15  # Degree C -> K
 
-def fun(t,y):
+
+def dydt(t, y):
     """
     y[0] is lambda(t) and y[1] is x(t)
     t is the time
@@ -40,24 +44,26 @@ def fun(t,y):
 
     return np.vstack((dlamdt, dxdt))
 
-def bc(ya, yb):
+
+def bc(ya, yb):  # boundary imposed on x at t=T
     x0 = 0.8
     return np.array([ya[1] - x0, yb[1]])
 
-def bc_wus(ya,yb):
+
+def bc_wus(ya,yb):  # Water use strategy
     x0 = 0.8
     wus_coeff = 800e-6*t_day*unit0  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
-t = np.linspace(0,20,1000)
+t = np.linspace(0, 20, 1000)
 
 lam_guess = 1*np.ones((1, t.size))
 x_guess = 0.8*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
-res = solve_bvp(fun, bc_wus, t, y_guess)
+res = solve_bvp(dydt, bc, t, y_guess)
 
 lam_plot = res.sol(t)[0]*unit1
 soilM_plot = res.sol(t)[1]

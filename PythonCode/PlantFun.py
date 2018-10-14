@@ -39,9 +39,9 @@ ca = 400 # atmospheric CO2 concentration, umol/mol
 rhow = 1000 # water density, kg/m3
 g = 9.81 # gravitational acceleration, m/s2
 R = 8.31*1e-3 # Gas constant, kJ/mol/K
-UNIT_1 = 18*1e-6 # mol H2O/m2/s ->  m/s
-UNIT_2 = 1e6 # Pa -> MPa
-UNIT_3 = 273.15 # Degree C -> K
+UNIT_1 = 18*1e-6  # mol H2O/m2/s ->  m/s
+UNIT_2 = 1e6  # Pa -> MPa
+UNIT_3 = 273.15  # Degree C -> K
 
 
 # read FluxNet forcings and MODIS LAI
@@ -125,9 +125,11 @@ def ReadInput(datapath,sitename,latitude): # optimal or full
     met = met[met['TIMESTAMP_START']>lai['TIMESTAMP_START'][0]]
     return met.reset_index()
 
-def Interstorm(df,drydownid):
+
+def Interstorm(df, drydownid):
+
     dailyP = dailyAvg(np.array(df['P']),nobsinaday).ravel()
-    rainyday = np.where(dailyP>0)[0]
+    rainyday = np.where(dailyP > 0)[0]
     drydownlength = np.concatenate([np.diff(rainyday),[0]])
     id1 = rainyday[drydownlength>30]+1 # start day of each dry down period longer than 30 days
     id2 = id1+drydownlength[drydownlength>30]-1 # end day of each dry down period
@@ -152,13 +154,15 @@ def savitzky_golay(y, window_size, order, deriv=0, rate=1):
     y = np.concatenate((firstvals, y, lastvals))
     return np.convolve( m[::-1], y, mode='valid') 
 
-def dailyAvg(data,windowsize):
+
+def dailyAvg(data, windowsize):
     data = np.array(data)
     data = data[0:windowsize*int(len(data)/windowsize)]
     return np.nanmean(np.reshape(data,[int(len(data)/windowsize),windowsize]),axis=1)
 
+
 # Compute An as a function of gc under given climate
-def f_An(gc,T,RN): # units: mol CO2/m2/s, K, W/m2
+def f_An(gc, T, RN): # units: mol CO2/m2/s, K, W/m2
 
     # photosynthetically active radiation
     hc = 2e-25  # Planck constant times light speed, J*s times m/s
@@ -204,7 +208,7 @@ def f_An(gc,T,RN): # units: mol CO2/m2/s, K, W/m2
     ci = (-B+np.sqrt(B**2-4*C))/2
     An2 = gc*(ca-ci)
     An = np.min(np.column_stack([An1, An2]), axis=1)
-    An[An<0] = 0
+    An[An < 0] = 0
     return An  # unit: umol CO2 /m2/s
 
 
@@ -272,4 +276,5 @@ plt.figure()
 plt.plot(psil, '-k'); plt.xlim([0, 48*5])
 plt.xlabel('Time step (half-hour)')
 plt.ylabel('Leaf water potential (MPa)')
+plt.show()
 
