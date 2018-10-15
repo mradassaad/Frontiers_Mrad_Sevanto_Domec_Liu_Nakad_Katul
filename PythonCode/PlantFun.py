@@ -5,40 +5,44 @@ import glob
 import scipy.optimize as opt
 import matplotlib.pyplot as plt
 import matplotlib
-matplotlib.rc('font',size=14)
+matplotlib.rc('font', size=14)
+
 
 # user defined parameter groups
 class SoilRoot:
-    def __init__(self,ksat,psat,b,n,Zr,RAI):
-        self.ksat = ksat # saturated conductivity, m/s/MPa
-        self.psat = psat # saturated soil water potential, MPa
-        self.b = b # nonlinearity in soil water retention curve
-        self.n = n # soil porosity
-        self.Zr = Zr # rooting depth, m
-        self.RAI = RAI # root area index
+    def __init__(self, ksat, psat, b, n, Zr, RAI):
+        self.ksat = ksat  # saturated conductivity, m/s/MPa
+        self.psat = psat  # saturated soil water potential, MPa
+        self.b = b  # nonlinearity in soil water retention curve
+        self.n = n  # soil porosity
+        self.Zr = Zr  # rooting depth, m
+        self.RAI = RAI  # root area index
         self.sfc = (psat/(-0.03))**(1/b)  
         self.sw = (psat/(-3))**(1/b) 
 
+
 class Xylem:
-    def __init__(self,gpmax,p50,aa):
-        self.gpmax = gpmax # maximum xylem conductivity, m/s/MPa
-        self.p50 = p50 # leaf water pontential at 50% loss of conductnace, MPa
-        self.aa = aa # nonlinearity of plant vulnerability curve
-     
+    def __init__(self, gpmax, p50, aa):
+        self.gpmax = gpmax  # maximum xylem conductivity, m/s/MPa
+        self.p50 = p50  # leaf water potential at 50% loss of conductance, MPa
+        self.aa = aa  # nonlinearity of plant vulnerability curve
+
+
 class Environment:
-    def __init__(self,SoilM,RNet,Time,VPD,LAI,):
-        self.SoilM = SoilM #soil moisture every 30 minutes
-        self.SoilMIni = SoilM(0) #Soil moisture at start of drydown
-        self.SoilMEnd = SoilM(-1) #Soil moisture at end of drydown
-        self.RNet = RNet #Net radiation every 30 minutes, J/m2/s
-        self.Time = Time #Time
-        
+    def __init__(self, SoilM, RNet, Time, VPD, LAI):
+        self.SoilM = SoilM  # soil moisture every 30 minutes
+        self.SoilMIni = SoilM(0)  # Soil moisture at start of drydown
+        self.SoilMEnd = SoilM(-1)  # Soil moisture at end of drydown
+        self.RNet = RNet  # Net radiation every 30 minutes, J/m2/s
+        self.Time = Time  # Time
+
+
 # constants
-a0 = 1.6 # ratio between water and carbon conductances
-ca = 400 # atmospheric CO2 concentration, umol/mol
-rhow = 1000 # water density, kg/m3
-g = 9.81 # gravitational acceleration, m/s2
-R = 8.31*1e-3 # Gas constant, kJ/mol/K
+a0 = 1.6  # ratio between water and carbon conductances
+ca = 400  # atmospheric CO2 concentration, umol/mol
+rhow = 1000  # water density, kg/m3
+g = 9.81  # gravitational acceleration, m/s2
+R = 8.31*1e-3  # Gas constant, kJ/mol/K
 UNIT_1 = 18*1e-6  # mol H2O/m2/s ->  m/s
 UNIT_2 = 1e6  # Pa -> MPa
 UNIT_3 = 273.15  # Degree C -> K
@@ -46,9 +50,11 @@ UNIT_3 = 273.15  # Degree C -> K
 
 # read FluxNet forcings and MODIS LAI
 fill_NA = -9999
-nobsinaday = 48 # number of observations in a day
+nobsinaday = 48  # number of observations in a day
 # Info on FluxNet data: http://fluxnet.fluxdata.org/data/aboutdata/data-variables/
-def ReadInput(datapath,sitename,latitude): # optimal or full
+
+
+def ReadInput(datapath, sitename, latitude):  # optimal or full
     fname = glob.glob(datapath+'FLuxNet/FLX_'+sitename+'*.csv')[0]
     lai_fname = datapath+'MODIS_LAI/LAI_'+sitename+'.csv'
     
@@ -240,7 +246,7 @@ latitude = 38.8953 # to be modified if changing site
 # read cleaned data 
 df = pd.read_csv(datapath+'FLX_'+sitename+'.csv')
 drydownid = 2
-drydown = Interstorm(df,drydownid) # data during the 2nd dry down period
+drydown = Interstorm(df, drydownid) # data during the 2nd dry down period
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 gc = 0.1 # mol CO2 /m2/s
