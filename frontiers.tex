@@ -27,8 +27,8 @@
 
 
 \def\keyFont{\fontsize{8}{11}\helveticabold }
-\def\firstAuthorLast{Sample {et~al.}} %use et al only if is more than 1 author
-\def\Authors{Assaad Mrad\,$^{1,*}$, Yanlan Liu\,$^{1}$, Mazen Nakad\,$^{1}$, Jean-Christophe Domec\,$^{1,2}$, Sanna Sevanto\,$^{3}$ and Gabriel Katul\,$^{1,4}$}
+\def\firstAuthorLast{Mrad {et~al.}} %use et al only if is more than 1 author
+\def\Authors{Assaad Mrad\,$^{1,*}$, Mazen Nakad\,$^{1}$, Yanlan Liu\,$^{1}$ Jean-Christophe Domec\,$^{1,2}$, Sanna Sevanto\,$^{3}$ and Gabriel Katul\,$^{1,4}$}
 % Affiliations should be keyed to the author's name with superscript numbers and be listed as follows: Laboratory, Institute, Department, Organization, City, State abbreviation (USA, Canada, Australia), and Country (without detailed address information such as city zip codes or street names).
 % If one of the authors has a change of address, list the new address below the correspondence details using a superscript symbol and use the same symbol to indicate the author in the author list.
 \def\Address{$^{1}$Nicholas School of the Environment, Duke University, Durham, NC, USA \\
@@ -48,7 +48,7 @@ $^{4}$Department of Civil and Environmental Engineering, Duke University, Durham
 \onecolumn
 \firstpage{1}
 
-\title[Running Title]{A dynamic optimality principle for water use strategies explains isohydric to anisohydric plant responses} 
+\title[Dynamic optimality principle for water use strategies]{A dynamic optimality principle for water use strategies explains isohydric to anisohydric plant responses} 
 
 \author[\firstAuthorLast ]{\Authors} %This field will be automatically populated
 \address{} %This field will be automatically populated
@@ -76,25 +76,80 @@ As a primary goal, the abstract should render the general significance and conce
 
 \section{Introduction}
 
+Gas exchange at the level of the stomata supports all plant life on earth by providing energy in the form of carbon dioxide ($CO_2$) for growth and maintenance in exchange for water. Over the past millenia, as atmospheric $CO_2$ concentrations decreased ten-fold and an increasing number of plant species adapting to terrestrial ecosystems, the need to optimize carbon gain in relation to water loss arose. This is thought to be behind the adaptation of cacti to arid climates by using a different photosynthetic machinery denoted as Crassulacean Acid Metabolism (CAM) photosynthesis. CAM photosynthesis allows stomata to open at night, when temperature and the vapor pressure deficit (VPD) are low so as to minimize loss of water. It is thought that the stomatal opening of plants utilizing C3 and C4 photosynthesis is also governed by water limitations.
+
+In fact, multiple models grounded on stomatal optimization were put forward and tipped as accurate predictors of transpiration. The accuracy those predictions is crucial for climate forecasting. \textbf{Here offer summary of these models}.
+
+While the assumption that stomatal opening trends are controlled by plant hydraulics is widely used in the plant community, there is a shortage of evidence corroborating this assumption. In this work, the effect of plant water use strategies (from conservative to aggressive) on stomatal conductance ($g$) and leaf water potential ($\psi_l$) is analyzed through a dynamical system perspective that allows setting multiple constraints. 
+
+\citet{Manzoni2013} offer a similar dynamical system approach to the same phenomenon. Water use strategy is prescribed by assigning a 'carbon value' to the terminal soil moisture content around the rooting zone. This study is similarly framed with additional sub-daily measured forcings and constraints on water use such as neighboring tree competition. The results of this model are compared to actual measurements.
+
+The work here answers the following question: to what degree does water use strategy dictate stomatal control during dry-down? In a recent review of the theory of optimal stomatal control, Buckley... recognize the importance of delayed benefits such as keeping soil soil moisture at higher levels for future use. 
+
+\section{Materials and Methods}
+
+\subsection{The model}
+
+The ensure the continuity of the water stream throughout the tree, we model three vertically connected layers: the soil, the trunk and branches, and the leaves. Each of these layers are characterized by a hydraulic resistance that is non-linearly related to water potential. Prescribing hydraulic resistances to these different layers allows computation of quantities regarded as indicative of isohydric to anisohydric behaviour. Such quantities include leaf water potential ($\psi_l$) and stomatal conductance ($g_s$).
+
+At the soil layer, we model the water budget (Proporato...) as follows:
+\begin{equation}
+    \label{eqn:soil_water}
+    \frac{dx(t)}{dt} =\frac{1}{n Z_r}(R - E - L),
+\end{equation}
+where $x(t)$ is the soil moisture in $m^3m^{-3}$, R, E, and L are the rainfall input into the soil, the evapotranspiration, and uncontrolled losses respectively in $m^2s^{-1}$. $n$ is the soil porosity in $m^3m^{-3}$ and $Z_r$ is considered the plant's rooting depth in $m$. $L$ contains both leakage losses due to soil drainage as well as competition from other plants.
+
+We consider the effect of a drydown on plant stomatal response. During a drydown, there is no rainfall input so $R=0$. The resulting form of Eqn. \ref{eqn:soil_water} is:
+\begin{equation}
+    \label{eeqn:soil_water_drydown}
+    \frac{dx(t)}{dt} = f = - \frac{1}{n Z_r}(E + L),
+\end{equation}
+where f is the combined losses through evapotranspiration and uncontrolled losses in $s^{-1}$.
 
 
 
-\section{Article types}
+To find the optimal trends of $g_s$ and $\psi_l$ with time at different environmental conditions, the method of calculus of variations is used to derive the necessary differential equations (Appendix A). The objective function $J$ in this situation is the following:
+\begin{equation}
+    \label{eqn:objective}
+    J = \int_0^{T_f} A(g_s,T,R_{abs}) dt + J_{T_f},
+\end{equation}
+where $A$ is the instantaneous plant carbon gain in $molm^{-2}s^{-1}$. $T$ is the atmospheric temperature in $K$, considered equal to the leaf temperature (Appendix B) and $R_{abs}$ is the absorbed radiation in $Wm^{-2}$. $J_{T_f}$ is the carbon value of the terminal soil water moisture $x(T_f)$ prescribed as:
+\begin{equation}
+    \label{eqn:terminal_gain}
+    J_{T_f} = \Lambda x(T_f),
+\end{equation}
+where $\Lambda$ is a user-defined parameter, in $mol m^{-2}$, prescribing conservative water use strategy when it is large and aggressive water use when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants and. The presence of $J_{T_f}$ in Eqn. \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water.
 
-For requirements for a specific article type please refer to the Article Types on any Frontiers journal page. Please also refer to  \href{http://home.frontiersin.org/about/author-guidelines#Sections}{Author Guidelines} for further information on how to organize your manuscript in the required sections or their equivalents for your field
+The model by Collatz for C3 plants is used to compute $A$ for different plant properties at the leaf level such as Rubisco capacity and for different environmental conditions like temperature and photosynthetically active radiation (PAR). To avoid having to compute derivatives of a piecewise, potentially non-differentiable function, we use the method provided by Campbell and Norman or Giulia Vico.
 
-% For Original Research articles, please note that the Material and Methods section can be placed in any of the following ways: before Results, before Discussion or after Discussion.
+The effects of high-frequency
+fluctuations in light and vapor pressure deficit are neglected,
+as they would require modeling of delayed responses of photosynthesis
+and conductances (e.g., Vico et al., 2011), a task
+beyond the scope here. Limiting the time scale of this investigation
+to few weeks also admits another simplification related
+to changes in leaf nitrogen status. Increasing leaf nitrogen concentration
+improves photosynthetic capacity for a given stomatal
+conductance, or allows maintaining relatively high photosynthetic
+rates when stomata close under dry conditions (Palmroth et al.,
+2013; Weih et al., 2011). Such changes are here assumed to
+take place over longer time scales than the typical daily cycles
+of light and vapor pressure deficit, but can be accommodated
+by varying the kinetic parameters of the photosynthetic demand
+curves.
 
-\section{Manuscript Formatting}
+The result is three equations for the soil moisture $x$, $g_s$, and a Lagrange multiplier $\lambda$ commonly referred to as the marginal water use efficiency (MWUE). 
 
-\subsection{Heading Levels}
+\subsection{Environmental data}
 
-%There are 5 heading levels
+The model required supplying environmental data acting as boundary conditions at the soil and leaf level. These are the initial soil water content ($x_0$), vapor pressure deficit ($VPD$), incident leaf shortwave radiation ($R_l$), and temperature ($T$) (see Table ).
 
-\subsection{Level 2}
-\subsubsection{Level 3}
-\paragraph{Level 4}
-\subparagraph{Level 5}
+Additionally, different species are characterized by different leaf area index ($LAI$), soil hydraulic conductivity ($g_s$), root-trunk-branch conductivity ($g_t$), rooting depth ($Z_r$). The soil porosity is denoted as $n$.
+
+\section{Results}
+
+
+\section{Discussion}
 
 \subsection{Equations}
 Equations should be inserted in editable format from the equation editor.
@@ -151,7 +206,7 @@ The datasets [GENERATED/ANALYZED] for this study can be found in the [NAME OF RE
 
 \bibliographystyle{frontiersinSCNS_ENG_HUMS} % for Science, Engineering and Humanities and Social Sciences articles, for Humanities and Social Sciences articles please include page numbers in the in-text citations
 %\bibliographystyle{frontiersinHLTH&FPHY} % for Health, Physics and Mathematics articles
-\bibliography{test}
+\bibliography{references}
 
 %%% Make sure to upload the bib file along with the tex file and PDF
 %%% Please see the test.bib file for some examples of references
