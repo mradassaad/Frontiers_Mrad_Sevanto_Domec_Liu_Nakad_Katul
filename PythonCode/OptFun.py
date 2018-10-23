@@ -1,4 +1,5 @@
 import numpy as np
+import numpy.ma as ma
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -123,13 +124,21 @@ def A(gl):
      ca: ambient CO2 mole fraction in the air in umol/mol
     cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol'''
 
-    k1 = J/4  # umol/m2/s
-    a2 = Kc * (1 + Oi/Ko)  # umol/mol
-    k2 = (J / 4) * a2 / Vmax  # umol/mol
-    delta = np.sqrt((k2*1e-6 + ca * 1e-6 + k1/gl) ** 2 -
-                    4 * k1 * (ca - cp) * 1e-6 / gl)  # mol/mol
+    A = np.zeros(gl.size)
+    gl_mask = ma.masked_less_equal(gl,0)
+    gl_valid = gl[~gl_mask.mask]
 
-    return 0.5 * (k1 + gl * (ca + k2) * 1e-6 - gl * delta)
+    k1 = J[~gl_mask.mask]/4  # mol/m2/d
+    a2 = Kc[~gl_mask.mask] * (1 + Oi/Ko[~gl_mask.mask])  # mol/mol
+    k2 = (J[~gl_mask.mask] / 4) * a2 / Vmax[~gl_mask.mask]  # mol/mol
+    delta = np.sqrt((k2 + ca + k1/gl_valid) ** 2 -
+                    4 * k1 * (ca - cp[~gl_mask.mask])  / gl_valid)  # mol/mol
+
+    A[~gl_mask.mask] = 0.5 * (k1 + gl_valid * (ca + k2) - gl_valid * delta)  # mol/m2/d
+    # A *= 1e6/unit0
+
+
+    return A
 
 
 
@@ -186,6 +195,26 @@ def dailyAvg(data, windowsize):
 # plt.xlim([0, 48*5])
 # plt.xlabel('Time step (half-hour)')
 # plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
+
+def g_val(lam):
+
+    gpart11 = np.sqrt(alpha * lam * k1_interp(t)**2 * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
+                     ((ca + k2_interp(t)) - 2 * alpha * lam * VPDinterp(t))**2 *
+                     ((ca + k2_interp(t)) - alpha * lam * alpha))  # mol/m2/d
+
+    gpart12 = alpha * lam * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * lam * VPDinterp(t))  # mol/mol
+
+    gpart21 = gpart11 / gpart12  # mol/m2/d
+
+    gpart22 = (ca * k1_interp(t) - k1_interp(t) * (2 * cp_interp(t) + k2_interp(t)))  # mol/m2/d
+
+    gpart3 = gpart21 + gpart22  # mol/m2/d
+
+    gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
+
+    g = gpart3 / gpart4  # mol/m2/d
+
+    return g
 
 
 def dydt(t, y):
@@ -295,9 +324,10 @@ RNfull = np.array(drydown['RNET'])  # shortwave radiation on leaves, W/m2
 PARfull = RNtoPAR(RNfull)  # umol/m2/s
 VPDfull = np.array(drydown['VPD'])  # mol/mol
 
-tlen = 48 * 5
+days = 20
+tlen = 48 * days
 
-t = np.linspace(0, 5, tlen)
+t = np.linspace(0, days, tlen)
 
 TEMP = TEMPfull[0:tlen]
 PAR = PARfull[0:tlen]
@@ -319,7 +349,7 @@ J *= 1e-6 * unit0  # mol/m2/d
 
 k1 = J / 4  # mol/m2/d
 a2 = Kc * (1 + Oi / Ko)  # mol/mol
-k2 = (J / 4) * a2 / Vmax  # mol/m2/d
+k2 = (J / 4) * a2 / Vmax  # mol/mol
 
 VPDinterp = interp1d(t, VPD, kind='cubic')
 cp_interp = interp1d(t, cp, kind='cubic')
@@ -349,18 +379,44 @@ res = solve_bvp(dydt, bc, t, y_guess)
 
 lam_plot = res.sol(t)[0]*unit1
 soilM_plot = res.sol(t)[1]
-plt.subplot(311)
+
+A_val = A(g_val(res.sol(t)[0]))
+
+plt.figure()
+plt.subplot(221)
 plt.plot(t, lam_plot)
 #plt.xlabel("days")
 plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
 
-# plt.subplot(312)
-# plt.plot(t, (k/unit0) * (np.sqrt(ca/(alpha*VPD*res.sol(t)[0]))-1))
-# plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+plt.subplot(222)
+plt.plot(t, soilM_plot)
+# plt.xlabel("time, days")
+plt.ylabel("$x(t)$")
+
+plt.subplot(223)
+plt.plot(t, g_val(res.sol(t)[0]) / unit0)
+plt.xlabel("time, days")
+plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+
+
+
+plt.subplot(224)
+plt.plot(t, A(g_val(res.sol(t)[0])) * 1e6 / unit0)
+plt.xlabel("time, days")
+plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
+
+plt.figure()
+plt.subplot(311)
+plt.plot(t, VPD)
+#plt.xlabel("days")
+plt.ylabel("$VPD, mol/mol$")
+
+plt.subplot(312)
+plt.plot(t, TEMP)
+plt.ylabel("$T, K$")
 
 plt.subplot(313)
-plt.plot(t, soilM_plot)
+plt.plot(t, PAR)
 plt.xlabel("time, days")
-plt.ylabel("$x(t)$")
-#
-# plt.show()
+plt.ylabel("$PAR, umol.m^{-2}.s^{-1}$")
+
