@@ -236,14 +236,14 @@ def Opt(Environment,SoilRoot,Xylem):
     return
     
 #%% -------------------------- READ DATA ----------------------------
-# read directly from fluxnet dataset 
+# read directly from fluxnet dataset
 datapath = '../Data/'
 sitename = 'US-Blo'
 latitude = 38.8953 # to be modified if changing site
 #df = ReadInput(datapath,sitename,latitude)
 #df.to_csv(datapath+'FLX_'+sitename+'.csv')
 
-# read cleaned data 
+# read cleaned data
 df = pd.read_csv(datapath+'FLX_'+sitename+'.csv')
 drydownid = 2
 drydown = Interstorm(df, drydownid) # data during the 2nd dry down period
@@ -257,30 +257,31 @@ plt.figure()
 plt.plot(An,'-k');plt.xlim([0,48*5])
 plt.xlabel('Time step (half-hour)')
 plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
-
-#%% --------------------- TRANSPIRATION -----------------------------
-VPD = np.array(drydown['VPD']) # kPa/kPa
-LAI = np.array(drydown['LAI'])
-Tr = a0*gc*VPD*LAI*UNIT_1 # m/s
-plt.figure()
-plt.plot(Tr,'-k');plt.xlim([0,48*5])
-plt.xlabel('Time step (half-hour)')
-plt.ylabel('Transpiration (m/s)')
-
-
-#%% ------------------ LEAF WATER POTENTIAL ------------------------
-s = 0.5  # relative soil moisture, \in (0,1)
-SRparas = SoilRoot(3.5e-4, -0.00696, 3.5, 0.4, 1, 10)
-Xparas = Xylem(3e-7, -3, 2)
-psis, gsr = f_soilroot(s,SRparas)
-psir = psis-Tr/gsr  # root water potential, assuming steady state, continuity
-psil0 = -0.5
-psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas, x) *
-                            (psir[np.where(Tr == tt)]-x)-tt,
-                            psil0) for tt in Tr])
-plt.figure()
-plt.plot(psil, '-k'); plt.xlim([0, 48*5])
-plt.xlabel('Time step (half-hour)')
-plt.ylabel('Leaf water potential (MPa)')
 plt.show()
-
+#
+# #%% --------------------- TRANSPIRATION -----------------------------
+# VPD = np.array(drydown['VPD']) # kPa/kPa
+# LAI = np.array(drydown['LAI'])
+# Tr = a0*gc*VPD*LAI*UNIT_1 # m/s
+# plt.figure()
+# plt.plot(Tr,'-k');plt.xlim([0,48*5])
+# plt.xlabel('Time step (half-hour)')
+# plt.ylabel('Transpiration (m/s)')
+#
+#
+# #%% ------------------ LEAF WATER POTENTIAL ------------------------
+# s = 0.5  # relative soil moisture, \in (0,1)
+# SRparas = SoilRoot(3.5e-4, -0.00696, 3.5, 0.4, 1, 10)
+# Xparas = Xylem(3e-7, -3, 2)
+# psis, gsr = f_soilroot(s,SRparas)
+# psir = psis-Tr/gsr  # root water potential, assuming steady state, continuity
+# psil0 = -0.5
+# psil = np.array([opt.fsolve(lambda x: VulnerabilityCurve(Xparas, x) *
+#                             (psir[np.where(Tr == tt)]-x)-tt,
+#                             psil0) for tt in Tr])
+# plt.figure()
+# plt.plot(psil, '-k'); plt.xlim([0, 48*5])
+# plt.xlabel('Time step (half-hour)')
+# plt.ylabel('Leaf water potential (MPa)')
+# plt.show()
+#
