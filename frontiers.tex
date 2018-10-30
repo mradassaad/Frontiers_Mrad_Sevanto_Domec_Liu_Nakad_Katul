@@ -84,15 +84,17 @@ While the assumption that stomatal opening trends are controlled by plant hydrau
 
 \citet{Manzoni2013} offer a similar dynamical system approach to the same phenomenon. Water use strategy is prescribed by assigning a 'carbon value' to the terminal soil moisture content around the rooting zone. This study is similarly framed with additional sub-daily measured forcings and constraints on water use such as neighboring tree competition. The results of this model are compared to actual measurements.
 
-The work here answers the following question: to what degree does water use strategy dictate stomatal control during dry-down? In a recent review of the theory of optimal stomatal control, Buckley... recognize the importance of delayed benefits such as keeping soil soil moisture at higher levels for future use. 
+The work here answers the following question: to what degree does water use strategy dictate stomatal control during dry-down? In a recent review of the theory of optimal stomatal control, \citet{Buckley2017} recognize the importance of delayed benefits such as keeping soil soil moisture at higher levels for future use. 
 
 \section{Materials and Methods}
 
 \subsection{The model}
 
+\subsubsection{The soil layer}
+
 The ensure the continuity of the water stream throughout the tree, we model three vertically connected layers: the soil, the trunk and branches, and the leaves. Each of these layers are characterized by a hydraulic resistance that is non-linearly related to water potential. Prescribing hydraulic resistances to these different layers allows computation of quantities regarded as indicative of isohydric to anisohydric behaviour. Such quantities include leaf water potential ($\psi_l$) and stomatal conductance ($g_s$).
 
-At the soil layer, we model the water budget (Proporato...) as follows:
+At the soil layer, we model the water budget \citep{Rodriguez-Iturbe2007} as follows:
 \begin{equation}
     \label{eqn:soil_water}
     \frac{dx(t)}{dt} =\frac{1}{n Z_r}(R - E - L),
@@ -106,7 +108,55 @@ We consider the effect of a drydown on plant stomatal response. During a drydown
 \end{equation}
 where f is the combined losses through evapotranspiration and uncontrolled losses in $s^{-1}$.
 
+\subsubsection{Carbon gain}
 
+The seminal work by \citet{Farquhar1980} for C3 plants details how carbon assimilation limitations are coupled with electron flow dynamics at the level of the thylakoids to obtain a photosynthesis model at the leaf level.
+The model by \citet{Farquhar1980} for C3 plants is used to compute $A$ for different leaf conditions such as Rubisco activity and for different environmental conditions like atmospheric temperature ($T_a = T_l$) and photosynthetically active radiation (PAR). To avoid having to compute derivatives of a piecewise, potentially non-differentiable function, we use the method provided elsewhere \citep{Vico2013}. The adopted equation matches the limitation imposed by the electron transport rate at very high mesophyll $CO_2$ concentration ($c_i$) and Rubisco limitation at very low $c_i$:
+\begin{equation}
+    \label{eqn:vico_model}
+    A = k_1 \frac{c_i - \Gamma*}{k_2 + c_i} - R_d,
+\end{equation}
+where $R_d$ refers to dark respiration in $mol m^{-2} s^{-1}$ and $k_1$ and $k_2$ are parameters determined by computing the limits imposed on $c_i$ described above and equating to the predictions of $A$ provided elsewhere \citep{Farquhar1980}. Namely, $k_1 = \frac{J}{4}$ and $k_2 = \frac{J}{4} \frac{a_2}{V_{c,max}}$.
+
+To eliminate the presence of $c_i$ in equation for the carbon gain, we use the carbon supply function where carbon assimilation is modeled as a diffusion process:
+\begin{equation}
+    \label{eqn:supply}
+    A = g(c_a - c_i).
+\end{equation}
+
+Combining Eqns \ref{eqn:vico_model} and \ref{eqn:supply} and assuming dark respiration $R_d$ is negligible compared to $A$, one gets a formulation for $A$ that is explicitly independent from $c_i$:
+\begin{equation}
+    \label{eqn:A_noci}
+    A = \frac{1}{2}[k_1 + g(k_2 + c_a) + g \sigma],
+\end{equation}
+where $\sigma = \sqrt{(k_2 + c_a + \frac{k_1}{g})^2 + \frac{4k_1(\Gamma^*-c_a)}{g}}$
+
+\subsubsection{The intermediate plant hydraulic pathway: roots, trunk, and branches}
+
+Recent debates on the hydraulic architecture of trees have elicited support for the segmentation hypothesis first proposed by Zimmerman (ref). The basis of this hypothesis is that the anatomy of the water conducting elements known as conduits differs considerably from one plant organ to the other. Specifically, as one progresses against the direction of the gravitational field, one encounters organs that are more and more resistant to loss of conductivity as a result of cavitation. 
+
+In this work, we approximate the vulnerability curve of the whole hydraulic pathway with a Weibull exceedance function:
+\begin{equation}
+    \label{eqn:Weibull}
+    g_{p} = g_{p,max}exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big],
+\end{equation}
+where $g_{p}$ is the hydraulic conductivity of the plant hydraulic pathway, and $g_{p,max}$ is its maximum value that corresponds to a plant water potential of $\psi_{p}=0$. When $\psi_{p}=\psi_{63}$, $g_{p} = g_{p,max}(1-0.63) = 0.37g_{p,max}$. Finally, $c$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. To find $\psi_{p}$, we invoke the hydrostatic assumption which leads to $\psi_{p}=\frac{\psi{s}+\psi_leaf}{2}$.
+
+At the soil level, knowing the soil moisture content, we use the formulation developed elsewhere \citep{Clapp1978} to compute the soil water potential:
+\begin{equation}
+    \label{eqn:Clapp_psi}
+    \psi_s = \psi_{s,max}x^{-b},
+\end{equation}
+and the soil hydraulic conductivity:
+\begin{equation}
+    \label{eqn:Clapp_cond}
+    g_s = g_{s,max}x^{2b+3},
+\end{equation}
+where $b$ is an empirical parameter dependent on the soil type. $\psi_{s,max}$ and $g_{s,max}$ are the soil water potential and hydraulic conductivity at saturation, respectively.
+
+
+
+\subsubsection{Optimization and delayed gains}
 
 To find the optimal trends of $g_s$ and $\psi_l$ with time at different environmental conditions, the method of calculus of variations is used to derive the necessary differential equations (Appendix A). The objective function $J$ in this situation is the following:
 \begin{equation}
@@ -120,25 +170,11 @@ where $A$ is the instantaneous plant carbon gain in $molm^{-2}s^{-1}$. $T$ is th
 \end{equation}
 where $\Lambda$ is a user-defined parameter, in $mol m^{-2}$, prescribing conservative water use strategy when it is large and aggressive water use when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants and. The presence of $J_{T_f}$ in Eqn. \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water.
 
-The model by Collatz for C3 plants is used to compute $A$ for different plant properties at the leaf level such as Rubisco capacity and for different environmental conditions like temperature and photosynthetically active radiation (PAR). To avoid having to compute derivatives of a piecewise, potentially non-differentiable function, we use the method provided by Campbell and Norman or Giulia Vico.
 
-The effects of high-frequency
-fluctuations in light and vapor pressure deficit are neglected,
-as they would require modeling of delayed responses of photosynthesis
-and conductances (e.g., Vico et al., 2011), a task
-beyond the scope here. Limiting the time scale of this investigation
-to few weeks also admits another simplification related
-to changes in leaf nitrogen status. Increasing leaf nitrogen concentration
-improves photosynthetic capacity for a given stomatal
-conductance, or allows maintaining relatively high photosynthetic
-rates when stomata close under dry conditions (Palmroth et al.,
-2013; Weih et al., 2011). Such changes are here assumed to
-take place over longer time scales than the typical daily cycles
-of light and vapor pressure deficit, but can be accommodated
-by varying the kinetic parameters of the photosynthetic demand
-curves.
 
 The result is three equations for the soil moisture $x$, $g_s$, and a Lagrange multiplier $\lambda$ commonly referred to as the marginal water use efficiency (MWUE). 
+
+The work here neglects high-frequency (sub-minute time scale) changes in environmental variables such as temperature and wind as well as those happening over multiple months such as changes in leaf nitrogen. The are thought not to have an appreciable effect on stomatal control over the timescale of a few weeks that is considered.
 
 \subsection{Environmental data}
 
