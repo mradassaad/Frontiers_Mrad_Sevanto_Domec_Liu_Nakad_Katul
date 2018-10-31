@@ -4,6 +4,7 @@ from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.interpolate import interp1d
+from scipy.optimize import broyden1
 from datetime import datetime
 import glob
 
@@ -124,23 +125,31 @@ def A(gl):
      ca: ambient CO2 mole fraction in the air in umol/mol
     cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol'''
 
-    A = np.zeros(gl.size)
-    gl_mask = ma.masked_less_equal(gl,0)
-    gl_valid = gl[~gl_mask.mask]
+    # A = np.zeros(gl.size)
+    # gl_mask = ma.masked_less_equal(gl, 0)
+    # gl_valid = gl[~gl_mask.mask]
+    #
+    # k1 = J[~gl_mask.mask]/4  # mol/m2/d
+    # a2 = Kc[~gl_mask.mask] * (1 + Oi/Ko[~gl_mask.mask])  # mol/mol
+    # k2 = (J[~gl_mask.mask] / 4) * a2 / Vmax[~gl_mask.mask]  # mol/mol
+    # delta = np.sqrt((k2 + ca + k1/gl_valid) ** 2 -
+    #                 4 * k1 * (ca - cp[~gl_mask.mask]) / gl_valid)  # mol/mol
+    #
+    # A[~gl_mask.mask] = 0.5 * (k1 + gl_valid * (ca + k2) - gl_valid * delta)  # mol/m2/d
 
-    k1 = J[~gl_mask.mask]/4  # mol/m2/d
-    a2 = Kc[~gl_mask.mask] * (1 + Oi/Ko[~gl_mask.mask])  # mol/mol
-    k2 = (J[~gl_mask.mask] / 4) * a2 / Vmax[~gl_mask.mask]  # mol/mol
-    delta = np.sqrt((k2 + ca + k1/gl_valid) ** 2 -
-                    4 * k1 * (ca - cp[~gl_mask.mask])  / gl_valid)  # mol/mol
+    delta = np.sqrt(((k2 + ca) * gl + k1) ** 2 -
+                    4 * k1 * (ca - cp) * gl)  # mol/mol
 
-    A[~gl_mask.mask] = 0.5 * (k1 + gl_valid * (ca + k2) - gl_valid * delta)  # mol/m2/d
+    A = 0.5 * (k1 + gl * (ca + k2) - delta)  # mol/m2/d
     # A *= 1e6/unit0
 
 
     return A
 
 
+# def soil_water_pot(x, b, psi_sat):
+#
+#     return psi_sat * x ** (-b)
 
 # def dAdg(J, Vc_max, Kc, Ko, Oi, ca, cp, gl):
 #     """
@@ -198,9 +207,9 @@ def dailyAvg(data, windowsize):
 
 def g_val(lam):
 
-    gpart11 = np.sqrt(alpha * lam * k1_interp(t)**2 * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-                     ((ca + k2_interp(t)) - 2 * alpha * lam * VPDinterp(t))**2 *
-                     ((ca + k2_interp(t)) - alpha * lam * alpha))  # mol/m2/d
+    gpart11 = (ca + k2_interp(t) - 2 * alpha * lam * VPDinterp(t)) *\
+              np.sqrt(alpha * lam * k1_interp(t)**2 * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
+              (ca + k2_interp(t) - alpha * lam * alpha))  # mol/m2/d
 
     gpart12 = alpha * lam * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * lam * VPDinterp(t))  # mol/mol
 
@@ -212,9 +221,11 @@ def g_val(lam):
 
     gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
 
-    g = gpart3 / gpart4  # mol/m2/d
+    gl = gpart3 / gpart4  # mol/m2/d
+    gl_mask = ma.masked_less(gl, 0)
+    gl[gl_mask.mask] = 0
 
-    return g
+    return gl
 
 
 def dydt(t, y):
@@ -224,10 +235,10 @@ def dydt(t, y):
     :param y: y[0] is lambda(t) in mol/m2, y[1] is x(t) in mol/mol
     :return:
     """
-
-    gpart11 = np.sqrt(alpha * y[0] * k1_interp(t)**2 * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-                     ((ca + k2_interp(t)) - 2 * alpha * y[0] * VPDinterp(t))**2 *
-                     ((ca + k2_interp(t)) - alpha * y[0] * alpha))  # mol/m2/d
+    # ----------------- stomatal conductance based on current values -------------------
+    gpart11 = (ca + k2_interp(t) - 2 * alpha * y[0] * VPDinterp(t)) *\
+                    np.sqrt(alpha * y[0] * k1_interp(t)**2 * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
+                    ((ca + k2_interp(t)) - alpha * y[0] * alpha))  # mol/m2/d
 
     gpart12 = alpha * y[0] * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t))  # mol/mol
 
@@ -239,21 +250,49 @@ def dydt(t, y):
 
     gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
 
-    g = gpart3 / gpart4  # mol/m2/d
+    gl = gpart3 / gpart4  # mol/m2/d
+    gl_mask = ma.masked_less(gl, 0)
+    gl[gl_mask.mask] = 0
 
+    dEdx = 0
+
+    # --------------- cost of sucking water through the plant stem ---------------------
+    psi_p = np.zeros(gl.size)
+    gl_mask = ma.masked_less_equal(gl, 0)
+
+    psi_x = psi_sat * y[1] ** (-b)  # Soil water potential, MPa
+
+    def psil_val(psi_l):
+        return psi_l - 2 * psi_63 *\
+               (np.log(Kmax * (psi_x[~gl_mask.mask] - psi_l) /
+                       (lai * gl[~gl_mask.mask] * VPDinterp(t[~gl_mask.mask])))) ** w_exp - psi_x[~gl_mask.mask]
+
+    psi_l = broyden1(psil_val, psi_x[~gl_mask.mask]-1)
+    # psi_l = 2 * psi_63 *\
+    #         (np.log(Kmax / (gl[~gl_mask.mask] * VPDinterp(t[~gl_mask.mask])))) **\
+    #         (1 / w_exp) - psi_x[~gl_mask.mask]  # leaf water pot, MPa
+
+    psi_p[~gl_mask.mask] = (psi_x[~gl_mask.mask] + psi_l) / 2  # plant water potential, MPa
+    psi_p[gl_mask.mask] = psi_x[gl_mask.mask]
+
+    dpsi_pdx = (1/2) * psi_sat * (-b) * y[1] ** (-b - 1)
+    dEdx = - alpha * Kmax * (-w_exp / psi_63) * dpsi_pdx * np.exp(-(psi_p / psi_63) ** w_exp) * (psi_p / psi_63) ** (w_exp-1)
+    # -------------- uncontrolled losses and evapo-trans ------------------------
     losses = beta * y[1]**c  # 1/d
-    evap_trans = alpha * g * VPDinterp(t)  # 1/d
+    evap_trans = alpha * gl * VPDinterp(t)  # 1/d
     f = - (losses + evap_trans)  # 1/d
 
-    dlamdt = y[0] * beta * c * y[1]**(c-1)  # mol/m2/d
+    dlossesdx = - beta * c * y[1]**(c-1)
+    dlamdt = - y[0] * (dlossesdx + dEdx)  # mol/m2/d
     dxdt = f  # 1/d
 
     return np.vstack((dlamdt, dxdt))
 
 
-def Weibull(Xylem, psi_s, psi_l):
 
-    return Xylem.gpmax * (np.exp(((psi_s - psi_l) / Xylem.psi_63) ** Xylem.c))
+# def Weibull(Xylem, psi_s, psi_l):
+#
+#     return Xylem.gpmax * (np.exp(((psi_s - psi_l) / Xylem.psi_63) ** Xylem.c))
 
 
 
@@ -273,7 +312,7 @@ latitude = 38.8953  # to be modified if changing site
 # read cleaned data
 df = pd.read_csv(datapath+'FLX_'+sitename+'.csv')
 drydownid = 2
-drydown = Interstorm(df, drydownid) # data during the 2nd dry down period
+drydown = Interstorm(df, drydownid)  # data during the 2nd dry down period
 
 
 Oi = 210e-3  # mol/mol
@@ -292,6 +331,7 @@ unit1 = 10 ** 3 * nu / (n * z_r)  # mol/m2 -> mmol/mol
 unit2 = 18 * 1e-6  # mol H2O/m2/s ->  m/s
 unit3 = 1e6  # Pa -> MPa
 unit4 = 273.15  # Degree C -> K
+atmP = 0.1013  # atmospheric pressure, MPa
 
 v_opt = 174.33  # umol/m2/s
 Hav = 61.21  # kJ/mol
@@ -316,6 +356,16 @@ beta = gamma / (n * z_r)  # 1/d
 alpha = nu * a / (n * z_r)  # m2/mol
 
 
+# ------------------ Soil Properties -----------------
+
+psi_sat = 21.8e-4  # Soil water potential at saturation, MPa
+b = 4.9  # other parameter
+
+# ------------------ Plant Stem Properties -------------
+
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
+w_exp = 2  # Weibull exponent
+Kmax = 0.03 * unit0 / atmP  # Maximum plant stem water conductivity, mol/m2/d/MPa
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -324,14 +374,28 @@ RNfull = np.array(drydown['RNET'])  # shortwave radiation on leaves, W/m2
 PARfull = RNtoPAR(RNfull)  # umol/m2/s
 VPDfull = np.array(drydown['VPD'])  # mol/mol
 
-days = 20
+AvgNbDay = 20
+
+PARavg = PARfull[0:48*AvgNbDay]
+PARavg = PARavg.reshape((20, 48))
+PARavg = np.average(PARavg, axis=0)
+
+TEMPavg = TEMPfull[0:48*AvgNbDay]
+TEMPavg = TEMPavg.reshape((20, 48))
+TEMPavg = np.average(TEMPavg, axis=0)
+
+VPDavg = VPDfull[0:48*AvgNbDay]
+VPDavg = VPDavg.reshape((20, 48))
+VPDavg = np.average(VPDavg, axis=0)
+
+days = 3
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
 
-TEMP = TEMPfull[0:tlen]
-PAR = PARfull[0:tlen]
-VPD = VPDfull[0:tlen]
+TEMP = np.tile(TEMPavg, days)
+PAR = np.tile(PARavg, days)
+VPD = np.tile(VPDavg, days)
 
 Kc, Ko = MMcoeff(TEMP)  # umol/mol and mmol/mol, respectively
 Kc *= 1e-6  # mol/mol
@@ -366,7 +430,7 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 def bc_wus(ya,yb):  # Water use strategy
     x0 = 0.8
-    wus_coeff = 800e-6*t_day*unit0  # mol/m2
+    wus_coeff = 400e-6*t_day*unit0  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
@@ -375,7 +439,7 @@ x_guess = 0.6*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
-res = solve_bvp(dydt, bc, t, y_guess)
+res = solve_bvp(dydt, bc_wus, t, y_guess)
 
 lam_plot = res.sol(t)[0]*unit1
 soilM_plot = res.sol(t)[1]
