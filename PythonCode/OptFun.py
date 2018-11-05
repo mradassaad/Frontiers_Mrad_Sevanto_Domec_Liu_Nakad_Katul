@@ -278,7 +278,8 @@ def dydt(t, y):
         return psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
         # return f_psi_l
 
-    psi_l = fsolve(psil_val, psi_x+1)
+    res_fsolve = fsolve(psil_val, psi_x+1, full_output=True)
+    psi_l = res_fsolve[0]
     psi_l_mask = ma.masked_less(psi_l, psi_x)
     # psi_l[psi_l_mask.mask] = psi_x[psi_l_mask.mask]
     psi_l[psi_l_mask.mask] = 999999
@@ -471,7 +472,7 @@ def bc_wus(ya,yb):  # Water use strategy
 
 # t = np.linspace(0, days, 1000)
 
-lam_guess = 20*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
+lam_guess = 5*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
 x_guess = 0.6*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
