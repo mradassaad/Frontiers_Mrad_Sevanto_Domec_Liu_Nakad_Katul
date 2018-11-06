@@ -5,13 +5,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
+from scipy.optimize import root
 from datetime import datetime
 import glob
 
-
-
-
 # user defined parameter groups
+
+
 class SoilRoot:
     def __init__(self, ksat, psat, b, n, Zr, RAI):
         self.ksat = ksat  # saturated conductivity, m/s/MPa
@@ -23,11 +23,13 @@ class SoilRoot:
         self.sfc = (psat/(-0.03))**(1/b)
         self.sw = (psat/(-3))**(1/b)
 
+
 class Xylem:
     def __init__(self, gpmax, psi_63, c):
         self.gpmax = gpmax  # maximum xylem conductivity, m/s/MPa
         self.psi_63 = psi_63  # leaf water potential at 50% loss of conductance, MPa
         self.c = c  # nonlinearity of plant vulnerability curve
+
 
 class Environment:
     def __init__(self, SoilM, RNet, Time, VPD, LAI):
@@ -39,6 +41,36 @@ class Environment:
         self.VPD = VPD
         self.LAI = LAI
         self.mean_LAI = np.mean(LAI)
+
+
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+
+class GuessError(Error):
+    """Exception raised for lack of satisfactory BVP solution due
+     to possible wrongful inital guess for lambda.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
+
+class ConvergenceError(Error):
+    """Exception raised for setting lambda to a value that makes finding
+    a reasonable psi_l given the set vulnerability curve.
+
+    Attributes:
+        message -- explanation of the error
+    """
+
+    def __init__(self, message):
+        self.message = message
+
 
 
 def max_val(k_opt, H_a, H_d, Tl, T_opt):
@@ -235,6 +267,9 @@ def dydt(t, y):
     :param y: y[0] is lambda(t) in mol/m2, y[1] is x(t) in mol/mol
     :return:
     """
+
+    if any(y[0] < 0):
+        raise GuessError('Try changing the guess for $\lambda$')
     # ----------------- stomatal conductance based on current values -------------------
     gpart11 = (ca + k2_interp(t) - 2 * alpha * y[0] * VPDinterp(t)) *\
                     np.sqrt(alpha * y[0] * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
@@ -272,18 +307,21 @@ def dydt(t, y):
         # temp = psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
         #
         # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
-        # if np.any(np.logical_not(np.isfinite(psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x))):
-        #     print("Stop")
 
-        return psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
+        if np.any(np.logical_not(np.isfinite((psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) -\
+               lai * gl * VPDinterp(t)))):
+            raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
+
+        return (psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) -\
+               lai * gl * VPDinterp(t)
         # return f_psi_l
 
-    res_fsolve = fsolve(psil_val, psi_x+1, full_output=True)
-    psi_l = res_fsolve[0]
-    psi_l_mask = ma.masked_less(psi_l, psi_x)
-    # psi_l[psi_l_mask.mask] = psi_x[psi_l_mask.mask]
-    psi_l[psi_l_mask.mask] = 999999
-    gl[psi_l_mask.mask] = 0
+    res_fsolve = root(psil_val, psi_x+1, method='broyden1')
+    psi_l = res_fsolve.x
+    # psi_l_mask = ma.masked_less(psi_l, psi_x)
+    # # psi_l[psi_l_mask.mask] = psi_x[psi_l_mask.mask]
+    # psi_l[psi_l_mask.mask] = 999999
+    # gl[psi_l_mask.mask] = 0
     # psi_l = 2 * psi_63 *\
     #         (np.log(Kmax / (gl[~gl_mask.mask] * VPDinterp(t[~gl_mask.mask])))) **\
     #         (1 / w_exp) - psi_x[~gl_mask.mask]  # leaf water pot, MPa
@@ -291,32 +329,35 @@ def dydt(t, y):
     psi_p = (psi_x + psi_l) / 2  # plant water potential, MPa
 
     dpsi_xdx = psi_sat * (-b) * y[1] ** (-b - 1)
-    dgldx = - Kmax / lai / VPDinterp(t) * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
-            (0.5 * w_exp / psi_63 * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
-    # dEdx = - alpha / lai * Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) *\
-    #        (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp-1) * (psi_l - psi_x) + 1)  # mol/m2/d
-    dEdx = alpha * VPDinterp(t) * dgldx
+    # dgldx = - Kmax / lai / VPDinterp(t) * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
+    #         (0.5 * w_exp / psi_63 * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
+    dEdx = - alpha / lai * Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) *\
+           (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp-1) * (psi_l - psi_x) + 1)  # mol/m2/d
+    # dEdx = alpha * VPDinterp(t) * dgldx
     # --------------- cost of sucking water through the plant stem, dAdx ---------------------
     dAdx = 0
 
     # dgldx = - Kmax / lai / VPDinterp(t) * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
     #                 (0.5 * w_exp / psi_63 * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
 
-    ddeltadx_part1 = - 2 * (ca - cp_interp(t)) / ((k2_interp(t) + ca) * zeta + 1)
-    ddeltadx_part2 = (ca + k2_interp(t))
-    ddeltadx_part3 = np.sqrt(1 - 4 * (ca - cp_interp(t)) * zeta / ((ca + k2_interp(t)) * zeta + 1) ** 2)
-
-    ddeltadx = (ddeltadx_part1 + ddeltadx_part2) * dgldx / ddeltadx_part3  # mol/m2/d
-
-    dAdx = 0.5 * ((ca + k2_interp(t)) * dgldx - ddeltadx)  # mol/m2/d
+    # ddeltadx_part1 = - 2 * (ca - cp_interp(t)) / ((k2_interp(t) + ca) * zeta + 1)
+    # ddeltadx_part2 = (ca + k2_interp(t))
+    # ddeltadx_part3 = np.sqrt(1 - 4 * (ca - cp_interp(t)) * zeta / ((ca + k2_interp(t)) * zeta + 1) ** 2)
+    #
+    # ddeltadx = (ddeltadx_part1 + ddeltadx_part2) * dgldx / ddeltadx_part3  # mol/m2/d
+    #
+    # dAdx = 0.5 * ((ca + k2_interp(t)) * dgldx - ddeltadx)  # mol/m2/d
 
     # -------------- uncontrolled losses and evapo-trans ------------------------
-    # losses = beta * y[1]**c  # 1/d
-    # dlossesdx = beta * c * y[1] ** (c - 1)
     losses = 0
     dlossesdx = 0
+    # Comment out following 2 lines if only plant hydraulic effects are sought
+    losses = beta * y[1] ** c  # 1/d
+    dlossesdx = beta * c * y[1] ** (c - 1)
+
     evap_trans = alpha * gl * VPDinterp(t)  # 1/d
     f = - (losses + evap_trans)  # 1/d
+
     dfdx = - (dlossesdx + dEdx)
 
     dlamdt = - (dAdx + y[0] * dfdx)  # mol/m2/d
@@ -380,7 +421,7 @@ Hdj = 200  # kJ/mol
 Topt_j = 32.19 + 273.15  # K
 
 
-gamma = 0.01  # m/d
+gamma = 0.002  # m/d
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
@@ -399,7 +440,7 @@ b = 4.9  # other parameter
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 1.5  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 2.5  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 3  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
 
@@ -424,7 +465,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 10
+days = 15
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -460,8 +501,8 @@ k2_interp = interp1d(t, k2, kind='cubic')
 
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.8
-    return np.array([ya[1] - x0, yb[1] - 0.5])
+    x0 = 0.6
+    return np.array([ya[1] - x0, yb[1] - 0.3])
 
 
 def bc_wus(ya,yb):  # Water use strategy
@@ -472,12 +513,16 @@ def bc_wus(ya,yb):  # Water use strategy
 
 # t = np.linspace(0, days, 1000)
 
-lam_guess = 5*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
+lam_guess = 4*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
 x_guess = 0.6*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
-
-res = solve_bvp(dydt, bc, t, y_guess)
+try:
+    res = solve_bvp(dydt, bc, t, y_guess)
+except OverflowError:
+    print('Try reducing initial guess for lambda')
+    import sys
+    sys.exit()
 
 lam_plot = res.sol(t)[0]*unit1
 soilM_plot = res.sol(t)[1]
