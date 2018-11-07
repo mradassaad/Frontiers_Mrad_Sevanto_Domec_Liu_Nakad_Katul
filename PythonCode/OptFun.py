@@ -6,6 +6,7 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from scipy.optimize import root
+from scipy.optimize import fmin
 from datetime import datetime
 import glob
 
@@ -260,6 +261,22 @@ def g_val(lam):
     return gl
 
 
+def psil_val(psi_l, psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t):
+    # psi_l_mask = ma.masked_greater_equal(psi_l, psi_x)
+    # f_psi_l = np.zeros(psi_l.size)
+    # temp = psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
+    #
+    # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
+
+    if np.any(
+            np.logical_not(np.isfinite((psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - \
+                                       lai * gl * VPDinterp(t)))):
+        raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
+
+    return (psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - \
+           lai * gl * VPDinterp(t)
+    # return f_psi_l
+
 def dydt(t, y):
     """
 
@@ -291,33 +308,14 @@ def dydt(t, y):
 
     gl = k1_interp(t) * zeta  # mol/m2/d
     # gl_mask = ma.masked_less(gl, 0)
-    # gl[gl_mask.mask] = 0
-
-    # --------------- cost of sucking water through the plant stem, dEdx ---------------------
-    dEdx = 0
 
     psi_x = psi_sat * y[1] ** (-b)  # Soil water potential, MPa
 
-    # if np.any(psi_x > 10):
-    #     print("Stop")
+    # ----------------------------------- Find conduction maximum of plant ------------------------
 
-    def psil_val(psi_l):
-        # psi_l_mask = ma.masked_greater_equal(psi_l, psi_x)
-        # f_psi_l = np.zeros(psi_l.size)
-        # temp = psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
-        #
-        # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
-
-        if np.any(np.logical_not(np.isfinite((psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) -\
-               lai * gl * VPDinterp(t)))):
-            raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
-
-        return (psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) -\
-               lai * gl * VPDinterp(t)
-        # return f_psi_l
-
-    res_fsolve = root(psil_val, psi_x+1, method='broyden1')
+    res_fsolve = root(psil_val, psi_x+1, args=(psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t), method='broyden1')
     psi_l = res_fsolve.x
+
     # psi_l_mask = ma.masked_less(psi_l, psi_x)
     # # psi_l[psi_l_mask.mask] = psi_x[psi_l_mask.mask]
     # psi_l[psi_l_mask.mask] = 999999
@@ -421,7 +419,7 @@ Hdj = 200  # kJ/mol
 Topt_j = 32.19 + 273.15  # K
 
 
-gamma = 0.002  # m/d
+gamma = 0.001  # m/d
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
@@ -440,7 +438,7 @@ b = 4.9  # other parameter
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 2.5  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 2  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 3  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
 
@@ -465,7 +463,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 15
+days = 20
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -506,19 +504,19 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya,yb):  # Water use strategy
-    x0 = 0.8
-    wus_coeff = 50e-6*t_day*unit0  # mol/m2
+    x0 = 0.6
+    wus_coeff = 300e-6*unit0  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
 # t = np.linspace(0, days, 1000)
 
-lam_guess = 4*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
+lam_guess = 6*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
 x_guess = 0.6*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 try:
-    res = solve_bvp(dydt, bc, t, y_guess)
+    res = solve_bvp(dydt, bc_wus, t, y_guess)
 except OverflowError:
     print('Try reducing initial guess for lambda')
     import sys
