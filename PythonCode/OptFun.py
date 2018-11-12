@@ -6,7 +6,8 @@ import pandas as pd
 from scipy.interpolate import interp1d
 from scipy.optimize import fsolve
 from scipy.optimize import root
-from scipy.optimize import fmin
+from scipy import optimize
+import operator
 from datetime import datetime
 import glob
 
@@ -269,13 +270,32 @@ def psil_val(psi_l, psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t):
     # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
 
     if np.any(
-            np.logical_not(np.isfinite((psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - \
-                                       lai * gl * VPDinterp(t)))):
+            np.logical_not(np.isfinite(transpiration(psi_l, psi_x, psi_63, w_exp, Kmax) - lai * gl * VPDinterp(t)))):
         raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
 
-    return (psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - \
-           lai * gl * VPDinterp(t)
+    return transpiration(psi_l, psi_x, psi_63, w_exp, Kmax) - lai * gl * VPDinterp(t)
     # return f_psi_l
+
+
+def transpiration(psi_l, psi_x, psi_63, w_exp, Kmax):
+
+    return (psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp))
+
+
+def opt_psil(psi_x, psi_63, w_exp, Kmax):
+
+    def trans_opt(psi_l, psi_x, psi_63, w_exp, Kmax):
+
+        return - transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
+
+    psil_opt = np.zeros(psi_x.shape)
+    i = 0
+    for px in psi_x:
+        psil_opt[i] = optimize.fmin_cg(trans_opt, x0=px+1, args=(px, psi_63, w_exp, Kmax), disp=False)
+        i += 1
+
+    return psil_opt
+
 
 def dydt(t, y):
     """
@@ -292,6 +312,13 @@ def dydt(t, y):
                     np.sqrt(alpha * y[0] * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
                     ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t)))  # mol/m2/d
 
+    gpart11_mask = ma.masked_less(gpart11, 0)
+    t_masked = t[gpart11_mask.mask]
+    y0_masked = y[0][gpart11_mask.mask]
+    gpart11[gpart11_mask.mask] = (ca + k2_interp(t_masked) + 2 * alpha * y0_masked * VPDinterp(t_masked)) *\
+                    np.sqrt(alpha * y0_masked * VPDinterp(t_masked) * (ca - cp_interp(t_masked)) * (cp_interp(t_masked) + k2_interp(t_masked)) *
+                    ((ca + k2_interp(t_masked)) - alpha * y0_masked * VPDinterp(t_masked)))  # mol/m2/d
+
     gpart12 = alpha * y[0] * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t))  # mol/mol
 
     gpart21 = gpart11 / gpart12  # mol/m2/d
@@ -303,8 +330,11 @@ def dydt(t, y):
     gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
 
     zeta = gpart3 / gpart4  # unitless
-    zeta_mask = ma.masked_less(zeta, 0)
-    zeta[zeta_mask.mask] = 0
+    # zeta_mask = ma.masked_less(zeta, 0)
+    # zeta[zeta_mask.mask] = 0
+    #
+    # if np.any(zeta_mask.mask):
+    #     print('Stop')
 
     gl = k1_interp(t) * zeta  # mol/m2/d
     # gl_mask = ma.masked_less(gl, 0)
@@ -419,7 +449,7 @@ Hdj = 200  # kJ/mol
 Topt_j = 32.19 + 273.15  # K
 
 
-gamma = 0.001  # m/d
+gamma = 0.000  # m/d
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
@@ -440,7 +470,7 @@ b = 4.9  # other parameter
 
 psi_63 = 2  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 3  # Weibull exponent
-Kmax = 2e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
+Kmax = 1e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -499,24 +529,24 @@ k2_interp = interp1d(t, k2, kind='cubic')
 
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.6
-    return np.array([ya[1] - x0, yb[1] - 0.3])
+    x0 = 0.65
+    return np.array([ya[1] - x0, yb[1] - 0.45])
 
 
 def bc_wus(ya,yb):  # Water use strategy
-    x0 = 0.6
-    wus_coeff = 300e-6*unit0  # mol/m2
+    x0 = 0.55
+    wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
 # t = np.linspace(0, days, 1000)
-
-lam_guess = 6*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
+Lambda = 550e-6*unit0
+lam_guess = Lambda*unit1*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
 x_guess = 0.6*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 try:
-    res = solve_bvp(dydt, bc_wus, t, y_guess)
+    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
     print('Try reducing initial guess for lambda')
     import sys
@@ -537,6 +567,14 @@ def psil_val(psi_l):
 psi_l = fsolve(psil_val, psi_x + 1)
 psi_p = 0.5 * (psi_x + psi_l)
 PLC = 1 - np.exp(- (psi_p / psi_63) ** w_exp)
+
+E = transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
+f = - (beta * soilM_plot + alpha * E / lai)
+objective_term_1 = np.sum(np.diff(t) * (A_val[:-1] + res.sol(t)[0][:-1] * f[:-1]))  # mol/m2
+objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
+theta = objective_term_2 / (objective_term_1 + objective_term_2)
+
+psil_opt=opt_psil(psi_x, psi_63, w_exp, Kmax)
 
 plt.figure()
 plt.subplot(331)
@@ -561,21 +599,26 @@ plt.plot(t, A(g_val(res.sol(t)[0])) * 1e6 / unit0)
 plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
 
 plt.subplot(335)
+plt.plot(t, (E * alpha / lai))
+# plt.xlabel("time, days")
+plt.ylabel("$E$")
+
+plt.subplot(336)
 plt.plot(t, psi_x)
 # plt.xlabel("time, days")
 plt.ylabel("$\psi_x, MPa$")
 
-plt.subplot(336)
+plt.subplot(337)
 plt.plot(t, psi_l)
 plt.xlabel("time, days")
 plt.ylabel("$\psi_l, MPa$")
 
-plt.subplot(337)
+plt.subplot(338)
 plt.plot(t, psi_p)
 plt.xlabel("time, days")
 plt.ylabel("$\psi_p, MPa$")
 
-plt.subplot(338)
+plt.subplot(339)
 plt.plot(t, PLC)
 plt.xlabel("time, days")
 plt.ylabel("PLC")
