@@ -305,19 +305,16 @@ def dydt(t, y):
     :return:
     """
 
-    if any(y[0] < 0):
-        raise GuessError('Try changing the guess for $\lambda$')
+    if np.any(y[0] < 0):
+        raise GuessError('y[0] < 0')
+    #
+    if np.any(y[0] > (ca - cp_interp(t))/(VPDinterp(t) * alpha)):
+        raise GuessError('y[0] too large')
     # ----------------- stomatal conductance based on current values -------------------
     gpart11 = (ca + k2_interp(t) - 2 * alpha * y[0] * VPDinterp(t)) *\
                     np.sqrt(alpha * y[0] * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
                     ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t)))  # mol/m2/d
 
-    gpart11_mask = ma.masked_less(gpart11, 0)
-    t_masked = t[gpart11_mask.mask]
-    y0_masked = y[0][gpart11_mask.mask]
-    gpart11[gpart11_mask.mask] = (ca + k2_interp(t_masked) + 2 * alpha * y0_masked * VPDinterp(t_masked)) *\
-                    np.sqrt(alpha * y0_masked * VPDinterp(t_masked) * (ca - cp_interp(t_masked)) * (cp_interp(t_masked) + k2_interp(t_masked)) *
-                    ((ca + k2_interp(t_masked)) - alpha * y0_masked * VPDinterp(t_masked)))  # mol/m2/d
 
     gpart12 = alpha * y[0] * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t))  # mol/mol
 
@@ -330,11 +327,11 @@ def dydt(t, y):
     gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
 
     zeta = gpart3 / gpart4  # unitless
-    # zeta_mask = ma.masked_less(zeta, 0)
+
+    zeta_mask = ma.masked_less(zeta, 0)
     # zeta[zeta_mask.mask] = 0
-    #
-    # if np.any(zeta_mask.mask):
-    #     print('Stop')
+    if np.any(zeta_mask.mask):
+        print('Stop')
 
     gl = k1_interp(t) * zeta  # mol/m2/d
     # gl_mask = ma.masked_less(gl, 0)
@@ -449,7 +446,7 @@ Hdj = 200  # kJ/mol
 Topt_j = 32.19 + 273.15  # K
 
 
-gamma = 0.000  # m/d
+gamma = 0.003  # m/d
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
@@ -468,9 +465,9 @@ b = 4.9  # other parameter
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 2  # Pressure at which there is 64% loss of conductivity, MPa
-w_exp = 3  # Weibull exponent
-Kmax = 1e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
+psi_63 = 4  # Pressure at which there is 64% loss of conductivity, MPa
+w_exp = 2  # Weibull exponent
+Kmax = 2e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -493,7 +490,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 20
+days = 10
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -529,24 +526,25 @@ k2_interp = interp1d(t, k2, kind='cubic')
 
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.65
-    return np.array([ya[1] - x0, yb[1] - 0.45])
+    x0 = 0.5
+    return np.array([ya[1] - x0, yb[1] - 0.26])
 
 
 def bc_wus(ya,yb):  # Water use strategy
-    x0 = 0.55
+    x0 = 0.5
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
-# t = np.linspace(0, days, 1000)
-Lambda = 550e-6*unit0
-lam_guess = Lambda*unit1*np.ones((1, t.size)) + np.linspace(0, 1, t.size)
-x_guess = 0.6*np.ones((1, t.size))
+# t = np.linspace(0, days, 2000)
+Lambda = 580e-6*unit0 # mol/m2
+# lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
+lam_guess = 10*np.ones((1, t.size))
+x_guess = 0.5*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 try:
-    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
+    res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
     print('Try reducing initial guess for lambda')
     import sys
@@ -566,7 +564,7 @@ def psil_val(psi_l):
 
 psi_l = fsolve(psil_val, psi_x + 1)
 psi_p = 0.5 * (psi_x + psi_l)
-PLC = 1 - np.exp(- (psi_p / psi_63) ** w_exp)
+PLC = 100 * (1 - np.exp(- (psi_p / psi_63) ** w_exp))
 
 E = transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
 f = - (beta * soilM_plot + alpha * E / lai)
@@ -621,7 +619,7 @@ plt.ylabel("$\psi_p, MPa$")
 plt.subplot(339)
 plt.plot(t, PLC)
 plt.xlabel("time, days")
-plt.ylabel("PLC")
+plt.ylabel("PLC, %")
 
 # plt.figure()
 # plt.subplot(311)
