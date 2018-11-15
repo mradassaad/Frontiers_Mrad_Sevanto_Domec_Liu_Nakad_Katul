@@ -446,7 +446,7 @@ Hdj = 200  # kJ/mol
 Topt_j = 32.19 + 273.15  # K
 
 
-gamma = 0.003  # m/d
+gamma = 0.000  # m/d
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
@@ -539,7 +539,7 @@ def bc_wus(ya,yb):  # Water use strategy
 # t = np.linspace(0, days, 2000)
 Lambda = 580e-6*unit0 # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 10*np.ones((1, t.size))
+lam_guess = 5*np.ones((1, t.size))
 x_guess = 0.5*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
@@ -557,6 +557,8 @@ A_val = A(g_val(res.sol(t)[0]))
 
 psi_x = psi_sat * soilM_plot ** (-b)  # Soil water potential, MPa
 gl = g_val(res.sol(t)[0])  # leaf stomatal conductance, mol/m2/d
+
+ci = ca - A_val / gl # internal carbon concentration, mol/mol
 
 def psil_val(psi_l):
     return psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
