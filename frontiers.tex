@@ -103,7 +103,7 @@ where $x(t)$ is the soil moisture in $m^3m^{-3}$, R, E, and L are the rainfall i
 
 We consider the effect of a drydown on plant stomatal response. During a drydown, there is no rainfall input so $R=0$. The resulting form of Eqn. \ref{eqn:soil_water} is:
 \begin{equation}
-    \label{eeqn:soil_water_drydown}
+    \label{eqn:soil_water_drydown}
     \frac{dx(t)}{dt} = f = - \frac{1}{n Z_r}(E + L),
 \end{equation}
 where f is the combined losses through evapotranspiration and uncontrolled losses in $s^{-1}$.
@@ -140,7 +140,7 @@ In this work, we approximate the vulnerability curve of the whole hydraulic path
     \label{eqn:Weibull}
     g_{p} = g_{p,max}exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big],
 \end{equation}
-where $g_{p}$ is the hydraulic conductivity of the plant hydraulic pathway, and $g_{p,max}$ is its maximum value that corresponds to a plant water potential of $\psi_{p}=0$. When $\psi_{p}=\psi_{63}$, $g_{p} = g_{p,max}(1-0.63) = 0.37g_{p,max}$. Finally, $c$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. To find $\psi_{p}$, we invoke the hydrostatic assumption which leads to $\psi_{p}=\frac{\psi{s}+\psi_leaf}{2}$.
+where $g_{p}$ is the hydraulic conductivity of the plant hydraulic pathway, and $g_{p,max}$ is its maximum value that corresponds to a plant water potential of $\psi_{p}=0$. When $\psi_{p}=\psi_{63}$, $g_{p} = g_{p,max}(1-0.63) = 0.37g_{p,max}$. Finally, $c$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. To find $\psi_{p}$, we invoke the hydrostatic assumption which leads to $\psi_{p}=\frac{\psi{s}+\psi_l}{2}$.
 
 At the soil level, knowing the soil moisture content, we use the formulation developed elsewhere \citep{Clapp1978} to compute the soil water potential:
 \begin{equation}
@@ -154,36 +154,52 @@ and the soil hydraulic conductivity:
 \end{equation}
 where $b$ is an empirical parameter dependent on the soil type. $\psi_{s,max}$ and $g_{s,max}$ are the soil water potential and hydraulic conductivity at saturation, respectively.
 
-
+At the leaf level, the conservation of water mass is invoked to obtain an expression for the leaf water potential $\psi_{l}$. At steady state, the water lost through the leaves is equal to that flowing through the plant water pathway, therefore:
+\begin{equation}
+    \label{eqn: mass_cons}
+    E = LAI g_l VPD = g_{p,max} exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big](\psi_s-\psi_l).
+\end{equation}
+Solving the above equation results in the value of $\psi_l$.
 
 \subsubsection{Optimization and delayed gains}
 
 To find the optimal trends of $g_s$ and $\psi_l$ with time at different environmental conditions, the method of calculus of variations is used to derive the necessary differential equations (Appendix A). The objective function $J$ in this situation is the following:
 \begin{equation}
     \label{eqn:objective}
-    J = \int_0^{T_f} A(g_s,T,R_{abs}) dt + J_{T_f},
+    J = \int_0^{T_f}\big[ A(g_l,T,R_{abs}) + \lambda f(x,g_l)\big] dt + J_{T_f},
 \end{equation}
 where $A$ is the instantaneous plant carbon gain in $molm^{-2}s^{-1}$. $T$ is the atmospheric temperature in $K$, considered equal to the leaf temperature (Appendix B) and $R_{abs}$ is the absorbed radiation in $Wm^{-2}$. $J_{T_f}$ is the carbon value of the terminal soil water moisture $x(T_f)$ prescribed as:
 \begin{equation}
     \label{eqn:terminal_gain}
     J_{T_f} = \Lambda x(T_f),
 \end{equation}
-where $\Lambda$ is a user-defined parameter, in $mol m^{-2}$, prescribing conservative water use strategy when it is large and aggressive water use when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants and. The presence of $J_{T_f}$ in Eqn. \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water.
+where $\Lambda$ is a user-defined parameter, in $mol m^{-2}$, prescribing conservative water use strategy when it is large and aggressive water use when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants and. The presence of $J_{T_f}$ in Eqn. \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water. The Lagrange multiplier $\lambda$ commonly referred to as the marginal water use efficiency (MWUE) and $f$ is the cost function obtained through eqn \ref{eqn:soil_water_drydown}.
 
+The optimal solution for the leaf stomatal conductance $g_l$ is obtained by solving the following simultaneous equations (Appendix A):
 
-
-The result is three equations for the soil moisture $x$, $g_s$, and a Lagrange multiplier $\lambda$ commonly referred to as the marginal water use efficiency (MWUE). 
+\begin{equation}
+    \label{eqn: dg}
+    \frac{\partial H}{\partial g} = \frac{\partial A}{\partial g} + \lambda \frac{\partial f}{\partial g}=0,
+\end{equation}
+\begin{equation}
+    \label{eqn: dlam}
+    \frac{d\lambda}{dt} = - \frac{\partial H}{\partial x} = - \lambda \frac{\partial f}{\partial x},
+\end{equation}
+in conjunction with eqn \ref{eqn:soil_water}.
 
 The work here neglects high-frequency (sub-minute time scale) changes in environmental variables such as temperature and wind as well as those happening over multiple months such as changes in leaf nitrogen. The are thought not to have an appreciable effect on stomatal control over the timescale of a few weeks that is considered.
 
-\subsection{Environmental data}
+By tweaking the prescribed vulnerability curve for the same long-term strategy ($\Lambda$), and vice versa, it is possible to discern their effect on optimal stomatal behavior. 
 
-The model required supplying environmental data acting as boundary conditions at the soil and leaf level. These are the initial soil water content ($x_0$), vapor pressure deficit ($VPD$), incident leaf shortwave radiation ($R_l$), and temperature ($T$) (see Table ).
+We assume this is the global maximum
 
-Additionally, different species are characterized by different leaf area index ($LAI$), soil hydraulic conductivity ($g_s$), root-trunk-branch conductivity ($g_t$), rooting depth ($Z_r$). The soil porosity is denoted as $n$.
+\subsection{Environmental data} 
+
+The model requires supplying environmental data acting as boundary conditions at the soil and leaf levels. These are the initial soil water content ($x_0$), vapor pressure deficit ($VPD$), incident leaf shortwave radiation ($R_l$), and temperature ($T$). We use the data provided by the FLUXNET project at the Blodgett forest. A drydown period starting on May 29, 2005 was chosen and the environmental variations over 20 days are averaged into one representative day. These conditions are then copied and tiled to however many days the optimization is running for. This allows isolating the plant hydraulic and strategy effects on stomatal behavior.
 
 \section{Results}
 
+Plant hydraulics, prescribed through a Vulnerability Curve (VC) decribing the combined behavior of the soil-root and root-leaf pathways, set a lower limit on the value of the marginal use efficiency $\lambda$ and accelerate its increase as the soil moisture content decreases.
 
 \section{Discussion}
 
