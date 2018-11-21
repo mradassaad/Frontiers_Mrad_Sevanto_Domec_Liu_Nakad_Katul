@@ -101,17 +101,6 @@ def A(t, gl, ca, k1_interp, k2_interp, cp_interp):
      ca: ambient CO2 mole fraction in the air in umol/mol
     cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol'''
 
-    # A = np.zeros(gl.size)
-    # gl_mask = ma.masked_less_equal(gl, 0)
-    # gl_valid = gl[~gl_mask.mask]
-    #
-    # k1 = J[~gl_mask.mask]/4  # mol/m2/d
-    # a2 = Kc[~gl_mask.mask] * (1 + Oi/Ko[~gl_mask.mask])  # mol/mol
-    # k2 = (J[~gl_mask.mask] / 4) * a2 / Vmax[~gl_mask.mask]  # mol/mol
-    # delta = np.sqrt((k2 + ca + k1/gl_valid) ** 2 -
-    #                 4 * k1 * (ca - cp[~gl_mask.mask]) / gl_valid)  # mol/mol
-    #
-    # A[~gl_mask.mask] = 0.5 * (k1 + gl_valid * (ca + k2) - gl_valid * delta)  # mol/m2/d
 
     delta = np.sqrt(((k2_interp(t) + ca) * gl + k1_interp(t)) ** 2 -
                     4 * k1_interp(t) * (ca - cp_interp(t)) * gl)  # mol/mol

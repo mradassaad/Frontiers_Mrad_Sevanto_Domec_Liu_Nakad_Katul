@@ -73,7 +73,7 @@ def dydt(t, y):
 
     # ----------------------------------- Find conduction maximum of plant ------------------------
     with warnings.catch_warnings():
-        warnings.filterwarnings('error',category=RuntimeWarning)
+        warnings.filterwarnings('error', category=RuntimeWarning)
         try:
             res_fsolve = root(psil_val, psi_x+1, args=(psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t), method='broyden1')
         except RuntimeWarning:

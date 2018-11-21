@@ -29,10 +29,9 @@ z_r = 0.3  # m
 lai = 1.5
 m_w = 0.018  # kg/mol
 rho_w = 1000  # kg/m3
-t_day = 1  # day/day
-nu = lai * m_w * t_day / rho_w  # m3/mol
+nu = lai * m_w / rho_w  # m3/mol
 
-unit0 = 24 * 3600 * t_day  # 1/s -> 1/d
+unit0 = 24 * 3600   # 1/s -> 1/d
 unit1 = 10 ** 3 * nu / (n * z_r)  # mol/m2 -> mmol/mol
 unit2 = 18 * 1e-6  # mol H2O/m2/s ->  m/s
 unit3 = 1e6  # Pa -> MPa
@@ -51,13 +50,14 @@ Topt_j = 32.19 + 273.15  # K
 
 
 gamma = 0.000  # m/d
+c = 1
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
-ca = 350 * 1e-6 # mol/mol
+ca = 350 * 1e-6  # mol/mol
 a = 1.6
 
-c = 1
+
 beta = gamma / (n * z_r)  # 1/d
 alpha = nu * a / (n * z_r)  # m2/mol
 
