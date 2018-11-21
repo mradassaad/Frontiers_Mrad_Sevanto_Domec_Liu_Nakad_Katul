@@ -215,3 +215,23 @@ def transpiration(psi_l, psi_x, psi_63, w_exp, Kmax):
 def trans_opt(psi_l, psi_x, psi_63, w_exp, Kmax):
 
     return - transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
+
+
+def dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
+    """
+
+    :param psi_l:
+    :param x:
+    :param psi_sat:
+    :param psi_63:
+    :param w_exp:
+    :param Kmax:
+    :return: dEdx in mol/m2/d
+    """
+    psi_x = psi_sat * x ** (-b)  # Soil water potential, MPa
+    psi_p = (psi_x + psi_l) / 2  # plant water potential, MPa
+    dpsi_xdx = psi_sat * (-b) * x ** (-b - 1)
+
+    dEdx = - Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
+           (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
+    return dEdx

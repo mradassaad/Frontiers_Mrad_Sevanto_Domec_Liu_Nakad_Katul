@@ -22,7 +22,11 @@ drydownid = 2
 drydown = Interstorm(df, drydownid)  # data during the 2nd dry down period
 
 Oi = 210e-3  # mol/mol
+# vpd = 0.015  # mol/mol
+# k = 0.05 * unit0  # mol/m2/day
 
+ca = 350 * 1e-6  # mol/mol
+a = 1.6
 #%%----------------------------PLANT CONSTANTS-------------------------
 n = 0.5  # m3/m3
 z_r = 0.3  # m
@@ -48,28 +52,25 @@ Haj = 43.79  # kJ/mol
 Hdj = 200  # kJ/mol
 Topt_j = 32.19 + 273.15  # K
 
-
-gamma = 0.000  # m/d
-c = 1
-# vpd = 0.015  # mol/mol
-# k = 0.05 * unit0  # mol/m2/day
-
-ca = 350 * 1e-6  # mol/mol
-a = 1.6
-
-
-beta = gamma / (n * z_r)  # 1/d
-alpha = nu * a / (n * z_r)  # m2/mol
-
-
 # ------------------ Soil Properties -----------------
 
 psi_sat = 21.8e-4  # Soil water potential at saturation, MPa
 b = 4.9  # other parameter
 
+gamma = 0.000  # m/d
+c = 1
+
+# --- Using the Campbell(1974) equations, comment out next two lines if don't want
+
+# gamma = 20.8e-2 * 24 * 60  # m/d
+# c = 2*b+3
+
+beta = gamma / (n * z_r)  # 1/d
+alpha = nu * a / (n * z_r)  # m2/mol
+
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 4  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
 

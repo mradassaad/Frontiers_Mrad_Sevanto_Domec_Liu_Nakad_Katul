@@ -10,6 +10,7 @@ from scipy import optimize
 import warnings
 from Plant_Env_Props import*
 from Useful_Funcs import*
+from scipy.optimize import minimize
 import operator
 from datetime import datetime
 import glob
@@ -139,121 +140,145 @@ def dydt(t, y):
 
 # ------------------------OPT Boundary Conditions----------------
 
-
 def bc(ya, yb):  # boundary imposed on x at t=T
     x0 = 0.5
-    return np.array([ya[1] - x0, yb[1] - 0.26])
+    return np.array([ya[1] - x0, yb[1] - 0.4])
 
 
-def bc_wus(ya,yb):  # Water use strategy
-    x0 = 0.5
+def bc_wus(ya, yb):  # Water use strategy
+    x0 = 0.43
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
 # t = np.linspace(0, days, 2000)
-Lambda = 580e-6*unit0 # mol/m2
+maxLam = 763e-6*unit0
+Lambda = maxLam*0.8 # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 5*np.ones((1, t.size))
-x_guess = 0.5*np.ones((1, t.size))
+lam_guess = 5*np.ones((1, t.size))# mol/m2
+x_guess = 0.45*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 try:
-    res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
+    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
-    print('Try reducing initial guess for lambda')
+    print('Try reducing initial guess for lambdba')
     import sys
     sys.exit()
 
 lam_plot = res.y[0]*unit1
 soilM_plot = res.y[1]
 
-gl = g_val(res.x, res.y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # leaf stomatal conductance, mol/m2/d
+gl = g_val(res.x, res.y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # stomatal conductance, mol/m2/d
 
-A_val = A(res.x, gl, ca, k1_interp, k2_interp, cp_interp)
+A_val = A(res.x, gl, ca, k1_interp, k2_interp, cp_interp)  # mol/m2/d
 
 psi_x = psi_sat * soilM_plot ** (-b)  # Soil water potential, MPa
 
 
-ci = ca - A_val / gl # internal carbon concentration, mol/mol
+ci = ca - A_val / gl  # internal carbon concentration, mol/mol
 
-def psil_val(psi_l):
-    return psi_l - lai * gl * VPDinterp(res.x) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
-
-psi_l = fsolve(psil_val, psi_x + 1)
-
+psi_l_res = root(psil_val, psi_x+1, args=(psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, res.x), method='broyden1')
+psi_l = psi_l_res.x
 psi_p = 0.5 * (psi_x + psi_l)
 PLC = 100 * (1 - np.exp(- (psi_p / psi_63) ** w_exp))
 
 E = transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
 f = - (beta * soilM_plot + alpha * E / lai)
-objective_term_1 = np.sum(np.diff(res.x) * (A_val[:-1] + res.y[0][:-1] * f[:-1]))  # mol/m2
+objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
 
+H = A_val + res.y[0]*f  # mol/m2/d
 
-plt.figure()
-plt.subplot(331)
-plt.plot(res.x, lam_plot)
-#plt.xlabel("days")
-plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
-
-plt.subplot(332)
-plt.plot(res.x, soilM_plot)
-# plt.xlabel("time, days")
-plt.ylabel("$x(t)$")
-
-plt.subplot(333)
-plt.plot(res.x, gl / unit0)
-plt.xlabel("time, days")
-plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
-
-
-plt.subplot(334)
-plt.plot(res.x, A_val * 1e6 / unit0)
-# plt.xlabel("time, days")
-plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
-
-plt.subplot(335)
-plt.plot(res.x, (E * alpha / lai))
-# plt.xlabel("time, days")
-plt.ylabel("$E$")
-
-plt.subplot(336)
-plt.plot(res.x, psi_x)
-# plt.xlabel("time, days")
-plt.ylabel("$\psi_x, MPa$")
-
-plt.subplot(337)
-plt.plot(res.x, psi_l)
-plt.xlabel("time, days")
-plt.ylabel("$\psi_l, MPa$")
-
-plt.subplot(338)
-plt.plot(res.x, psi_p)
-plt.xlabel("time, days")
-plt.ylabel("$\psi_p, MPa$")
-
-plt.subplot(339)
-plt.plot(res.x, PLC)
-plt.xlabel("time, days")
-plt.ylabel("PLC, %")
+# --- for debugging and insight
 
 # plt.figure()
-# plt.subplot(311)
-# plt.plot(t, VPD)
+# plt.subplot(331)
+# plt.plot(res.x, lam_plot)
 # #plt.xlabel("days")
-# plt.ylabel("$VPD, mol/mol$")
+# plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
 #
-# plt.subplot(312)
-# plt.plot(t, TEMP)
-# plt.ylabel("$T, K$")
+# plt.subplot(332)
+# plt.plot(res.x, soilM_plot)
+# # plt.xlabel("time, days")
+# plt.ylabel("$x(t)$")
 #
-# plt.subplot(313)
-# plt.plot(t, PAR)
+# plt.subplot(333)
+# plt.plot(res.x, gl / unit0)
 # plt.xlabel("time, days")
-# plt.ylabel("$PAR, umol.m^{-2}.s^{-1}$")
+# plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+#
+#
+# plt.subplot(334)
+# plt.plot(res.x, A_val * 1e6 / unit0)
+# # plt.xlabel("time, days")
+# plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
+#
+# plt.subplot(335)
+# plt.plot(res.x, (E * alpha / lai))
+# # plt.xlabel("time, days")
+# plt.ylabel("$E, d^{-1}$")
+#
+# plt.subplot(336)
+# plt.plot(res.x, psi_x)
+# # plt.xlabel("time, days")
+# plt.ylabel("$\psi_x, MPa$")
+#
+# plt.subplot(337)
+# plt.plot(res.x, psi_l)
+# plt.xlabel("time, days")
+# plt.ylabel("$\psi_l, MPa$")
+#
+# plt.subplot(338)
+# plt.plot(res.x, psi_p)
+# plt.xlabel("time, days")
+# plt.ylabel("$\psi_p, MPa$")
+#
+# plt.subplot(339)
+# plt.plot(res.x, PLC)
+# plt.xlabel("time, days")
+# plt.ylabel("PLC, %")
+
+# --- Fig1b
+
+timeOfDay = 14.5/24
+
+env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
+                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
+xvals = soilM_plot
+psi_x_vals = psi_sat * xvals ** -b
+psi_l_vals = np.zeros(xvals.shape)
+trans_vals = np.zeros(xvals.shape)
+
+i = 0
+for x in xvals:
+    OptRes = minimize(trans_opt, psi_x_vals[i], args=(psi_x_vals[i], psi_63, w_exp, Kmax))
+    psi_l_vals[i] = OptRes.x
+    trans_vals[i] = transpiration(OptRes.x, psi_x_vals[i], psi_63, w_exp, Kmax)
+    i += 1
 
 
+def lam(trans, ca, alpha, cp, VPD, k1, k2):
+    gl_vals = trans / (VPD * lai)
+    part11 = ca ** 2 * gl_vals + 2 * cp * k1 - ca * (k1 - 2 * gl_vals * k2) + k2 * (k1 + gl_vals * k2)
+    part12 = np.sqrt(4 * (cp - ca) * gl_vals * k1 + (k1 + gl_vals * (ca + k2)) ** 2)
+    part1 = part11 / part12
+
+    part2 = ca + k2
+
+    part3 = 2 * VPD * alpha
+    return (part2 - part1) / part3
 
 
+lam_low = lam(trans_vals, ca, alpha, env_data[0], env_data[1], env_data[2], env_data[3])
+
+timeOfDay = 12/24
+env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
+                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
+lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / alpha
+
+fig, ax = plt.subplots()
+lam_line = ax.plot(res.x, lam_plot)
+lam_low_line = ax.plot(res.x, lam_low*unit1, 'r:')
+lam_high_line = ax.plot(res.x, lam_up*unit1, 'r:')

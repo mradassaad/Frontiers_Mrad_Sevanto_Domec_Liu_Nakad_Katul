@@ -8,11 +8,11 @@ import matplotlib.pyplot as plt
 
 # -------- Compute hydraulic limitations on Lambda
 
-sample_times = np.array([0, 6/24, 12/24, 18/24])
+sample_times = np.array([0, 6/24, 12/24, 14.5/24])
 env_data = np.array([cp_interp(sample_times), VPDinterp(sample_times),
                      k1_interp(sample_times), k2_interp(sample_times)])
 
-xvals = np.arange(0.2, 0.5, 0.01)
+xvals = np.arange(0.3, 0.5, 0.01)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
@@ -83,9 +83,9 @@ for x in xvals:
 
 lam_val_S = lam(trans_vals, ca, alpha, env_data[0, 2], env_data[1, 2], env_data[2, 2], env_data[3, 2])
 
-# lam_upper_1 = np.ones(lam_val_1.shape) * (ca - env_data[0, 1]) / env_data[1, 1] / alpha
-# lam_upper_2 = np.ones(lam_val_1.shape) * (ca - env_data[0, 2]) / env_data[1, 2] / alpha
-# lam_upper_3 = np.ones(lam_val_1.shape) * (ca - env_data[0, 3]) / env_data[1, 3] / alpha
+lam_upper_1 = np.ones(lam_val_1.shape) * (ca - env_data[0, 1]) / env_data[1, 1] / alpha
+lam_upper_2 = np.ones(lam_val_1.shape) * (ca - env_data[0, 2]) / env_data[1, 2] / alpha
+lam_upper_3 = np.ones(lam_val_1.shape) * (ca - env_data[0, 3]) / env_data[1, 3] / alpha
 
 xax = psi_x_vals
 
@@ -98,6 +98,7 @@ line_low, = ax.plot(xax, lam_val_low*unit1, 'r--', label='$\psi_{63}=2.5$, $s=2$
 line_high, = ax.plot(xax, lam_val_high*unit1, 'r:', label='$\psi_{63}=4$, $s=2$')
 line_R, = ax.plot(xax, lam_val_R*unit1, 'b-', label='$\psi_{63}=3$, $s=1$')
 line_S, = ax.plot(xax, lam_val_S*unit1, 'k-', label='$\psi_{63}=3$, $s=3$')
+# line_upper, = plt.plot(xax, lam_upper_2*unit1, 'g^')
 ax.set_xlabel("Soil water potential, $\psi_x$", FontSize=16)
 ax.set_ylabel("$\lambda$ lower bound, $\lambda_{lower}$, $mol.m^{-2}$", FontSize=16)
 plt.setp(ax.get_xticklabels(), FontSize=12)
@@ -114,9 +115,9 @@ plt.grid(False)
 
 
 # plt.figure()
-# plt.plot(xvals, lam_upper_1, 'b-', label='06:00')
-# plt.plot(xvals, lam_upper_2, 'r--', label='12:00')
-# plt.plot(xvals, lam_upper_3, 'y:', label='18:00')
+# plt.plot(xvals, lam_upper_1*unit1, 'b-', label='06:00')
+# plt.plot(xvals, lam_upper_2*unit1, 'r--', label='12:00')
+# plt.plot(xvals, lam_upper_3*unit1, 'y:', label='18:00')
 # plt.xlabel("Soil Moisture, x")
 # plt.ylabel("$\lambda$ upper bound, $\lambda_{upper}$, $mol.m^{-2}$")
 # plt.legend()
