@@ -57,12 +57,12 @@ Topt_j = 32.19 + 273.15  # K
 psi_sat = 21.8e-4  # Soil water potential at saturation, MPa
 b = 4.9  # other parameter
 
-# gamma = 0.000  # m/d
-# c = 1
+gamma = 0.000  # m/d
+c = 1
 
 # --- Using the Campbell(1974) equations, comment out next two lines if don't want
 
-gamma = 20.8e-2 * 24 * 60  # m/d
+gamma = 20.8e-2 * 24 * 60 / 100  # m/d
 c = 2*b+3
 
 beta = gamma / (n * z_r)  # 1/d
@@ -95,7 +95,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 10
+days = 9
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)

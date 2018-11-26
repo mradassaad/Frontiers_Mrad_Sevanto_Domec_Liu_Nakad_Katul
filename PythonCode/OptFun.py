@@ -141,12 +141,12 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.5
-    return np.array([ya[1] - x0, yb[1] - 0.4])
+    x0 = 0.42
+    return np.array([ya[1] - x0, yb[1] - 0.28])
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.43
+    x0 = 0.5
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
@@ -160,7 +160,7 @@ x_guess = 0.45*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 try:
-    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
+    res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
     print('Try reducing initial guess for lambdba')
     import sys
@@ -193,52 +193,52 @@ H = A_val + res.y[0]*f  # mol/m2/d
 
 # --- for debugging and insight
 
-# plt.figure()
-# plt.subplot(331)
-# plt.plot(res.x, lam_plot)
-# #plt.xlabel("days")
-# plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
-#
-# plt.subplot(332)
-# plt.plot(res.x, soilM_plot)
-# # plt.xlabel("time, days")
-# plt.ylabel("$x(t)$")
-#
-# plt.subplot(333)
-# plt.plot(res.x, gl / unit0)
+plt.figure()
+plt.subplot(331)
+plt.plot(res.x, lam_plot)
+#plt.xlabel("days")
+plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
+
+plt.subplot(332)
+plt.plot(res.x, soilM_plot)
 # plt.xlabel("time, days")
-# plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
-#
-#
-# plt.subplot(334)
-# plt.plot(res.x, A_val * 1e6 / unit0)
-# # plt.xlabel("time, days")
-# plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
-#
-# plt.subplot(335)
-# plt.plot(res.x, (E * alpha / lai))
-# # plt.xlabel("time, days")
-# plt.ylabel("$E, d^{-1}$")
-#
-# plt.subplot(336)
-# plt.plot(res.x, psi_x)
-# # plt.xlabel("time, days")
-# plt.ylabel("$\psi_x, MPa$")
-#
-# plt.subplot(337)
-# plt.plot(res.x, psi_l)
+plt.ylabel("$x(t)$")
+
+plt.subplot(333)
+plt.plot(res.x, gl / unit0)
+plt.xlabel("time, days")
+plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+
+
+plt.subplot(334)
+plt.plot(res.x, A_val * 1e6 / unit0)
 # plt.xlabel("time, days")
-# plt.ylabel("$\psi_l, MPa$")
-#
-# plt.subplot(338)
-# plt.plot(res.x, psi_p)
+plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
+
+plt.subplot(335)
+plt.plot(res.x, (E * alpha * n * z_r / lai))
 # plt.xlabel("time, days")
-# plt.ylabel("$\psi_p, MPa$")
-#
-# plt.subplot(339)
-# plt.plot(res.x, PLC)
+plt.ylabel("$E, m.d^{-1}$")
+
+plt.subplot(336)
+plt.plot(res.x, psi_x)
 # plt.xlabel("time, days")
-# plt.ylabel("PLC, %")
+plt.ylabel("$\psi_x, MPa$")
+
+plt.subplot(337)
+plt.plot(res.x, psi_l)
+plt.xlabel("time, days")
+plt.ylabel("$\psi_l, MPa$")
+
+plt.subplot(338)
+plt.plot(res.x, psi_p)
+plt.xlabel("time, days")
+plt.ylabel("$\psi_p, MPa$")
+
+plt.subplot(339)
+plt.plot(res.x, PLC)
+plt.xlabel("time, days")
+plt.ylabel("PLC, %")
 
 # --- Fig1b
 
