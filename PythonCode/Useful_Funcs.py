@@ -235,3 +235,7 @@ def dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
     dEdx = - Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
            (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
     return dEdx
+
+def dtransdx_opt(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
+
+    return - dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax)
