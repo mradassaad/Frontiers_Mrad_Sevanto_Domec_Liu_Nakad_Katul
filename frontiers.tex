@@ -86,6 +86,8 @@ While the assumption that stomatal opening trends are controlled by plant hydrau
 
 The work here answers the following question: to what degree does water use strategy dictate stomatal control during dry-down? In a recent review of the theory of optimal stomatal control, \citet{Buckley2017} recognize the importance of delayed benefits such as keeping soil soil moisture at higher levels for future use. 
 
+The goal here is not to develop a stomatal prediction package but to explore whether plant hydraulic traits alone are capable of placing stomatal behavior anywhere on the iso- or aniso-hydry spectrum. 
+
 \section{Materials and Methods}
 
 \subsection{The model}
@@ -157,7 +159,10 @@ where $b$ is an empirical parameter dependent on the soil type. $\psi_{s,max}$ a
 At the leaf level, the conservation of water mass is invoked to obtain an expression for the leaf water potential $\psi_{l}$. At steady state, the water lost through the leaves is equal to that flowing through the plant water pathway, therefore:
 \begin{equation}
     \label{eqn: mass_cons}
-    E = LAI g_l VPD = g_{p,max} exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big](\psi_s-\psi_l).
+        \begin{split}
+        E & = \text{LAI }\, g_l\, \text{VPD} \\
+        & = g_{p,max}\, \text{exp}\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big](\psi_s-\psi_l) = g_p (\psi_s-\psi_l) .
+        \end{split}
 \end{equation}
 Solving the above equation results in the value of $\psi_l$.
 
@@ -199,23 +204,28 @@ The model requires supplying environmental data acting as boundary conditions at
 
 \section{Results}
 
-\begin{figure}[h!]
+\begin{figure}[t]
 \begin{center}
-\includegraphics[width=10cm]{Fig1.pdf}
+\includegraphics[width=10cm]{Fig1.eps}
 \end{center}
-\caption{ Enter the caption for your figure here.  Repeat as  necessary for each of your figures}\label{fig:1}
+\caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit on $\lambda$. These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:Weibull}). All of the shown curves are subject to environmental conditions at 12:00. The combination of VPD, temperature, and PAR at that time are the most stringent of any combination at another time throughout the day over the course of the considered drydown.}\label{fig:lam_lower}
 \end{figure}
 
-Plant hydraulics, prescribed through a Vulnerability Curve (VC) decribing the combined behavior of the soil-root and root-leaf pathways, set a lower limit on the value of the marginal use efficiency $\lambda$ and accelerate its increase as the soil moisture content decreases.
+Soil-to-leaf plant hydraulics, prescribed through a Vulnerability Curve (VC), set a lower limit on the value of the marginal use efficiency $\lambda$ and dictate its increase as the soil moisture content decreases.
 
+The former of these two effects is shown in figure \ref{fig:lam_lower} where the lower bound of $\lambda$ ($\lambda_{lower}$) is plotted as a functions of soil water potential. This arises from the solution of equation \ref{eqn: dg} upon replacing A using equation \ref{eqn:A_noci}. The solution provides an inverse functional relationship between $g_l$ and $\lambda$. At every $\psi_x$, equation \ref{eqn: mass_cons} is maximized to obtain an upper bound on $g_l$ which translates into a lower bound on $\lambda$. Because the maximum possible transpiration rate $E$ decreases as $\psi_x$ increases, $\lambda_{lower}$ increases with $\psi_x$.
+
+The latter of these two effects is imposed through equation \ref{eqn: dlam}. In the simple case where no uncontrolled losses from the soil are present, $f=-E$ and therefore $\frac{d\lambda}{dt}=\lambda \frac{\partial E}{\partial x}$. Taking the partial derivative by $x$ of equation \ref{eqn: mass_cons} yields the following positively valued equation:
+\begin{equation}
+    \frac{\partial E}{\partial x} = g_p \Big(-\frac{\partial \psi_x}{\partial x}\Big) \Big[\frac{1}{2} \frac{s}{\psi_{63}} \Big(\frac{\psi_p}{\psi_{63}}\Big)^{s-1} (\psi_l-\psi_x) + 1\Big]
+\end{equation}
 \section{Discussion}
 
-\subsection{Equations}
-Equations should be inserted in editable format from the equation editor.
+The purpose of this work is to elucidate the connection of stomatal response to plant hydraulics and water-use strategy. Plant hydraulics was shown to set a lower limit for the marginal water-use efficiency ($\lambda$) whereas the upper limit is set by a ratio of atmospheric supply of carbon to atmospheric demand of water (figure \ref{fig:lam_lower}).
 
-\begin{equation}
-\sum x+ y =Z\label{eq:01}
-\end{equation}
+Connecting the concepts of isohydry and anisohydry to plant hydraulics represents a crucial next step toward improving stomatal response modelling. 
+
+There is evidence for the evolutionary coordination between hydraulic traits and photosynthetic rate \citep{Scoffoni2016}. 
 
 \subsection{Figures}
 Frontiers requires figures to be submitted individually, in the same order as they are referred to in the manuscript. Figures will then be automatically embedded at the bottom of the submitted manuscript. Kindly ensure that each table and figure is mentioned in the text and in numerical order. Figures must be of sufficient resolution for publication \href{http://home.frontiersin.org/about/author-guidelines#ResolutionRequirements}{see here for examples and minimum requirements}. Figures which are not according to the guidelines will cause substantial delay during the production process. Please see \href{http://home.frontiersin.org/about/author-guidelines#GeneralStyleGuidelinesforFigures}{here} for full figure guidelines. Cite figures with subfigures as figure \ref{fig:2}B.
