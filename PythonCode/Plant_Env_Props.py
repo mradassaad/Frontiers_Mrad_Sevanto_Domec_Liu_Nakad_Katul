@@ -38,8 +38,10 @@ nu = lai * m_w / rho_w  # m3/mol
 unit0 = 24 * 3600   # 1/s -> 1/d
 unit1 = 10 ** 3 * nu / (n * z_r)  # mol/m2 -> mmol/mol
 unit2 = 18 * 1e-6  # mol H2O/m2/s ->  m/s
-unit3 = 1e6  # Pa -> MPa
+unit3 = 1e6  # 1/Pa -> 1/MPa
 unit4 = 273.15  # Degree C -> K
+unit5 = 3.6 * 24 * 9.81  # kg.s.m-3 of water -> m/d
+unit6 = 1e-3  # J/Kg of water to MPa
 atmP = 0.1013  # atmospheric pressure, MPa
 
 v_opt = 174.33  # umol/m2/s
@@ -54,15 +56,15 @@ Topt_j = 32.19 + 273.15  # K
 
 # ------------------ Soil Properties -----------------
 
-psi_sat = 21.8e-4  # Soil water potential at saturation, MPa
-b = 4.9  # other parameter
+psi_sat = 1.5 * unit6  # Soil water potential at saturation, MPa
+b = 3.1  # other parameter
 
 gamma = 0.000  # m/d
 c = 1
 
 # --- Using the Campbell(1974) equations, comment out next two lines if don't want
 
-gamma = 20.8e-2 * 24 * 60 / 100  # m/d
+gamma = 0.00072 * unit5  # m/d, for sandy loam page 130 Campbell and Norman
 c = 2*b+3
 
 beta = gamma / (n * z_r)  # 1/d
