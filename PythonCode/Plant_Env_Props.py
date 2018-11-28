@@ -29,7 +29,9 @@ ca = 350 * 1e-6  # mol/mol
 a = 1.6
 #%%----------------------------PLANT CONSTANTS-------------------------
 n = 0.5  # m3/m3
+d_r = 1e-3  # fine root diameter in meters
 z_r = 0.3  # m
+RAI = 10  # root area index
 lai = 1.5
 m_w = 0.018  # kg/mol
 rho_w = 1000  # kg/m3
@@ -74,7 +76,7 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
-Kmax = 2e-3 * unit0  # Maximum plant stem water conductivity, mol/m2/d/MPa
+Kmax = 4e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -97,7 +99,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 9
+days = 5
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)

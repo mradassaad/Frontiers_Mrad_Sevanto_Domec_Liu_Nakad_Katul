@@ -11,7 +11,7 @@ import warnings
 from Plant_Env_Props import*
 from Useful_Funcs import*
 from scipy.optimize import minimize
-import operator
+from scipy.misc import derivative
 from datetime import datetime
 import glob
 
@@ -75,12 +75,14 @@ def dydt(t, y):
     # ----------------------------------- Find conduction maximum of plant ------------------------
     with warnings.catch_warnings():
         warnings.filterwarnings('error', category=RuntimeWarning)
-        try:
-            res_fsolve = root(psil_val, psi_x+1, args=(psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t), method='broyden1')
-        except RuntimeWarning:
-            print('stomatal conductance exceeds transpiration capacity: increase lam guess or no sols')
-            import sys
-            sys.exit()
+        # try:
+        res_fsolve = root(psil_val, psi_x+1,
+                            args=(y[1], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, gl, lai, VPDinterp, t),
+                            method='broyden1')
+        # except RuntimeWarning:
+        #     print('stomatal conductance exceeds transpiration capacity: increase lam guess or no sols')
+        #     import sys
+        #     sys.exit()
 
     psi_l = res_fsolve.x
 
@@ -92,13 +94,15 @@ def dydt(t, y):
     #         (np.log(Kmax / (gl[~gl_mask.mask] * VPDinterp(t[~gl_mask.mask])))) **\
     #         (1 / w_exp) - psi_x[~gl_mask.mask]  # leaf water pot, MPa
 
-    psi_p = (psi_x + psi_l) / 2  # plant water potential, MPa
+    # psi_p = (psi_x + psi_l) / 2  # plant water potential, MPa
+    # psi_p = psi_l
 
-    dpsi_xdx = psi_sat * (-b) * y[1] ** (-b - 1)
-    # dgldx = - Kmax / lai / VPDinterp(t) * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
-    #         (0.5 * w_exp / psi_63 * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
-    dEdx = - alpha / lai * Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) *\
-           (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp-1) * (psi_l - psi_x) + 1)  # mol/m2/d
+    # dpsi_xdx = psi_sat * (-b) * y[1] ** (-b - 1)
+
+    # dEdx = - alpha  * Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) *\
+    #        (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp-1) * (psi_l - psi_x) + 1)  # m/d
+    f = lambda xx: transpiration(psi_l, xx, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)[0]
+    dEdx = derivative(f, y[1], dx=1e-5) * alpha  # 1/d
     # dEdx = alpha * VPDinterp(t) * dgldx
     # --------------- cost of sucking water through the plant stem, dAdx ---------------------
     dAdx = 0
@@ -141,28 +145,28 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.42
-    return np.array([ya[1] - x0, yb[1] - 0.28])
+    x0 = 0.5
+    return np.array([ya[1] - x0, yb[1] - 0.43])
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.5
+    x0 = 0.42
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 
 # t = np.linspace(0, days, 2000)
 maxLam = 763e-6*unit0
-Lambda = maxLam*0.8 # mol/m2
+Lambda = maxLam*0.9  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 5*np.ones((1, t.size))# mol/m2
-x_guess = 0.45*np.ones((1, t.size))
+lam_guess = 20*np.ones((1, t.size))  # mol/m2
+x_guess = 0.47*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 try:
     res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
-    print('Try reducing initial guess for lambdba')
+    print('Try reducing initial guess for lambda')
     import sys
     sys.exit()
 
@@ -180,10 +184,13 @@ ci = ca - A_val / gl  # internal carbon concentration, mol/mol
 
 psi_l_res = root(psil_val, psi_x+1, args=(psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, res.x), method='broyden1')
 psi_l = psi_l_res.x
-psi_p = 0.5 * (psi_x + psi_l)
+
+E = transpiration(psi_l, res.y[1], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
+psi_r = E[1]
+E = E[0]
+psi_p = (psi_l + psi_r) / 2
 PLC = 100 * (1 - np.exp(- (psi_p / psi_63) ** w_exp))
 
-E = transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
 f = - (beta * soilM_plot + alpha * E / lai)
 objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
@@ -255,7 +262,7 @@ i = 0
 for x in xvals:
     OptRes = minimize(trans_opt, psi_x_vals[i], args=(psi_x_vals[i], psi_63, w_exp, Kmax))
     psi_l_vals[i] = OptRes.x
-    trans_vals[i] = transpiration(OptRes.x, psi_x_vals[i], psi_63, w_exp, Kmax)
+    trans_vals[i] = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
     i += 1
 
 

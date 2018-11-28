@@ -1,5 +1,5 @@
 import numpy as np
-from scipy import optimize
+from scipy.optimize import root
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -192,24 +192,49 @@ def g_val(t, lam, ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp):
     return gl
 
 
-def psil_val(psi_l, psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t):
+def psil_val(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, gl, lai, VPDinterp, t):
     # psi_l_mask = ma.masked_greater_equal(psi_l, psi_x)
     # f_psi_l = np.zeros(psi_l.size)
     # temp = psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
     #
     # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
 
+    trans_res = transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
+
     if np.any(
-            np.logical_not(np.isfinite(transpiration(psi_l, psi_x, psi_63, w_exp, Kmax) - lai * gl * VPDinterp(t)))):
+            np.logical_not(np.isfinite(trans_res[0] - lai * gl * VPDinterp(t)))):
         raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
 
-    return transpiration(psi_l, psi_x, psi_63, w_exp, Kmax) - lai * gl * VPDinterp(t)
-    # return f_psi_l
+    return trans_res[0] - lai * gl * VPDinterp(t)
 
 
-def transpiration(psi_l, psi_x, psi_63, w_exp, Kmax):
+def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI):
+    """
+
+    :param psi_l: leaf water potential in MPa
+    :param x: Soil moisture in m3/m3
+    :param psi_sat: Soil saturation pressure in MPa
+    :param gamma: Saturated soil hydraulic conductivity in m/d
+    :param b: Soil retention curve exponent
+    :param psi_63: Weibull parameter in MPa
+    :param w_exp: Weibull exponent
+    :param Kmax: leaf area-averaged plant hydraulic conductivity in mol/m2/MPa/d
+    :param d_r: diameter of fine roots in meters
+    :param z_r: rooting depth in meters
+    :param RAI: Root Area Index in m/m
+    :return: transpiration rate in mol/m2/d
+    """
+    psi_x = psi_sat * x ** -b
+
+    res = root(lambda psi_r: (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI) -
+                            (psi_l - psi_x) * (plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax) ** (-1) +
+                                               gSR_val(x, gamma, b, d_r, z_r, RAI) ** (-1)) ** (-1),
+                psi_x + 1, method='broyden1')
+
+    psi_r = res.get('x')
+
     #  returns transpiration in mol/m2/d
-    return (psi_l - psi_x) * (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp))
+    return (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI), psi_r
 
 
 def trans_opt(psi_l, psi_x, psi_63, w_exp, Kmax):
@@ -239,3 +264,48 @@ def dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
 def dtransdx_opt(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
 
     return - dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax)
+
+
+def psi_r_val(psi_x, gSR, transpiration):
+    """
+
+    :param psi_x: Soil water potential in MPa
+    :param gSR: Soil to root conductivity in mol/m2/MPa/d
+    :param transpiration: transpiration in mol/m2/d
+    :return: root water potential in MPa
+    """
+    return psi_x + transpiration / gSR
+
+
+def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax):
+    """
+
+    :param psi_r: root water potential in MPa
+    :param psi_l: leaf water potential in MPa
+    :param psi_63: Weibull parameter in MPa
+    :param w_exp: Weibull exponent
+    :param Kmax: Saturated plant leaf area-average conductivity in mol/m2/MPa/d
+    :return: Unsaturated plant leaf area-average conductivity in mol/m2/MPa/d
+    """
+    return Kmax * np.exp(- (0.5 * (psi_r + psi_l) / psi_63) ** w_exp)
+
+def gSR_val(x, gamma, b, d_r, z_r, RAI):
+    """
+
+    :param x: Soil moisture in m3.m-3
+    :param gamma: Saturated hydraulic conductivity of soil in m.d-1
+    :param b: exponent of relation
+    :param d_r: diameter of fine roots in meters
+    :param z_r: rooting depth in meters
+    :param RAI: Root Area Index in m/m
+    :return: soil to root hydraulic conductivity in mol/m2/MPa/d
+    """
+    lSR = np.sqrt(d_r * z_r / RAI)
+    ks = gamma * x ** (2*b+3)  # Unsaturated hydraulic conductivity of soil in m/d
+    unit = 24 * 3600  # 1/s -> 1/d
+    grav = 9.81  # gravitational acceleration in N/Kg
+    M_w = 0.018  # molar mass of water in Kg/mol
+    gSR = ks / unit / grav / lSR  # kg/N/s
+    gSR *= 1e6 * M_w  # mol/MPa/m2/s
+    gSR *= unit  # mol/MPa/m2/d
+    return gSR
