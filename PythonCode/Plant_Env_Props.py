@@ -74,7 +74,7 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 2  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
 Kmax = 4e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 
@@ -99,7 +99,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 5
+days = 7
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)

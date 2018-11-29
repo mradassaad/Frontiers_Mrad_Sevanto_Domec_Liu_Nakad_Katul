@@ -192,23 +192,32 @@ def g_val(t, lam, ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp):
     return gl
 
 
-def psil_val(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, gl, lai, VPDinterp, t):
+def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t, reversible=0):
     # psi_l_mask = ma.masked_greater_equal(psi_l, psi_x)
     # f_psi_l = np.zeros(psi_l.size)
     # temp = psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
     #
     # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
 
-    trans_res = transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
+    trans_res = (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
 
     if np.any(
-            np.logical_not(np.isfinite(trans_res[0] - lai * gl * VPDinterp(t)))):
+            np.logical_not(np.isfinite(trans_res - lai * gl * VPDinterp(t)))):
         raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
 
-    return trans_res[0] - lai * gl * VPDinterp(t)
+    return trans_res - lai * gl * VPDinterp(t)
 
 
-def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI):
+def psi_r_val(x, psi_sat, gamma, b, d_r, z_r, RAI, gl, lai, VPDinterp, t):
+
+    psi_x = psi_sat * x ** -b
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)
+    trans = lai * gl * VPDinterp(t)
+    return psi_x + trans / gSR
+
+
+
+def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
     """
 
     :param psi_l: leaf water potential in MPa
@@ -226,9 +235,9 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     """
     psi_x = psi_sat * x ** -b
 
+
     res = root(lambda psi_r: (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI) -
-                            (psi_l - psi_x) * (plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax) ** (-1) +
-                                               gSR_val(x, gamma, b, d_r, z_r, RAI) ** (-1)) ** (-1),
+                            (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible),
                 psi_x + 1, method='broyden1')
 
     psi_r = res.get('x')
@@ -237,47 +246,25 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     return (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI), psi_r
 
 
-def trans_opt(psi_l, psi_x, psi_63, w_exp, Kmax):
+def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
 
-    return - transpiration(psi_l, psi_x, psi_63, w_exp, Kmax)
-
-
-def dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
-    """
-
-    :param psi_l:
-    :param x:
-    :param psi_sat:
-    :param psi_63:
-    :param w_exp:
-    :param Kmax:
-    :return: dEdx in mol/m2/d
-    """
-    psi_x = psi_sat * x ** (-b)  # Soil water potential, MPa
-    psi_p = (psi_x + psi_l) / 2  # plant water potential, MPa
-    dpsi_xdx = psi_sat * (-b) * x ** (-b - 1)
-
-    dEdx = - Kmax * dpsi_xdx * np.exp(-(psi_p / psi_63) ** w_exp) * \
-           (0.5 * (w_exp / psi_63) * (psi_p / psi_63) ** (w_exp - 1) * (psi_l - psi_x) + 1)  # mol/m2/d
-    return dEdx
-
-def dtransdx_opt(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax):
-
-    return - dtransdx(psi_l, x, psi_sat, b, psi_63, w_exp, Kmax)
+    return - transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
 
 
-def psi_r_val(psi_x, gSR, transpiration):
-    """
+def dtransdx(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
 
-    :param psi_x: Soil water potential in MPa
-    :param gSR: Soil to root conductivity in mol/m2/MPa/d
-    :param transpiration: transpiration in mol/m2/d
-    :return: root water potential in MPa
-    """
-    return psi_x + transpiration / gSR
+    psi_x = psi_sat * x ** -b
+    dpsi_xdx = -b * psi_sat * x ** (-b-1)
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)
+    dgSR_dx = dgSR_dx_val(x, gamma, b, d_r, z_r, RAI)
+    psi_r = transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[1]
+    ktot = (plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible) ** -1 + gSR_val(x, gamma, b, d_r, z_r, RAI) ** -1) ** -1
+    dEdx = - dpsi_xdx * ktot + (psi_l - psi_x) * dgSR_dx * ktot ** 2 / (gSR ** 2)
+
+    return dEdx  # mol/m2/d
 
 
-def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax):
+def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax , reversible=0):
     """
 
     :param psi_r: root water potential in MPa
@@ -287,7 +274,16 @@ def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax):
     :param Kmax: Saturated plant leaf area-average conductivity in mol/m2/MPa/d
     :return: Unsaturated plant leaf area-average conductivity in mol/m2/MPa/d
     """
-    return Kmax * np.exp(- (0.5 * (psi_r + psi_l) / psi_63) ** w_exp)
+    cond_pot = Kmax * np.exp(- (0.5 * (psi_r + psi_l) / psi_63) ** w_exp)
+
+    if reversible:
+        return cond_pot
+    else:
+
+        cond_pot = np.minimum.accumulate(cond_pot)
+
+        return cond_pot
+
 
 def gSR_val(x, gamma, b, d_r, z_r, RAI):
     """
@@ -306,6 +302,27 @@ def gSR_val(x, gamma, b, d_r, z_r, RAI):
     grav = 9.81  # gravitational acceleration in N/Kg
     M_w = 0.018  # molar mass of water in Kg/mol
     gSR = ks / unit / grav / lSR  # kg/N/s
-    gSR *= 1e6 * M_w  # mol/MPa/m2/s
+    gSR *= 1e6 / M_w  # mol/MPa/m2/s
     gSR *= unit  # mol/MPa/m2/d
     return gSR
+
+def dgSR_dx_val(x, gamma, b, d_r, z_r, RAI):
+    """
+
+    :param x: Soil moisture in m3.m-3
+    :param gamma: Saturated hydraulic conductivity of soil in m.d-1
+    :param b: exponent of relation
+    :param d_r: diameter of fine roots in meters
+    :param z_r: rooting depth in meters
+    :param RAI: Root Area Index in m/m
+    :return: partial derivative of the soil to root hydraulic conductivity wrt x in mol/m2/MPa/d
+    """
+    lSR = np.sqrt(d_r * z_r / RAI)
+    dks_dx = (2*b+3) * gamma * x ** (2*b+2)  # Partial derivative of unsaturated hydraulic conductivity of soil in m/d
+    unit = 24 * 3600  # 1/s -> 1/d
+    grav = 9.81  # gravitational acceleration in N/Kg
+    M_w = 0.018  # molar mass of water in Kg/mol
+    dgSR = dks_dx / unit / grav / lSR  # kg/N/s
+    dgSR *= 1e6 / M_w  # mol/MPa/m2/s
+    dgSR *= unit  # mol/MPa/m2/d
+    return dgSR
