@@ -2,6 +2,7 @@ import numpy as np
 import pandas as pd
 from Useful_Funcs import*
 from scipy.interpolate import interp1d
+from scipy.optimize import minimize
 
 # read FluxNet forcings and MODIS LAI
 fill_NA = -9999
@@ -66,7 +67,7 @@ c = 1
 
 # --- Using the Campbell(1974) equations, comment out next two lines if don't want
 
-gamma = 0.00072 * unit5  # m/d, for sandy loam page 130 Campbell and Norman
+gamma = 0.00072 * unit5   # m/d, for sandy loam page 130 Campbell and Norman
 c = 2*b+3
 
 beta = gamma / (n * z_r)  # 1/d
@@ -74,9 +75,32 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 2  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
-Kmax = 4e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
+Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
+reversible = 1
+# ----------------- Compute transpiration maxima -----------
+
+xvals = np.arange(0.1, 0.8, 0.01)
+psi_x_vals = psi_sat * xvals ** -b
+psi_l_vals = np.zeros(xvals.shape)
+psi_r_vals = np.zeros(xvals.shape)
+trans_vals = np.zeros(xvals.shape)
+i = 0
+for x in xvals:
+    OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
+    psi_l_vals[i] = OptRes.x
+    trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
+    trans_vals[i] = trans_res[0]
+    psi_r_vals[i] = trans_res[1]
+    i += 1
+
+trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')
+psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
+psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
+
+dtrans_max_dx = np.gradient(trans_vals, psi_x_vals)
+dtrans_max_dx_interp = interp1d(psi_x_vals, dtrans_max_dx, kind='cubic')
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -99,7 +123,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 7
+days = 10
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)

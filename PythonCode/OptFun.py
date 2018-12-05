@@ -30,92 +30,82 @@ def dydt(t, y):
     :return:
     """
 
-    if np.any(y[0] < 0):
-        raise GuessError('y[0] < 0')
-    #
     if np.any(y[0] > (ca - cp_interp(t))/(VPDinterp(t) * alpha)):
         raise GuessError('y[0] too large')
+
+    elif np.any(y[0] < 0):
+
+        raise GuessError('y[0] < 0')
+
     # ----------------- stomatal conductance based on current values -------------------
-    gpart11 = (ca + k2_interp(t) - 2 * alpha * y[0] * VPDinterp(t)) *\
-                    np.sqrt(alpha * y[0] * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-                    ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t)))  # mol/m2/d
+    gl = g_val(t, y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # mol/m2/d
+    psi_x = psi_sat * y[1] ** -b
+    trans_max = trans_max_interp(psi_x)
 
+    ok = np.less_equal(lai * gl * VPDinterp(t), trans_max*0.99)
+    Nok = ~ok
 
-    gpart12 = alpha * y[0] * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * y[0] * VPDinterp(t))  # mol/mol
+    psi_r = np.zeros(t.shape); psi_l = np.zeros(t.shape); dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape);
+    dlamdt = np.zeros(t.shape)
 
-    gpart21 = gpart11 / gpart12  # mol/m2/d
-
-    gpart22 = (ca - (2 * cp_interp(t) + k2_interp(t)))  # mol/m2/d
-
-    gpart3 = gpart21 + gpart22  # mol/m2/d
-
-    gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
-
-    zeta = gpart3 / gpart4  # unitless
-
-    zeta_mask = ma.masked_less(zeta, 0)
-    # zeta[zeta_mask.mask] = 0
-    if np.any(zeta_mask.mask):
-        print('Stop')
-
-    gl = k1_interp(t) * zeta  # mol/m2/d
-    # gl_mask = ma.masked_less(gl, 0)
-
-    # psi_x = psi_sat * y[1] ** (-b)  # Soil water potential, MPa
-    psi_r = psi_r_val(y[1], psi_sat, gamma, b, d_r, z_r, RAI, gl, lai, VPDinterp, t)
-    # ----------------------------------- Find conduction maximum of plant ------------------------
+    psi_r[ok] = psi_r_val(y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, t[ok])
+    evap_trans[ok] = alpha * gl[ok] * VPDinterp(t[ok])  # 1/d
+    dEdx[ok] = 0
+    # ----------------------------------- Find psi_l ------------------------
     with warnings.catch_warnings():
         warnings.filterwarnings('error', category=RuntimeWarning)
         try:
-            res_fsolve = root(psil_val, psi_r+1,
-                                args=(psi_r, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t, reversible),
-                                method='broyden1')
+            res_fsolve = root(psil_val, psi_r[ok] + 0.1,
+                                args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], lai, VPDinterp, t[ok], reversible),
+                                method='hybr')
         except RuntimeWarning:
             print('stomatal conductance exceeds transpiration capacity: increase lam guess or no sols')
             import sys
             sys.exit()
 
-    psi_l = res_fsolve.x
+    psi_l[ok] = res_fsolve.x
 
-    dEdx = dtransdx(psi_l, y[1], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible) * alpha  # 1/d
+    # ----------------------------- When  transpiration limit is reached --------------
+    if np.any(np.equal(Nok, True)):
+        evap_trans[Nok] = trans_max_interp(psi_x[Nok]) * alpha
+        psi_r[Nok] = psi_r_interp(psi_x[Nok])
+        psi_l[Nok] = psi_l_interp(psi_x[Nok])
+        # dEdx[Nok] = dtrans_max_dx_interp(psi_x[Nok]) * alpha
+        lam_new = lam_from_trans(evap_trans[Nok], ca, alpha, cp_interp(t[Nok]), VPDinterp(t[Nok]),
+                       k1_interp(t[Nok]), k2_interp(t[Nok]), lai)
+        dlamdt[Nok] = np.gradient(lam_new, t[Nok])
 
     # -------------- uncontrolled losses and evapo-trans ------------------------
     losses = 0
     dlossesdx = 0
     # Comment out following 2 lines if only plant hydraulic effects are sought
     losses = beta * y[1] ** c  # 1/d
-    dlossesdx = beta * c * y[1] ** (c - 1)
-
-    evap_trans = alpha * gl * VPDinterp(t)  # 1/d
+    dlossesdx = beta * c * y[1] ** (c - 1)  # 1/d
     f = - (losses + evap_trans)  # 1/d
-
-    dfdx = - (dlossesdx + dEdx)
-
-    dlamdt = - y[0] * dfdx  # mol/m2/d
+    dfdx = - (dlossesdx + dEdx)  # 1/d
+    dlamdt[ok] = - y[0][ok] * dfdx[ok]  # mol/m2/d
     dxdt = f  # 1/d
-
     return np.vstack((dlamdt, dxdt))
 
 
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.3
-    return np.array([ya[1] - x0, yb[1] - 0.19])
+    x0 = 0.25
+    return np.array([ya[1] - x0, yb[1] - 0.165])
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.42
+    x0 = 0.4
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
-reversible = 0  # 0 or 1
 # t = np.linspace(0, days, 2000)
 maxLam = 763e-6*unit0
 Lambda = maxLam*0.9  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 7*np.ones((1, t.size))  # mol/m2
-x_guess = 0.35*np.ones((1, t.size))
+lam_guess = 30*np.ones((1, t.size))  # mol/m2
+x_guess = 0.25*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -133,20 +123,21 @@ lam_plot = res.y[0]*unit1
 soilM_plot = res.y[1]
 
 gl = g_val(res.x, res.y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # stomatal conductance, mol/m2/d
+gl[gl < 0] = 0
 
 A_val = A(res.x, gl, ca, k1_interp, k2_interp, cp_interp)  # mol/m2/d
 
 psi_x = psi_sat * soilM_plot ** (-b)  # Soil water potential, MPa
 
+ci = np.zeros(res.x.shape)
+notZero = gl != 0
+ci[notZero] = ca - A_val[notZero] / gl[notZero]  # internal carbon concentration, mol/mol
 
-ci = ca - A_val / gl  # internal carbon concentration, mol/mol
-
-psi_l_res = root(psil_val, psi_x+1, args=(psi_x, psi_63, w_exp, Kmax, gl, lai, VPDinterp, res.x), method='broyden1')
+psi_r = psi_r_val(res.y[1], psi_sat, gamma, b, d_r, z_r, RAI, gl, lai, VPDinterp, res.x)
+psi_l_res = root(psil_val, psi_r+0.1, args=(psi_r, psi_63, w_exp, Kmax, gl, lai, VPDinterp, res.x, reversible), method='broyden1')
 psi_l = psi_l_res.x
 
-E = transpiration(psi_l, res.y[1], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
-psi_r = E[1]
-E = E[0]
+E = lai * gl * VPDinterp(res.x)
 psi_p = (psi_l + psi_r) / 2
 PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
 
@@ -208,43 +199,35 @@ plt.ylabel("PLC, %")
 
 # --- Fig1b
 
-# timeOfDay = 14.5/24
-#
-# env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
-#                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
-# xvals = soilM_plot
-# psi_x_vals = psi_sat * xvals ** -b
-# psi_l_vals = np.zeros(xvals.shape)
-# trans_vals = np.zeros(xvals.shape)
-#
-# i = 0
-# for x in xvals:
-#     OptRes = minimize(trans_opt, psi_x_vals[i], args=(psi_x_vals[i], psi_63, w_exp, Kmax))
-#     psi_l_vals[i] = OptRes.x
-#     trans_vals[i] = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
-#     i += 1
-#
-#
-# def lam(trans, ca, alpha, cp, VPD, k1, k2):
-#     gl_vals = trans / (VPD * lai)
-#     part11 = ca ** 2 * gl_vals + 2 * cp * k1 - ca * (k1 - 2 * gl_vals * k2) + k2 * (k1 + gl_vals * k2)
-#     part12 = np.sqrt(4 * (cp - ca) * gl_vals * k1 + (k1 + gl_vals * (ca + k2)) ** 2)
-#     part1 = part11 / part12
-#
-#     part2 = ca + k2
-#
-#     part3 = 2 * VPD * alpha
-#     return (part2 - part1) / part3
-#
-#
-# lam_low = lam(trans_vals, ca, alpha, env_data[0], env_data[1], env_data[2], env_data[3])
-#
-# timeOfDay = 12/24
-# env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
-#                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
-# lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / alpha
-#
-# fig, ax = plt.subplots()
-# lam_line = ax.plot(res.x, lam_plot)
-# lam_low_line = ax.plot(res.x, lam_low*unit1, 'r:')
-# lam_high_line = ax.plot(res.x, lam_up*unit1, 'r:')
+timeOfDay = 14.5/24
+
+env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
+                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
+xvals = soilM_plot
+psi_x_vals = psi_sat * xvals ** -b
+psi_l_vals = np.zeros(xvals.shape)
+trans_vals = trans_max_interp(psi_x_vals)
+
+def lam(trans, ca, alpha, cp, VPD, k1, k2):
+    gl_vals = trans / (VPD * lai)
+    part11 = ca ** 2 * gl_vals + 2 * cp * k1 - ca * (k1 - 2 * gl_vals * k2) + k2 * (k1 + gl_vals * k2)
+    part12 = np.sqrt(4 * (cp - ca) * gl_vals * k1 + (k1 + gl_vals * (ca + k2)) ** 2)
+    part1 = part11 / part12
+
+    part2 = ca + k2
+
+    part3 = 2 * VPD * alpha
+    return (part2 - part1) / part3
+
+
+lam_low = lam(trans_vals, ca, alpha, env_data[0], env_data[1], env_data[2], env_data[3])
+
+timeOfDay = 12/24
+env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
+                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
+lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / alpha
+
+fig, ax = plt.subplots()
+lam_line = ax.plot(res.x, lam_plot)
+lam_low_line = ax.plot(res.x, lam_low*unit1, 'r:')
+lam_high_line = ax.plot(res.x, lam_up*unit1, 'r:')

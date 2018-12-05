@@ -1,5 +1,7 @@
 import numpy as np
 from scipy.optimize import root
+from scipy.optimize import minimize
+from scipy.misc import derivative
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -160,9 +162,6 @@ def dailyAvg(data, windowsize):
                             [int(len(data)/windowsize), windowsize]), axis=1)
 
 
-
-
-
 # Anet = A(J, Vmax, Kc, Ko, Oi, 350, cp, 0.1e6)
 
 # plt.figure()
@@ -238,7 +237,7 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
 
     res = root(lambda psi_r: (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI) -
                             (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible),
-                psi_x + 1, method='broyden1')
+                psi_x + 0.1, method='broyden1')
 
     psi_r = res.get('x')
 
@@ -248,7 +247,19 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
 
 def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
 
-    return - transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
+    return - transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
+
+
+def trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
+    psi_x = psi_sat * x ** -b
+    OptRes = minimize(trans_opt, psi_x,
+                      args=(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
+    psi_l_max = OptRes.x
+    trans_res = transpiration(OptRes.x, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
+    trans_max = trans_res[0]
+    psi_r_max = trans_res[1]
+
+    return trans_max, psi_l_max, psi_r_max
 
 
 def dtransdx(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
@@ -326,3 +337,24 @@ def dgSR_dx_val(x, gamma, b, d_r, z_r, RAI):
     dgSR *= 1e6 / M_w  # mol/MPa/m2/s
     dgSR *= unit  # mol/MPa/m2/d
     return dgSR
+
+
+def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2, lai):
+    gl_vals = trans / (VPD * lai)
+    part11 = ca ** 2 * gl_vals + 2 * cp * k1 - ca * (k1 - 2 * gl_vals * k2) + k2 * (k1 + gl_vals * k2)
+    part12 = np.sqrt(4 * (cp - ca) * gl_vals * k1 + (k1 + gl_vals * (ca + k2)) ** 2)
+    part1 = part11 / part12
+
+    part2 = ca + k2
+
+    part3 = 2 * VPD * alpha
+    return (part2 - part1) / part3  # mol/m2
+
+
+def dlam_dx(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, ca, alpha, cp, VPD, k1, k2, lai, reversible=0):
+    trans_max = trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
+    dlam_dtrans = derivative(lam_from_trans, trans_max, dx = 1e-5, args=(ca, alpha, cp, VPD, k1, k2, lai))
+    fun = lambda xx: trans_max_val(xx, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
+    dtrans_max_dx = derivative(fun, x, dx=1e-5)
+
+    return dlam_dtrans * dtrans_max_dx
