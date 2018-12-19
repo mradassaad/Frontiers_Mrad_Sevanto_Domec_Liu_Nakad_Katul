@@ -48,14 +48,14 @@ unit6 = 1e-3  # J/Kg of water to MPa
 atmP = 0.1013  # atmospheric pressure, MPa
 
 v_opt = 174.33  # umol/m2/s
-Hav = 61.21  # kJ/mol
+Hav = 51.32  # kJ/mol
 Hdv = 200  # kJ/mol
 Topt_v = 37.74 + 273.15  # K
 
-j_opt = 155.76  # umol/m2/s
-Haj = 43.79  # kJ/mol
+j_opt = 189.66  # umol/m2/s
+Haj = 43.18  # kJ/mol
 Hdj = 200  # kJ/mol
-Topt_j = 32.19 + 273.15  # K
+Topt_j = 29.01 + 273.15  # K
 
 # ------------------ Soil Properties -----------------
 
@@ -77,11 +77,11 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
-Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
-reversible = 1
+Kmax = 1e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
+reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.1, 0.8, 0.01)
+xvals = np.arange(0.1, 0.6, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
@@ -99,7 +99,7 @@ trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')
 psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
 psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
 
-dtrans_max_dx = np.gradient(trans_vals, psi_x_vals)
+dtrans_max_dx = np.gradient(trans_vals, psi_x_vals)  # mol/m2/d
 dtrans_max_dx_interp = interp1d(psi_x_vals, dtrans_max_dx, kind='cubic')
 
 #%% --------------------- CARBON ASSIMILATION -----------------------

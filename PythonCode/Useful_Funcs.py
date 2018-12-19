@@ -103,13 +103,11 @@ def A(t, gl, ca, k1_interp, k2_interp, cp_interp):
      ca: ambient CO2 mole fraction in the air in umol/mol
     cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol'''
 
-
     delta = np.sqrt(((k2_interp(t) + ca) * gl + k1_interp(t)) ** 2 -
                     4 * k1_interp(t) * (ca - cp_interp(t)) * gl)  # mol/mol
 
     A = 0.5 * (k1_interp(t) + gl * (ca + k2_interp(t)) - delta)  # mol/m2/d
     # A *= 1e6/unit0
-
 
     return A
 
@@ -350,11 +348,11 @@ def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2, lai):
     part3 = 2 * VPD * alpha
     return (part2 - part1) / part3  # mol/m2
 
-
-def dlam_dx(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, ca, alpha, cp, VPD, k1, k2, lai, reversible=0):
-    trans_max = trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
-    dlam_dtrans = derivative(lam_from_trans, trans_max, dx = 1e-5, args=(ca, alpha, cp, VPD, k1, k2, lai))
-    fun = lambda xx: trans_max_val(xx, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
-    dtrans_max_dx = derivative(fun, x, dx=1e-5)
-
-    return dlam_dtrans * dtrans_max_dx
+#
+# def dlam_dx(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, ca, alpha, cp, VPD, k1, k2, lai, reversible=0):
+#     trans_max = trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
+#     dlam_dtrans = derivative(lam_from_trans, trans_max, dx = 1e-5, args=(ca, alpha, cp, VPD, k1, k2, lai))
+#     fun = lambda xx: trans_max_val(xx, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
+#     dtrans_max_dx = derivative(fun, x, dx=1e-5)
+#
+#     return dlam_dtrans * dtrans_max_dx

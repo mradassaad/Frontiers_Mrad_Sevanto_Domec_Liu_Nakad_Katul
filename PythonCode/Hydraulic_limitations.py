@@ -12,13 +12,13 @@ sample_times = np.array([6/24, 12/24, 14.5/24, 18/24])
 env_data = np.array([cp_interp(sample_times), VPDinterp(sample_times),
                      k1_interp(sample_times), k2_interp(sample_times)])
 
-xvals = np.arange(0.12, 0.2, 0.001)
+xvals = np.arange(0.12, 0.5, 0.01)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
 i = 0
-psi_63 = 3
+psi_63 = 4
 w_exp = 2
 for x in xvals:
     OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI))
