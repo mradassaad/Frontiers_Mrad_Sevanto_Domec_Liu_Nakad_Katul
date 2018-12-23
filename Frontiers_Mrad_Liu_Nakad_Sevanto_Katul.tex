@@ -90,83 +90,122 @@ The goal here is not to develop a stomatal prediction package but to explore whe
 
 \section{Materials and Methods}
 
-\subsection{The model}
+\subsection{Theory}
 
-\subsubsection{The soil layer}
-
-The ensure the continuity of the water stream throughout the tree, we model three vertically connected layers: the soil, the trunk and branches, and the leaves. Each of these layers are characterized by a hydraulic resistance that is non-linearly related to water potential. Prescribing hydraulic resistances to these different layers allows computation of quantities regarded as indicative of isohydric to anisohydric behaviour. Such quantities include leaf water potential ($\psi_l$) and stomatal conductance ($g_s$).
-
-At the soil layer, we model the water budget \citep{Rodriguez-Iturbe2007} as follows:
+The principle adopted here is that plants maximize their carbon gain ($A$) over the period of a drydown. This principle assumes that plants freely control the stomatal conductance $g_s$. Previous work constrained control of $g_s$ by enforcing instantaneous water balance at the soil level \citep{Manzoni2013}. To mathematically express this constraint an augmented Lagrangian is defined $H$:
 \begin{equation}
-    \label{eqn:soil_water}
-    \frac{dx(t)}{dt} =\frac{1}{n Z_r}(R - E - L),
+    \label{eqn:Hamiltonian}
+    H\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = A(g_s, t) + \lambda f_e\Big(g_s, x, \frac{dx}{dt}, t\Big).
 \end{equation}
-where $x(t)$ is the soil moisture in $m^3m^{-3}$, R, E, and L are the rainfall input into the soil, the evapotranspiration, and uncontrolled losses respectively in $m^2s^{-1}$. $n$ is the soil porosity in $m^3m^{-3}$ and $Z_r$ is considered the plant's rooting depth in $m$. $L$ contains both leakage losses due to soil drainage as well as competition from other plants.
+$\lambda$ is the Lagrange multiplier, $x$ is the soil moisture, $t$ is time, and $f_e$ is the soil water balance.
 
-We consider the effect of a drydown on plant stomatal response. During a drydown, there is no rainfall input so $R=0$. The resulting form of Eqn. \ref{eqn:soil_water} is:
+Because the principle states that $A$ is maximized over a drydown, the objective function $J$ is the integral of $H$ from $t=0$ at the beginning of drydown to $t=T$ at the end of it:
 \begin{equation}
-    \label{eqn:soil_water_drydown}
-    \frac{dx(t)}{dt} = f = - \frac{1}{n Z_r}(E + L),
+    \label{eqn:Objective}
+    J\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = \int_0^T H\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big).
 \end{equation}
-where f is the combined losses through evapotranspiration and uncontrolled losses in $s^{-1}$.
 
-\subsubsection{Carbon gain}
+The goal then consists of finding the function of $g_s$ in terms of $t$ that maximizes $J$. This goal is achieved by solving the Euler-Lagrange equations using the method of the calculus of variations. A required step however is expressing $A$ and $f_e$ in terms of the control variable $g_s$ and the state variable $x$.
 
-The seminal work by \citet{Farquhar1980} for C3 plants details how carbon assimilation limitations are coupled with electron flow dynamics at the level of the thylakoids to obtain a photosynthesis model at the leaf level.
-The model by \citet{Farquhar1980} for C3 plants is used to compute $A$ for different leaf conditions such as Rubisco activity and for different environmental conditions like atmospheric temperature ($T_a = T_l$) and photosynthetically active radiation (PAR). To avoid having to compute derivatives of a piecewise, potentially non-differentiable function, we use the method provided elsewhere \citep{Vico2013}. The adopted equation matches the limitation imposed by the electron transport rate at very high mesophyll $CO_2$ concentration ($c_i$) and Rubisco limitation at very low $c_i$:
+\subsection{Carbon gain}
+
+The seminal work by \citet{Farquhar1980} expresses carbon assimilation, or biochemical demand of carbon $A_{demand}$, for a C3 leaf as either limited by the Rubisco enzyme activity under saturated incoming photosynthetically active radiation (PAR) or by ribulose-1,5-biphosphate (RuBP) activity under limiting incoming PAR. 
+To avoid the use of non-linear functions such as the minimum between two number as well as ad-hoc parameters that might remedy this non-linearity, we adopt an accurate approximation to $A_{demand}$ \citep{Vico2013}. $A_{demand}$ is approximated using a hyperbolic function:
 \begin{equation}
     \label{eqn:vico_model}
-    A = k_1 \frac{c_i - \Gamma*}{k_2 + c_i} - R_d,
+    A_{demand} = k_1 \frac{c_i - \Gamma^*}{c_i + k_2},
 \end{equation}
-where $R_d$ refers to dark respiration in $mol m^{-2} s^{-1}$ and $k_1$ and $k_2$ are parameters determined by computing the limits imposed on $c_i$ described above and equating to the predictions of $A$ provided elsewhere \citep{Farquhar1980}. Namely, $k_1 = \frac{J}{4}$ and $k_2 = \frac{J}{4} \frac{a_2}{V_{c,max}}$.
+where $c_i$ is the carbon concentration inside the leaf. $k_1$ and $k_2$ are parameters determined by asymptotic limits imposed on $c_i$ described in \citet{Vico2013}. Namely, $k_1 = \frac{J}{4}$ and $k_2 = \frac{J}{4} \frac{a_2}{V_{c,max}}$. $\Gamma^*$ is the carbon compensation point which is the concentration of $c_i$ where carbon assimilation comes to a halt.
 
-To eliminate the presence of $c_i$ in equation for the carbon gain, we use the carbon supply function where carbon assimilation is modeled as a diffusion process:
+Equation \ref{eqn:vico_model} is of a Michaelis-Menten type where $k_1$ is interpreted as the maximum rate of carbon assimilation and $k_2$ prescribes the strength of carboxylation compared to oxygenation through $a_2$. Specifically, $a_2 = K_c (1+O_a/K_o)$ where $K_c$ and $K_o$ are Michaelis-Menten constants for CO$_2$ and O$_2$ respectively and $O_a$ is the atmospheric concentration of O$_2$.
+
+The parameters of equation \ref{eqn:vico_model} ($V_{c,max}$, $\Gamma^*$, $K_c$, $K_o$) are temperature $T_a$ dependent while $J$ is both $T_a$ and PAR dependent \citep{Medlyn2002}. The dependence of $K_c$ and $K_o$ to $T_a$ is that of tobacco \citep{Bernacchi2001} and that of $\Gamma^*$ to $T_a$ is that of spinach reported elsewhere \citep{Brooks1985}. The dependence of $J$ and $V_{c,max}$ to $T_a$ is that of fertilized Pinus radiata \citep{Medlyn2002}.
+
+The approximations used for $A_{demand}$ in equation \ref{eqn:vico_model} neglect: 1) the potential limitation by sucrose synthesis, 2) the contribution by dark respiration to $A_{demand}$, and 3) the temperature buffering effect of the leaf boundary layer such that leaf temperature is equal to atmospheric temperature $T_a$.
+
+Furthermore, it is enforced that every CO$_2$ molecule captured from the atmosphere by the leaf is assimilated such that $A_{demand} = A_{supply}$. The supply of carbon from the atmosphere is modeled as a Fickian diffusion process through the stomatal opening:
 \begin{equation}
     \label{eqn:supply}
-    A = g(c_a - c_i).
+    A_{supply} = g_s(c_a - c_i),
 \end{equation}
+where $c_a$ is the atmospheric concentration of CO$_2$.
 
-Combining Eqns \ref{eqn:vico_model} and \ref{eqn:supply} and assuming dark respiration $R_d$ is negligible compared to $A$, one gets a formulation for $A$ that is explicitly independent from $c_i$:
+Combining equations \ref{eqn:vico_model} and \ref{eqn:supply}, a formulation for $A$ in terms of $g_s$ that is explicitly independent from $c_i$ is obtained:
 \begin{equation}
     \label{eqn:A_noci}
-    A = \frac{1}{2}[k_1 + g(k_2 + c_a) + g \sigma],
+    A = \frac{1}{2}[k_1 + g_s(k_2 + c_a) - \sigma],
 \end{equation}
-where $\sigma = \sqrt{(k_2 + c_a + \frac{k_1}{g})^2 + \frac{4k_1(\Gamma^*-c_a)}{g}}$
+where $\sigma = \sqrt{[(k_2 + c_a)g_s + k_1]^2 + 4k_1 g_s (\Gamma^*-c_a)}$
 
-\subsubsection{The intermediate plant hydraulic pathway: roots, trunk, and branches}
+To sum up, if changes of $T_a$ and PAR with time are given, as well as $c_a$ and $O_a$, then $g_s$ is the only independent variable in equation \ref{eqn:A_noci}.
 
-Recent debates on the hydraulic architecture of trees have elicited support for the segmentation hypothesis first proposed by Zimmerman (ref). The basis of this hypothesis is that the anatomy of the water conducting elements known as conduits differs considerably from one plant organ to the other. Specifically, as one progresses against the direction of the gravitational field, one encounters organs that are more and more resistant to loss of conductivity as a result of cavitation. 
+\subsection{Soil water balance}
 
-In this work, we approximate the vulnerability curve of the whole hydraulic pathway with a Weibull exceedance function:
+% The ensure the continuity of the water stream throughout the tree, we model three vertically connected layers: the soil, the trunk and branches, and the leaves. Each of these layers are characterized by a hydraulic resistance that is non-linearly related to water potential. Prescribing hydraulic resistances to these different layers allows computation of quantities regarded as indicative of isohydric to anisohydric behaviour. Such quantities include leaf water potential ($\psi_l$) and stomatal conductance ($g_s$).
+
+At the soil, we model the water budget as follows \citep{Rodriguez-Iturbe2007}:
 \begin{equation}
-    \label{eqn:Weibull}
-    g_{p} = g_{p,max}exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big],
+    \label{eqn:soil_water}
+    \frac{dx(t)}{dt} =\frac{1}{n Z_r}[- E(g_s, t) - L(x, t)],
 \end{equation}
-where $g_{p}$ is the hydraulic conductivity of the plant hydraulic pathway, and $g_{p,max}$ is its maximum value that corresponds to a plant water potential of $\psi_{p}=0$. When $\psi_{p}=\psi_{63}$, $g_{p} = g_{p,max}(1-0.63) = 0.37g_{p,max}$. Finally, $c$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. To find $\psi_{p}$, we invoke the hydrostatic assumption which leads to $\psi_{p}=\frac{\psi{s}+\psi_l}{2}$.
+where $x(t)$ is the soil moisture in $m^3m^{-3}$, L are uncontrolled losses (independent of the leaf), and E is the evapotranspiration rate from the leaf in $m^2d^{-1}$. $n$ is the soil porosity in $m^3m^{-3}$ and $Z_r$ is the effective plant rooting depth in $m$. $L$ may account for both soil leakage away from the rooting zone and competition from other plant roots.
 
-At the soil level, knowing the soil moisture content, we use the formulation developed elsewhere \citep{Clapp1978} to compute the soil water potential:
+Missing in equation \ref{eqn:soil_water} is the rainfall input and this is because we are only considering drydown periods in this work. To formulate this soil water balance as a constraint on the maximum carbon gain principle, we write:
 \begin{equation}
-    \label{eqn:Clapp_psi}
-    \psi_s = \psi_{s,max}x^{-b},
+    \label{eqn:soil_water_constraint}
+    f_e\Big(g_s, x, \frac{dx}{dt}, t\Big) = \frac{dx(t)}{dt} + \frac{1}{n Z_r}[ E(g_s, t) + L(x, t)],
 \end{equation}
-and the soil hydraulic conductivity:
+where $f_e$ was previously introduced in equation \ref{eqn:Hamiltonian}. Soil leakage is modeled as free drainage such that water losses from leakage per unit soil area and per unit depth is equal to the soil conductivity $g_x$ \citep{campbell1974}:
 \begin{equation}
-    \label{eqn:Clapp_cond}
-    g_s = g_{s,max}x^{2b+3},
+    \label{eqn:soil_cond}
+    g_x = g_{x,sat}x^{2b+3}.
 \end{equation}
-where $b$ is an empirical parameter dependent on the soil type. $\psi_{s,max}$ and $g_{s,max}$ are the soil water potential and hydraulic conductivity at saturation, respectively.
+$g_{x,sat}$ is the soil conductivity at saturation and $b$ is the non-linearity parameter. Both of these parameters depend on soil type \citep{Clapp1978}. From the soil moisture, one could also compute the soil water potential ($\psi_x$):
+\begin{equation}
+    \label{eqn:Clapp_pot}
+    \psi_x = \psi_{x,sat}x^{-b},
+\end{equation}
+where $\psi_{x,sat}$ is the soil water potential at saturation.
 
-At the leaf level, the conservation of water mass is invoked to obtain an expression for the leaf water potential $\psi_{l}$. At steady state, the water lost through the leaves is equal to that flowing through the plant water pathway, therefore:
+\subsection{Leaf-level water balance}
+
+As a point of departure from previous analyses based on the carbon gain maximization principle, it is recognized that plant transpiration is limited by the the plant hydraulic architecture. This limitation imposes an upper bound on $g_s$. 
+
+% Recent debates on the hydraulic architecture of trees have elicited support for the segmentation hypothesis first proposed by Zimmerman (ref). The basis of this hypothesis is that the anatomy of the water conducting elements known as conduits differs considerably from one plant organ to the other. Specifically, as one progresses against the direction of the gravitational field, one encounters organs that are more and more resistant to loss of conductivity as a result of cavitation. 
+
+The loss of conductivity function of the whole plant with respect to plant water potential $\psi_p$ is known as a vulnerability curve. We approximate the vulnerability curve of the whole hydraulic pathway (roots, trunk, and branches) with a Weibull exceedance function such that:
+\begin{equation}
+    \label{eqn:root_leaf}
+    g_{rl} = g_{rl,max}exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big],
+\end{equation}
+where $g_{rl}$ is the root to leaf hydraulic conductivity (the whole plant), and $g_{rl,max}$ is its maximum value at saturation. $\psi_{63}$ is the water potential at which the plant loses about 63\% of its conductivity. Finally, $c$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. To find $\psi_{p}$, we invoke the hydrostatic approximation between leaves and roots which leads to $\psi_{p}=\frac{\psi{r}+\psi_l}{2}$ where $\psi_r$ is the root water potential.
+
+To find $\psi_r$, we define the soil to root conductivity $g_{sr}$. $g_{sr}$ is assumed to be the conductivity of the soil $g_x$ but over the distance between soil and root $l_{sr}$. $l_{sr} = \sqrt{d_r Z_r \text{RAI}}$ where $d_r$ is the fine root diamter in m and RAI is the root area index \citep{Manzoni2013}. If $g_x$ is given in m d$^{-1}$, then
+\begin{equation}
+    \label{eqn:soil_root}
+    g_{sr} = \frac{g_x}{\text{grav} l_{sr}}. 
+\end{equation}
+Because the soil to root distance is taken into account in $g_{sr}$, one only needs to multiply $g_{sr}$ by the water potential different between root and soil to get the volume flux of water.
+
+Therefore, we can express $E$ at multiple levels as follows
 \begin{equation}
     \label{eqn: mass_cons}
         \begin{split}
-        E & = \text{LAI }\, g_l\, \text{VPD} \\
-        & = g_{p,max}\, \text{exp}\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big](\psi_s-\psi_l) = g_p (\psi_s-\psi_l) .
+        E & = E_{demand} = 1.6 \text{LAI }\, g_s\, \text{VPD} \\
+        & = E_{sr} = g_{sr}(\psi_s)*(\psi_s - \psi_r)\\
+        & = E_{rl} = g_{rl}(\psi_r,\psi_l)*(\psi_r - \psi_l) \\
+        & = E_{sl} = \Bigg(\frac{1}{g_{sr}(\psi_s)} + \frac{1}{g_{rl}(\psi_r,\psi_l)}\Bigg)^{-1}*(\psi_s - \psi_l).
         \end{split}
 \end{equation}
-Solving the above equation results in the value of $\psi_l$.
+$E_{demand}$ is the atmospheric demand of water, $E_{sr}$ is the soil to root water supply, $E_{rl}$ is the root to leaf supply, and $E_{sl}$ is to soil to leaf supply.
 
-\subsubsection{Optimization and delayed gains}
+From equation \ref{eqn: mass_cons}, as $g_s$ varies with time, $\psi_l$ also varies to match supply and demand. The hydraulic constraint from plant water supply is apparent when one realizes that while $E_{demand}$ is monotonous and increasing with $g_s$, water supply is not monotonous with respect to $\psi_l$ (equations \ref{eqn:root_leaf}, \ref{eqn: mass_cons}). The presence of a maximum water supply imposes an additional constraint on the stomatal conductance $g_s$. 
+
+This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E_{sl}$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E_{sl}}{\partial \psi_l} = 0$\Big). 
+\subsection{Maximizing the objective}
+
+
+\subsection{Water use strategy}
 
 To find the optimal trends of $g_s$ and $\psi_l$ with time at different environmental conditions, the method of calculus of variations is used to derive the necessary differential equations (Appendix A). The objective function $J$ in this situation is the following:
 \begin{equation}
@@ -190,7 +229,7 @@ The optimal solution for the leaf stomatal conductance $g_l$ is obtained by solv
     \label{eqn: dlam}
     \frac{d\lambda}{dt} = - \frac{\partial H}{\partial x} = - \lambda \frac{\partial f}{\partial x},
 \end{equation}
-in conjunction with eqn \ref{eqn:soil_water}.
+in conjunction with equation \ref{eqn:soil_water}.
 
 The work here neglects high-frequency (sub-minute time scale) changes in environmental variables such as temperature and wind as well as those happening over multiple months such as changes in leaf nitrogen. The are thought not to have an appreciable effect on stomatal control over the timescale of a few weeks that is considered.
 
@@ -202,14 +241,14 @@ We assume this is the global maximum
 
 The model requires supplying environmental data acting as boundary conditions at the soil and leaf levels. These are the initial soil water content ($x_0$), vapor pressure deficit ($VPD$), incident leaf shortwave radiation ($R_l$), and temperature ($T$). We use the data provided by the FLUXNET project at the Blodgett forest. A drydown period starting on May 29, 2005 was chosen and the environmental variations over 20 days are averaged into one representative day. These conditions are then copied and tiled to however many days the optimization is running for. This allows isolating the plant hydraulic and strategy effects on stomatal behavior.
 
-\section{Results}
-
 \begin{figure}[t]
 \begin{center}
 \includegraphics[width=10cm]{Fig1.eps}
 \end{center}
 \caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit on $\lambda$. These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:Weibull}). All of the shown curves are subject to environmental conditions at 12:00. The combination of VPD, temperature, and PAR at that time are the most stringent of any combination at another time throughout the day over the course of the considered drydown.}\label{fig:lam_lower}
 \end{figure}
+
+\section{Results}
 
 Soil-to-leaf plant hydraulics, prescribed through a Vulnerability Curve (VC), set a lower limit on the value of the marginal use efficiency $\lambda$ and dictate its increase as the soil moisture content decreases.
 
@@ -219,6 +258,8 @@ The latter of these two effects is imposed through equation \ref{eqn: dlam}. In 
 \begin{equation}
     \frac{\partial E}{\partial x} = g_p \Big(-\frac{\partial \psi_x}{\partial x}\Big) \Big[\frac{1}{2} \frac{s}{\psi_{63}} \Big(\frac{\psi_p}{\psi_{63}}\Big)^{s-1} (\psi_l-\psi_x) + 1\Big]
 \end{equation}
+
+
 \section{Discussion}
 
 The purpose of this work is to elucidate the connection of stomatal response to plant hydraulics and water-use strategy. Plant hydraulics was shown to set a lower limit for the marginal water-use efficiency ($\lambda$) whereas the upper limit is set by a ratio of atmospheric supply of carbon to atmospheric demand of water (figure \ref{fig:lam_lower}).
@@ -226,6 +267,8 @@ The purpose of this work is to elucidate the connection of stomatal response to 
 Connecting the concepts of isohydry and anisohydry to plant hydraulics represents a crucial next step toward improving stomatal response modelling. 
 
 There is evidence for the evolutionary coordination between hydraulic traits and photosynthetic rate \citep{Scoffoni2016}. 
+
+Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \subsection{Figures}
 Frontiers requires figures to be submitted individually, in the same order as they are referred to in the manuscript. Figures will then be automatically embedded at the bottom of the submitted manuscript. Kindly ensure that each table and figure is mentioned in the text and in numerical order. Figures must be of sufficient resolution for publication \href{http://home.frontiersin.org/about/author-guidelines#ResolutionRequirements}{see here for examples and minimum requirements}. Figures which are not according to the guidelines will cause substantial delay during the production process. Please see \href{http://home.frontiersin.org/about/author-guidelines#GeneralStyleGuidelinesforFigures}{here} for full figure guidelines. Cite figures with subfigures as figure \ref{fig:2}B.
