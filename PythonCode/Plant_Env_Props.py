@@ -62,7 +62,7 @@ Topt_j = 29.01 + 273.15  # K
 psi_sat = 1.5 * unit6  # Soil water potential at saturation, MPa
 b = 3.1  # other parameter
 
-gamma = 0.000  # m/d
+gamma = 0.000  # m/d per unit ground area
 c = 1
 
 # --- Using the Campbell(1974) equations, comment out next two lines if don't want

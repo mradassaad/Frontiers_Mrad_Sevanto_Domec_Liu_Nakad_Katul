@@ -12,13 +12,13 @@ sample_times = np.array([6/24, 12/24, 14.5/24, 18/24])
 env_data = np.array([cp_interp(sample_times), VPDinterp(sample_times),
                      k1_interp(sample_times), k2_interp(sample_times)])
 
-xvals = np.arange(0.12, 0.5, 0.01)
+xvals = np.arange(0.12, 0.5, 0.001)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
 i = 0
-psi_63 = 4
+psi_63 = 3
 w_exp = 2
 for x in xvals:
     OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI))
@@ -51,44 +51,51 @@ lam_upper_1 = np.ones(lam_val_1.shape) * (ca - env_data[0, 1]) / env_data[1, 1] 
 lam_upper_2 = np.ones(lam_val_1.shape) * (ca - env_data[0, 2]) / env_data[1, 2] / alpha
 lam_upper_3 = np.ones(lam_val_1.shape) * (ca - env_data[0, 3]) / env_data[1, 3] / alpha
 
-fig, ax = plt.subplots()
-line_low_0, = plt.plot(psi_x_vals, lam_val_0 * unit1, 'r')
-line_low_1, = plt.plot(psi_x_vals, lam_val_1 * unit1, 'k')
-# plt.plot(psi_x_vals, lam_val_2 * unit1)
-line_low_3, = plt.plot(psi_x_vals, lam_val_3 * unit1, 'b')
-line_high_0, = plt.plot(psi_x_vals, lam_upper_0 * unit1, 'r--')
-line_high_1, = plt.plot(psi_x_vals, lam_upper_1 * unit1, 'k--')
-line_high_3, = plt.plot(psi_x_vals, lam_upper_3 * unit1, 'b--')
-ax.set_xlabel("Soil water potential, $\psi_x$, MPa", FontSize=16)
-ax.set_ylabel("$\lambda$ lower and upper bounds, mol.m$^{-2}$", FontSize=16)
-plt.setp(ax.get_xticklabels(), FontSize=12)
-plt.setp(ax.get_yticklabels(), FontSize=12)
-legend1 = ax.legend((line_low_0, line_low_1, line_low_3),
-                   ('06:00', '12:00', '18:00'), fontsize='large', loc=8, title='Color')
-ax.add_artist(legend1)
-legend2 = ax.legend((line_low_1, line_high_1),
-                   ('$\lambda_{lower}$', '$\lambda_{upper}$'), fontsize='large', loc=4, title='Line Style')
+# fig, ax = plt.subplots()
+# line_low_0, = plt.plot(-psi_x_vals, lam_val_0 * unit1, 'r')
+# line_low_1, = plt.plot(-psi_x_vals, lam_val_1 * unit1, 'k')
+# # plt.plot(psi_x_vals, lam_val_2 * unit1)
+# line_low_3, = plt.plot(-psi_x_vals, lam_val_3 * unit1, 'b')
+# line_high_0, = plt.plot(-psi_x_vals, lam_upper_0 * unit1, 'r--')
+# line_high_1, = plt.plot(-psi_x_vals, lam_upper_1 * unit1, 'k--')
+# line_high_3, = plt.plot(-psi_x_vals, lam_upper_3 * unit1, 'b--')
+# ax.set_xlabel("Soil water potential, $\psi_x$, MPa", FontSize=16)
+# ax.set_ylabel("$\lambda$ lower and upper bounds, mol.m$^{-2}$", FontSize=16)
+# plt.setp(ax.get_xticklabels(), FontSize=12)
+# plt.setp(ax.get_yticklabels(), FontSize=12)
+# legend1 = ax.legend((line_low_0, line_low_1, line_low_3),
+#                    ('06:00', '12:00', '18:00'), fontsize='large', loc=3, title='Color')
+# ax.add_artist(legend1)
+# legend2 = ax.legend((line_low_1, line_high_1),
+#                    ('$\lambda_{lower}$', '$\lambda_{upper}$'), fontsize='large', loc=8, title='Line Style')
+#
+# plt.savefig('limits_time.pdf', bbox_inches='tight')
 
-plt.savefig('limits_time.pdf', bbox_inches='tight')
-# psi_63 = 2.5
-# i = 0
-# for x in xvals:
-#     OptRes = minimize(trans_opt, psi_x_vals[i], args=(psi_x_vals[i],psi_63,w_exp,Kmax))
-#     psi_l_vals[i] = OptRes.x
-#     trans_vals[i] = transpiration(OptRes.x, psi_x_vals[i], psi_63, w_exp, Kmax)
-#     i += 1
-#
-# lam_val_low = lam(trans_vals, ca, alpha, env_data[0, 2], env_data[1, 2], env_data[2, 2], env_data[3, 2])
-#
-# psi_63 = 4
-# i = 0
-# for x in xvals:
-#     OptRes = minimize(trans_opt, psi_x_vals[i], args=(psi_x_vals[i], psi_63, w_exp, Kmax))
-#     psi_l_vals[i] = OptRes.x
-#     trans_vals[i] = transpiration(OptRes.x, psi_x_vals[i], psi_63, w_exp, Kmax)
-#     i += 1
-#
-# lam_val_high = lam(trans_vals, ca, alpha, env_data[0, 2], env_data[1, 2], env_data[2, 2], env_data[3, 2])
+
+psi_63 = 2
+i = 0
+for x in xvals:
+    OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI))
+    psi_l_vals[i] = OptRes.x
+    trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
+    trans_vals[i] = trans_res[0]
+    psi_r_vals[i] = trans_res[1]
+    i += 1
+
+lam_val_low = lam(trans_vals, ca, alpha, env_data[0, 1], env_data[1, 1], env_data[2, 1], env_data[3, 1])
+
+psi_63 = 3
+w_exp = 1
+i = 0
+for x in xvals:
+    OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI))
+    psi_l_vals[i] = OptRes.x
+    trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI)
+    trans_vals[i] = trans_res[0]
+    psi_r_vals[i] = trans_res[1]
+    i += 1
+
+lam_val_high = lam(trans_vals, ca, alpha, env_data[0, 1], env_data[1, 1], env_data[2, 1], env_data[3, 1])
 #
 # psi_63 = 3
 # w_exp = 1

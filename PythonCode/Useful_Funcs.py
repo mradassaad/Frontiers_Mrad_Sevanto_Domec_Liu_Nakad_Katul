@@ -273,7 +273,7 @@ def dtransdx(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, re
     return dEdx  # mol/m2/d
 
 
-def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax , reversible=0):
+def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
     """
 
     :param psi_r: root water potential in MPa
