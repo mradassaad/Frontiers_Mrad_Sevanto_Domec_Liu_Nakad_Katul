@@ -47,6 +47,7 @@ unit5 = 3.6 * 24 * 9.81  # kg.s.m-3 of water -> m/d
 unit6 = 1e-3  # J/Kg of water to MPa
 atmP = 0.1013  # atmospheric pressure, MPa
 
+# Medlyn 2002 pinus radiata fert.
 v_opt = 174.33  # umol/m2/s
 Hav = 51.32  # kJ/mol
 Hdv = 200  # kJ/mol
