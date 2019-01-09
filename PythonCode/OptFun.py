@@ -100,8 +100,8 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.25
-    return np.array([ya[1] - x0, yb[1] - 0.16])
+    x0 = 0.35
+    return np.array([ya[1] - x0, yb[1] - 0.3])
 
 
 def bc_wus(ya, yb):  # Water use strategy
@@ -113,7 +113,7 @@ def bc_wus(ya, yb):  # Water use strategy
 maxLam = 763e-6*unit0
 Lambda = maxLam*0.55  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 10*np.ones((1, t.size))  # mol/m2
+lam_guess = 20*np.ones((1, t.size))  # mol/m2
 x_guess = 0.25*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))

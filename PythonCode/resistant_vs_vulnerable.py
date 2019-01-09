@@ -3,12 +3,66 @@ import numpy.ma as ma
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import warnings
-from Plant_Env_Props import*
+import Plant_Env_Props as PEP
+from Plant_Env_Props import unit0, unit1, TEMPavg, PARavg, VPDavg, v_opt, j_opt, Hav, Haj, Hdv, Hdj, Topt_v, Topt_j, \
+    Oi, ca
 from Useful_Funcs import*
 from scipy.interpolate import interp1d
 
-np.seterr(divide='warn')
 
+alpha = PEP.alpha
+psi_sat = PEP.psi_sat
+b = PEP.b
+trans_max_interp = PEP.trans_max_interp
+lai = PEP.lai
+gamma = PEP.gamma
+d_r = PEP.d_r
+n = PEP.n
+z_r = PEP.z_r
+RAI = PEP.RAI
+# psi_63 = PEP.psi_63
+w_exp = PEP.w_exp
+Kmax = PEP.Kmax
+reversible = PEP.reversible
+psi_r_interp = PEP.psi_r_interp
+psi_l_interp = PEP.psi_l_interp
+beta = PEP.beta
+c = PEP.c
+
+days = 10
+tlen = 48 * days
+
+t = np.linspace(0, days, tlen)
+
+TEMP = np.tile(TEMPavg, days)
+PAR = np.tile(PARavg, days)
+VPD = np.tile(VPDavg, days)
+
+Kc, Ko = MMcoeff(TEMP)  # umol/mol and mmol/mol, respectively
+Kc *= 1e-6  # mol/mol
+Ko *= 1e-3  # mol/mol
+
+cp = cp_val(TEMP)  # umol/mol
+cp *= 1e-6  # mol/mol
+
+Vmax = max_val(v_opt, Hav, Hdv, TEMP, Topt_v)  # umol/m2/s
+Vmax *= 1e-6 * unit0  # mol/m2/d
+
+Jmax = max_val(j_opt, Haj, Hdj, TEMP, Topt_j)  # umol/m2/s
+J = J_val(PAR, Jmax)  # umol/m2/s
+J *= 1e-6 * unit0  # mol/m2/d
+
+k1 = J / 4  # mol/m2/d
+a2 = Kc * (1 + Oi / Ko)  # mol/mol
+k2 = (J / 4) * a2 / Vmax  # mol/mol
+
+VPDinterp = interp1d(t, VPD, kind='cubic')
+cp_interp = interp1d(t, cp, kind='cubic')
+k1_interp = interp1d(t, k1, kind='cubic')
+k2_interp = interp1d(t, k2, kind='cubic')
+
+
+np.seterr(divide='warn')
 
 class ConvergenceError(Error):
     """Exception raised for setting lambda to a value that makes finding
@@ -22,10 +76,8 @@ class ConvergenceError(Error):
         self.message = message
 
 
-
-def dydt(t, y, psi_63):
+def dydt_63(t, y, psi_63):
     """
-
     :param t: time in 30 min intervals
     :param y: y[0] is lambda(t) in mol/m2, y[1] is x(t) in mol/mol
     :return:
@@ -119,6 +171,8 @@ x_guess = 0.25*np.ones((1, t.size))
 y_guess = np.vstack((lam_guess, x_guess))
 
 # ---------------- SOLVER - SOLVER - SOLVER - SOLVER - SOLVER --------------------
+psi_63 = 2
+dydt = lambda t, y: dydt_63(t, y, psi_63)
 try:
     res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
