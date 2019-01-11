@@ -201,23 +201,41 @@ $E_{demand}$ is the atmospheric demand of water, $E_{sr}$ is the soil to root wa
 
 From equation \ref{eqn: mass_cons}, as $g_s$ varies with time, $\psi_l$ also varies to match supply and demand. The hydraulic constraint from plant water supply is apparent when one realizes that while $E_{demand}$ is monotonous and increasing with $g_s$, water supply is not monotonous with respect to $\psi_l$ (equations \ref{eqn:root_leaf}, \ref{eqn: mass_cons}). The presence of a maximum water supply imposes an additional constraint on the stomatal conductance $g_s$. 
 
-This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E_{sl}$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E_{sl}}{\partial \psi_l} = 0$\Big). 
+This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently here. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E_{sl}$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E_{sl}}{\partial \psi_l} = 0$\Big). 
 \subsection{Maximizing the objective}
 
+To maximize $J$ (equation \ref{eqn:Objective}), we use the method of the calculus of variations \citep{witelski2015} to derive what are known as the Euler-Lagrange equations (see equation 3.55 in the mentioned reference). For this problem, these are a set of three equations to be solved with two boundary conditions set on $x$ at the beginning of drydown $t=0$ and at the end of it $t=T$.
+
+The control equation,
+\begin{equation}
+    \label{eqn:control}
+    \frac{\partial L}{\partial g_s} = \frac{\partial A}{\partial g_s} + \lambda \frac{\partial f_e}{\partial g_s} = 0,
+\end{equation}
+gives a monotonic inverse relation between $\lambda$ and $g_s$ (Appendix A).
+
+The co-state equation is $\frac{\partial L}{\partial x} - \frac{d}{dt} \Big(\frac{\partial L}{\partial x'} \Big) = 0$, where $x'= \frac{dx}{dt}$. The co-state equation yields the time variation of $\lambda$,
+\begin{equation}
+    \label{eqn:co_state}
+    \frac{d \lambda}{dt} = \frac{\partial A}{\partial x} + \lambda \frac{\partial f_e}{\partial x} = \lambda \frac{\partial U}{\partial x}.
+\end{equation}
+
+Finally, the sate equation, $\frac{\partial L}{\partial \lambda} = 0$ gives the soil water balance (equation \ref{eqn:soil_water}). 
+
+Of equal importance are the boundary conditions: equations \ref{eqn:control}, \ref{eqn:co_state}, and \ref{eqn:soil_water} are to be solved with preset $x(t=0)$ and $x(t=T)$. In reality, it is impossible to set the terminal soil moisture a priori. However, this can be mended by introducing the water use strategy (WUS).
 
 \subsection{Water use strategy}
 
 To find the optimal trends of $g_s$ and $\psi_l$ with time at different environmental conditions, the method of calculus of variations is used to derive the necessary differential equations (Appendix A). The objective function $J$ in this situation is the following:
 \begin{equation}
     \label{eqn:objective}
-    J = \int_0^{T_f}\big[ A(g_l,T,R_{abs}) + \lambda f(x,g_l)\big] dt + J_{T_f},
+    J = \int_0^{T_f}\big[ A(g_l,T,R_{abs}) + \lambda f(x,g_l)\big] dt + J_{T},
 \end{equation}
 where $A$ is the instantaneous plant carbon gain in $molm^{-2}s^{-1}$. $T$ is the atmospheric temperature in $K$, considered equal to the leaf temperature (Appendix B) and $R_{abs}$ is the absorbed radiation in $Wm^{-2}$. $J_{T_f}$ is the carbon value of the terminal soil water moisture $x(T_f)$ prescribed as:
 \begin{equation}
     \label{eqn:terminal_gain}
-    J_{T_f} = \Lambda x(T_f),
+    J_{T} = \Lambda x(T),
 \end{equation}
-where $\Lambda$ is a user-defined parameter, in $mol m^{-2}$, prescribing conservative water use strategy when it is large and aggressive water use when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants and. The presence of $J_{T_f}$ in Eqn. \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water. The Lagrange multiplier $\lambda$ commonly referred to as the marginal water use efficiency (MWUE) and $f$ is the cost function obtained through eqn \ref{eqn:soil_water_drydown}.
+where $\Lambda$ is a user-defined parameter, in mol m$^{-2}$, prescribing conservative water use strategy when it is large and aggressive water use when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants and. The presence of $J_{T}$ in equation \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water. The Lagrange multiplier $\lambda$ commonly referred to as the marginal water use efficiency (MWUE) and $f$ is the cost function obtained through equation \ref{eqn:soil_water_drydown}.
 
 The optimal solution for the leaf stomatal conductance $g_l$ is obtained by solving the following simultaneous equations (Appendix A):
 
@@ -242,22 +260,23 @@ We assume this is the global maximum
 The model requires supplying environmental data acting as boundary conditions at the soil and leaf levels. These are the initial soil water content ($x_0$), vapor pressure deficit ($VPD$), incident leaf shortwave radiation ($R_l$), and temperature ($T$). We use the data provided by the FLUXNET project at the Blodgett forest. A drydown period starting on May 29, 2005 was chosen and the environmental variations over 20 days are averaged into one representative day. These conditions are then copied and tiled to however many days the optimization is running for. This allows isolating the plant hydraulic and strategy effects on stomatal behavior.
 
 \begin{figure}[t]
-\begin{center}
-\includegraphics[width=10cm]{Fig1.eps}
-\end{center}
-\caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit on $\lambda$. These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:Weibull}). All of the shown curves are subject to environmental conditions at 12:00. The combination of VPD, temperature, and PAR at that time are the most stringent of any combination at another time throughout the day over the course of the considered drydown.}\label{fig:lam_lower}
+    \begin{center}
+    \includegraphics[width=10cm]{Fig2.pdf}
+    \end{center}
+    \caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit ($\lambda_{lower}$). These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:root_leaf}). All of the shown curves are subject to environmental conditions at 12:00 on 5-29-2004 in Blodgett Forest (combination of vapor pressure deficit, temperature, and photosynthetically active radiation). The upper limit ($\lambda_{upper}$) is set at the point where $g_s=0$ because $g_s$ can never be negative.}
+    \label{fig:lam_lower}
 \end{figure}
 
 \section{Results}
 
-Soil-to-leaf plant hydraulics, prescribed through a Vulnerability Curve (VC), set a lower limit on the value of the marginal use efficiency $\lambda$ and dictate its increase as the soil moisture content decreases.
+As previously described, Soil-to-leaf plant hydraulics are prescribed through a Vulnerability Curve (VC). By setting an upper limit on $E$ and therefore $g_s$, the VC sets a lower limit on the value of the marginal use efficiency $\lambda$ (Figure \ref{fig:lam_lower}). Because of the inverse relation between $g_s$ and $\lambda$ (equation \ref{eqn:control}), an upper limit on $\lambda$ is set at $g_s=0$ because $g_s$ cannot be negative (equation \ref{eqn:control}). As the soil moisture decreases and the soil water potential gets more negative, the leaf is constrained to higher $\lambda$ while the upper limit maintains a constant value.
 
-The former of these two effects is shown in figure \ref{fig:lam_lower} where the lower bound of $\lambda$ ($\lambda_{lower}$) is plotted as a functions of soil water potential. This arises from the solution of equation \ref{eqn: dg} upon replacing A using equation \ref{eqn:A_noci}. The solution provides an inverse functional relationship between $g_l$ and $\lambda$. At every $\psi_x$, equation \ref{eqn: mass_cons} is maximized to obtain an upper bound on $g_l$ which translates into a lower bound on $\lambda$. Because the maximum possible transpiration rate $E$ decreases as $\psi_x$ increases, $\lambda_{lower}$ increases with $\psi_x$.
+% The former of these two effects is shown in figure \ref{fig:lam_lower} where the lower bound of $\lambda$ ($\lambda_{lower}$) is plotted as a functions of soil water potential. This arises from the solution of equation \ref{eqn: dg} upon replacing A using equation \ref{eqn:A_noci}. The solution provides an inverse functional relationship between $g_l$ and $\lambda$. At every $\psi_x$, equation \ref{eqn: mass_cons} is maximized to obtain an upper bound on $g_l$ which translates into a lower bound on $\lambda$. Because the maximum possible transpiration rate $E$ decreases as $\psi_x$ increases, $\lambda_{lower}$ increases with $\psi_x$.
 
-The latter of these two effects is imposed through equation \ref{eqn: dlam}. In the simple case where no uncontrolled losses from the soil are present, $f=-E$ and therefore $\frac{d\lambda}{dt}=\lambda \frac{\partial E}{\partial x}$. Taking the partial derivative by $x$ of equation \ref{eqn: mass_cons} yields the following positively valued equation:
-\begin{equation}
-    \frac{\partial E}{\partial x} = g_p \Big(-\frac{\partial \psi_x}{\partial x}\Big) \Big[\frac{1}{2} \frac{s}{\psi_{63}} \Big(\frac{\psi_p}{\psi_{63}}\Big)^{s-1} (\psi_l-\psi_x) + 1\Big]
-\end{equation}
+% The latter of these two effects is imposed through equation \ref{eqn: dlam}. In the simple case where no uncontrolled losses from the soil are present, $f=-E$ and therefore $\frac{d\lambda}{dt}=\lambda \frac{\partial E}{\partial x}$. Taking the partial derivative by $x$ of equation \ref{eqn: mass_cons} yields the following positively valued equation:
+% \begin{equation}
+%     \frac{\partial E}{\partial x} = g_p \Big(-\frac{\partial \psi_x}{\partial x}\Big) \Big[\frac{1}{2} \frac{s}{\psi_{63}} \Big(\frac{\psi_p}{\psi_{63}}\Big)^{s-1} (\psi_l-\psi_x) + 1\Big]
+% \end{equation}
 
 
 \section{Discussion}
