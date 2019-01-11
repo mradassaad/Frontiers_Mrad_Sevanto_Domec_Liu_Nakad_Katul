@@ -86,9 +86,11 @@ def dydt(t, y):
     # -------------- uncontrolled losses and evapo-trans ------------------------
     losses = 0
     dlossesdx = 0
+
     # Comment out following 2 lines if only plant hydraulic effects are sought
-    losses = beta * y[1] ** c  # 1/d
-    dlossesdx = beta * c * y[1] ** (c - 1) # 1/d
+    # losses = beta * y[1] ** c  # 1/d
+    # dlossesdx = beta * c * y[1] ** (c - 1) # 1/d
+
     f = - (losses + evap_trans)  # 1/d
     dfdx = - (dlossesdx + dEdx)  # 1/d
     dlamdt = - dA_dx - y[0] * dfdx  # mol/m2/d
@@ -100,8 +102,8 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.35
-    return np.array([ya[1] - x0, yb[1] - 0.3])
+    x0 = 0.2
+    return np.array([ya[1] - x0, yb[1] - 0.15])
 
 
 def bc_wus(ya, yb):  # Water use strategy
@@ -113,8 +115,8 @@ def bc_wus(ya, yb):  # Water use strategy
 maxLam = 763e-6*unit0
 Lambda = maxLam*0.55  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 20*np.ones((1, t.size))  # mol/m2
-x_guess = 0.25*np.ones((1, t.size))
+lam_guess = 5*np.ones((1, t.size))  # mol/m2
+x_guess = 0.17*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -166,12 +168,22 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 psi_p = (psi_l + psi_r) / 2
 PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
 
-f = - (beta * soilM_plot ** c + alpha * E / lai)
+f = - (beta * soilM_plot ** c + alpha * E / lai)  # day-1
 objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
 
 H = A_val + res.y[0]*f  # mol/m2/d
+
+inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
+        'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
+        'theta': theta, 'PLC': PLC, 'H': H}
+
+import pickle
+
+pickle_out = open("../Fig2/Fig2.vulnerable", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()
 
 # --- for debugging and insight
 
