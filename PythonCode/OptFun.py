@@ -115,7 +115,7 @@ def bc_wus(ya, yb):  # Water use strategy
 maxLam = 763e-6*unit0
 Lambda = maxLam*0.55  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 5*np.ones((1, t.size))  # mol/m2
+lam_guess = 50*np.ones((1, t.size))  # mol/m2
 x_guess = 0.17*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
@@ -175,64 +175,55 @@ theta = objective_term_2 / (objective_term_1 + objective_term_2)
 
 H = A_val + res.y[0]*f  # mol/m2/d
 
-inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
-        'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
-        'theta': theta, 'PLC': PLC, 'H': H}
-
-import pickle
-
-pickle_out = open("../Fig2/Fig2.vulnerable", "wb")
-pickle.dump(inst, pickle_out)
-pickle_out.close()
 
 # --- for debugging and insight
 
-plt.figure()
-plt.subplot(331)
-plt.plot(res.x, lam_plot)
-#plt.xlabel("days")
-plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
-
-plt.subplot(332)
-plt.plot(res.x, soilM_plot)
+# plt.figure()
+# plt.subplot(331)
+# plt.plot(res.x, lam_plot)
+# #plt.xlabel("days")
+# plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
+#
+# plt.subplot(332)
+# plt.plot(res.x, soilM_plot)
+# # plt.xlabel("time, days")
+# plt.ylabel("$x(t)$")
+#
+# plt.subplot(333)
+# plt.plot(res.x, gl / unit0)
 # plt.xlabel("time, days")
-plt.ylabel("$x(t)$")
-
-plt.subplot(333)
-plt.plot(res.x, gl / unit0)
-plt.xlabel("time, days")
-plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
-
-
-plt.subplot(334)
-plt.plot(res.x, A_val * 1e6 / unit0)
+# plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+#
+#
+# plt.subplot(334)
+# plt.plot(res.x, A_val * 1e6 / unit0)
+# # plt.xlabel("time, days")
+# plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
+#
+# plt.subplot(335)
+# plt.plot(res.x, (E * alpha * n * z_r / lai))
+# # plt.xlabel("time, days")
+# plt.ylabel("$E, m.d^{-1}$")
+#
+# plt.subplot(336)
+# plt.plot(res.x, psi_x)
+# # plt.xlabel("time, days")
+# plt.ylabel("$\psi_x, MPa$")
+#
+# plt.subplot(337)
+# plt.plot(res.x, psi_l)
 # plt.xlabel("time, days")
-plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
-
-plt.subplot(335)
-plt.plot(res.x, (E * alpha * n * z_r / lai))
+# plt.ylabel("$\psi_l, MPa$")
+#
+# plt.subplot(338)
+# plt.plot(res.x, psi_p)
 # plt.xlabel("time, days")
-plt.ylabel("$E, m.d^{-1}$")
-
-plt.subplot(336)
-plt.plot(res.x, psi_x)
+# plt.ylabel("$\psi_p, MPa$")
+#
+# plt.subplot(339)
+# plt.plot(res.x, PLC)
 # plt.xlabel("time, days")
-plt.ylabel("$\psi_x, MPa$")
-
-plt.subplot(337)
-plt.plot(res.x, psi_l)
-plt.xlabel("time, days")
-plt.ylabel("$\psi_l, MPa$")
-
-plt.subplot(338)
-plt.plot(res.x, psi_p)
-plt.xlabel("time, days")
-plt.ylabel("$\psi_p, MPa$")
-
-plt.subplot(339)
-plt.plot(res.x, PLC)
-plt.xlabel("time, days")
-plt.ylabel("PLC, %")
+# plt.ylabel("PLC, %")
 
 # --- Fig1b
 
@@ -264,3 +255,16 @@ psix_sim_interp = interp1d(res.x, psi_x, kind='cubic')
 gl_mid_day = gl_interp(mid_day)
 psil_mid_day = psil_sim_interp(mid_day)
 psix_mid_day = psix_sim_interp(mid_day)
+
+
+# -----save----
+
+inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
+        'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
+        'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up}
+
+import pickle
+
+pickle_out = open("../Fig3/Fig3.resistant", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()

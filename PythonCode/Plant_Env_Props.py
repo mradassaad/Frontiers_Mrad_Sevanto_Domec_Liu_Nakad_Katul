@@ -76,7 +76,7 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 1.9  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
 Kmax = 1e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
@@ -155,3 +155,30 @@ VPDinterp = interp1d(t, VPD, kind='cubic')
 cp_interp = interp1d(t, cp, kind='cubic')
 k1_interp = interp1d(t, k1, kind='cubic')
 k2_interp = interp1d(t, k2, kind='cubic')
+
+env = {'VPDavg': VPDavg, 'TEMPavg': TEMPavg, 'PARavg': PARavg, 'VPDinterp': VPDinterp,
+       'cp_interp': cp_interp, 'k1_interp': k1_interp, 'k2_interp': k2_interp, 'AvgNbDay': AvgNbDay,
+       'days': days}
+
+soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, 'd_r': d_r, 'RAI': RAI,
+        'beta': beta, 'psi_sat': psi_sat, 'b': b}
+
+plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
+         'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
+         'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
+         'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp}
+
+import pickle
+
+pickle_out = open("../Fig3/Fig3.environment", "wb")
+pickle.dump(env, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../Fig3/Fig3.soil", "wb")
+pickle.dump(soil, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../Fig3/Fig3.plant", "wb")
+pickle.dump(plant, pickle_out)
+pickle_out.close()
+
