@@ -257,19 +257,49 @@ We assume this is the global maximum
 
 \subsection{Environmental data} 
 
+\begin{figure}
+    \begin{center}
+         \includegraphics[scale=0.75]{Fig1.pdf}   
+    \end{center}
+    \caption{Diurnal trends of vapor pressure deficit (VPD), temperature ($T$), and photosynthetically active radiation (PAR). These are the averaged trends using measurements from the FLUXNET project at the Blodgett forest over 20 days starting from 5-29-2004 (the start of 4-months drought). These trends are repeated for the desired simulation duration.}
+    \label{fig:environment}
+\end{figure}
+
 The model requires supplying environmental data acting as boundary conditions at the soil and leaf levels. These are the initial soil water content ($x_0$), vapor pressure deficit ($VPD$), incident leaf shortwave radiation ($R_l$), and temperature ($T$). We use the data provided by the FLUXNET project at the Blodgett forest. A drydown period starting on May 29, 2005 was chosen and the environmental variations over 20 days are averaged into one representative day. These conditions are then copied and tiled to however many days the optimization is running for. This allows isolating the plant hydraulic and strategy effects on stomatal behavior.
 
+\section{Results}
+
+\begin{table}[]
+    \centering
+    \begin{tabular}{c|c|c|c}
+        Symbol & Property & Value & Unit \\
+        \hline
+        $g_{rl,max}$ & Maximum leaf area specific root-leaf hydraulic conductance & 10$^{-3}$ & mol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
+        $g_{rl}$ & Leaf area specific root-leaf hydraulic conductance & varies & mol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
+        $\psi_{63}$ & water potential at which $g_{rl} \approx 0.34 g_{rl,max}$ & varies & MPa \\
+        $s$ & Shape parameter of the vulnerability curve & 2 &  \\
+    \end{tabular}
+    \caption{Plant properties used in the model unless stated in the particular simulation description, figure or table caption.}
+    \label{tab:plant_props}
+\end{table}
 \begin{figure}[t]
     \begin{center}
-    \includegraphics[width=10cm]{Fig2.pdf}
+        \includegraphics[width=10cm]{Fig2.pdf}
     \end{center}
     \caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit ($\lambda_{lower}$). These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:root_leaf}). All of the shown curves are subject to environmental conditions at 12:00 on 5-29-2004 in Blodgett Forest (combination of vapor pressure deficit, temperature, and photosynthetically active radiation). The upper limit ($\lambda_{upper}$) is set at the point where $g_s=0$ because $g_s$ can never be negative.}
     \label{fig:lam_lower}
 \end{figure}
 
-\section{Results}
 
 As previously described, Soil-to-leaf plant hydraulics are prescribed through a Vulnerability Curve (VC). By setting an upper limit on $E$ and therefore $g_s$, the VC sets a lower limit on the value of the marginal use efficiency $\lambda$ (Figure \ref{fig:lam_lower}). Because of the inverse relation between $g_s$ and $\lambda$ (equation \ref{eqn:control}), an upper limit on $\lambda$ is set at $g_s=0$ because $g_s$ cannot be negative (equation \ref{eqn:control}). As the soil moisture decreases and the soil water potential gets more negative, the leaf is constrained to higher $\lambda$ while the upper limit maintains a constant value.
+
+\begin{figure}
+    \begin{center}
+         \includegraphics[scale=0.75]{Fig3.pdf}   
+    \end{center}
+    \caption{Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with a) time ($t$) and b) soil water potential ($\psi_x$). Trends are shown for a resistant plant ($\psi_{63} = 3$ MPa), a vulnerable plant ($\psi_{63} = 1.9$ MPa), and a midrange plant ($\psi_{63} = 2.2$ MPa). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam.}
+    \label{fig:resistant_vulnerable_gs}
+\end{figure}
 
 % The former of these two effects is shown in figure \ref{fig:lam_lower} where the lower bound of $\lambda$ ($\lambda_{lower}$) is plotted as a functions of soil water potential. This arises from the solution of equation \ref{eqn: dg} upon replacing A using equation \ref{eqn:A_noci}. The solution provides an inverse functional relationship between $g_l$ and $\lambda$. At every $\psi_x$, equation \ref{eqn: mass_cons} is maximized to obtain an upper bound on $g_l$ which translates into a lower bound on $\lambda$. Because the maximum possible transpiration rate $E$ decreases as $\psi_x$ increases, $\lambda_{lower}$ increases with $\psi_x$.
 
