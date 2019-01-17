@@ -76,7 +76,7 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 1.9  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
 Kmax = 1e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0

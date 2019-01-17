@@ -41,7 +41,7 @@ vul_gl_day, = ax.plot(vulnerable["t"][noon], vulnerable["gl"][noon] * unit, 'r:'
 legend1 = ax.legend((res_gl, res_gl_day),
                    ('Half-hourly', 'Midday'), fontsize='large', loc=1)
 
-fig.savefig('../Fig3/gs_time.pdf', bbox_inches='tight')
+# fig.savefig('../Fig3/gs_time.pdf', bbox_inches='tight')
 # ------------psi_x----------------
 
 
@@ -60,7 +60,7 @@ ax2.set_ylim(0, np.max(ax.yaxis.get_data_interval()))
 legend1 = ax2.legend((res_gl, mid_gl, vul_gl),
                    ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
 
-fig2.savefig('../Fig3/gs_psix.pdf', bbox_inches='tight')
+# fig2.savefig('../Fig3/gs_psix.pdf', bbox_inches='tight')
 
 # --------------lambda-------------
 
@@ -104,10 +104,8 @@ res_lam_low, = ax3.plot(resistant["t"], resistant["lam_low"], 'r')
 res_lam_mid, = ax3.plot(midrange["t"], midrange["lam_low"], 'r--')
 res_lam_vul, = ax3.plot(vulnerable["t"], vulnerable["lam_low"], 'r:')
 
-
 plt.setp(ax3.get_xticklabels(), FontSize=12)
 plt.setp(ax3.get_yticklabels(), FontSize=12)
-
 
 ax3.set_xlabel("Time, $t$, days", FontSize=14)
 ax3.set_ylabel("Marginal water use efficiency, $\lambda$, mol m$^{-2}$", FontSize=14)
@@ -119,4 +117,23 @@ ax3.add_artist(legend1)
 legend2 = ax3.legend((res_lam, res_lam_low),
                    ('$\lambda (t)$', '$\lambda_{lower}$'), fontsize='large', loc=9)
 
-fig3.savefig('../Fig3/lam_t.pdf', bbox_inches='tight')
+# fig3.savefig('../Fig3/lam_t.pdf', bbox_inches='tight')
+
+# --------------------- PLC ---------------------
+
+fig4, ax4 = plt.subplots()
+res_PLC, = ax4.plot(resistant["t"], resistant["PLC"], 'k')
+mid_PLC, = ax4.plot(midrange["t"], midrange["PLC"], 'k--')
+vul_PLC, = ax4.plot(vulnerable["t"], vulnerable["PLC"], 'k:')
+
+plt.setp(ax4.get_xticklabels(), FontSize=12)
+plt.setp(ax4.get_yticklabels(), FontSize=12)
+
+ax4.set_xlabel("Time, $t$, days", FontSize=14)
+ax4.set_ylabel("Percent loss of conductivity, PLC, $\%$", FontSize=14)
+
+legend1 = ax4.legend((res_PLC, mid_PLC, vul_PLC),
+                   ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
+ax4.set_ylim(0, 100)
+
+fig4.savefig('../Fig3/PLC_t.pdf', bbox_inches='tight')

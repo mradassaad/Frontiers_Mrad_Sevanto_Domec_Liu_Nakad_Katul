@@ -88,8 +88,8 @@ def dydt(t, y):
     dlossesdx = 0
 
     # Comment out following 2 lines if only plant hydraulic effects are sought
-    losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
-    dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
+    # losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
+    # dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
 
     f = - (losses + evap_trans)  # 1/d
     dfdx = - (dlossesdx + dEdx)  # 1/d
@@ -102,7 +102,7 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.26
+    x0 = 0.2
     return np.array([ya[1] - x0, yb[1] - 0.15])
 
 
@@ -168,12 +168,11 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 psi_p = (psi_l + psi_r) / 2
 PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
 
-f = - (res.yp[1] + beta * soilM_plot ** c + alpha * E / lai + 0.1 * soilM_plot ** 2)  # day-1
+# f = - (beta * soilM_plot ** c + alpha * E / lai + 0.1 * soilM_plot ** 2)  # day-1
+f = - (alpha * E / lai)  # day-1
 objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
-
-H = A_val + res.y[0]*f  # mol/m2/d
 
 
 # --- for debugging and insight
@@ -259,12 +258,17 @@ psix_mid_day = psix_sim_interp(mid_day)
 
 # -----save----
 
+H = np.zeros(A_val.shape)
+oklam = np.greater_equal(res.y[0], lam_low)
+H[oklam] = A_val[oklam] + res.y[0][oklam]*f[oklam]  # mol/m2/d
+H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]  # mol/m2/d
+
 inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E}
 
-# import pickle
-#
-# pickle_out = open("../Fig5/Fig5.vulnerable_competition", "wb")
-# pickle.dump(inst, pickle_out)
-# pickle_out.close()
+import pickle
+
+pickle_out = open("../Fig3/Fig3.resistant", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()
