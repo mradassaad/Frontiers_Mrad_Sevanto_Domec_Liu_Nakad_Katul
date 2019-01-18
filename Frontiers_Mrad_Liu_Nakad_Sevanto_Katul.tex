@@ -92,17 +92,17 @@ The goal here is not to develop a stomatal prediction package but to explore whe
 
 \subsection{Theory}
 
-The principle adopted here is that plants maximize their carbon gain ($A$) over the period of a drydown. This principle assumes that plants freely control the stomatal conductance $g_s$. Previous work constrained control of $g_s$ by enforcing instantaneous water balance at the soil level \citep{Manzoni2013}. To mathematically express this constraint an augmented Lagrangian is defined $H$:
+The principle adopted here is that plants maximize their carbon gain ($A$) over the period of a drydown. This principle assumes that plants freely control the stomatal conductance $g_s$. Previous work constrained control of $g_s$ by enforcing instantaneous water balance at the soil level \citep{Manzoni2013}. To mathematically express this constraint an augmented Lagrangian is defined $L$:
 \begin{equation}
-    \label{eqn:Hamiltonian}
-    H\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = A(g_s, t) + \lambda f_e\Big(g_s, x, \frac{dx}{dt}, t\Big).
+    \label{eqn:Lagrangian}
+    L\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = A(g_s, t) - \lambda \Bigg[ \frac{dx}{dt} - f_e\Big(g_s, x, \frac{dx}{dt}, t\Big)\Bigg].
 \end{equation}
 $\lambda$ is the Lagrange multiplier, $x$ is the soil moisture, $t$ is time, and $f_e$ is the soil water balance.
 
-Because the principle states that $A$ is maximized over a drydown, the objective function $J$ is the integral of $H$ from $t=0$ at the beginning of drydown to $t=T$ at the end of it:
+Because the principle states that $A$ is maximized over a drydown, the objective function $J$ is the integral of $L$ from $t=0$ at the beginning of drydown to $t=T$ at the end of it:
 \begin{equation}
     \label{eqn:Objective}
-    J\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = \int_0^T H\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big).
+    J\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = \int_0^T L\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big).
 \end{equation}
 
 The goal then consists of finding the function of $g_s$ in terms of $t$ that maximizes $J$. This goal is achieved by solving the Euler-Lagrange equations using the method of the calculus of variations. A required step however is expressing $A$ and $f_e$ in terms of the control variable $g_s$ and the state variable $x$.
@@ -146,16 +146,9 @@ To sum up, if changes of $T_a$ and PAR with time are given, as well as $c_a$ and
 At the soil, we model the water budget as follows \citep{Rodriguez-Iturbe2007}:
 \begin{equation}
     \label{eqn:soil_water}
-    \frac{dx(t)}{dt} =\frac{1}{n Z_r}[- E(g_s, t) - L(x, t)],
+    \frac{dx(t)}{dt} = f_e\Big(g_s, x, \frac{dx}{dt}, t\Big) = \frac{1}{n Z_r}[- E(g_s, t) - U(x, t)],
 \end{equation}
-where $x(t)$ is the soil moisture in $m^3m^{-3}$, L are uncontrolled losses (independent of the leaf), and E is the evapotranspiration rate from the leaf in $m^2d^{-1}$. $n$ is the soil porosity in $m^3m^{-3}$ and $Z_r$ is the effective plant rooting depth in $m$. $L$ may account for both soil leakage away from the rooting zone and competition from other plant roots.
-
-Missing in equation \ref{eqn:soil_water} is the rainfall input and this is because we are only considering drydown periods in this work. To formulate this soil water balance as a constraint on the maximum carbon gain principle, we write:
-\begin{equation}
-    \label{eqn:soil_water_constraint}
-    f_e\Big(g_s, x, \frac{dx}{dt}, t\Big) = \frac{dx(t)}{dt} + \frac{1}{n Z_r}[ E(g_s, t) + L(x, t)],
-\end{equation}
-where $f_e$ was previously introduced in equation \ref{eqn:Hamiltonian}. Soil leakage is modeled as free drainage such that water losses from leakage per unit soil area and per unit depth is equal to the soil conductivity $g_x$ \citep{campbell1974}:
+where $x(t)$ is the soil moisture in m$^3$ m$^{-3}$, $U$ are uncontrolled losses (independent of the leaf), and E is the evapotranspiration rate from the leaf in $m^2d^{-1}$. $n$ is the soil porosity in m$^3$ m$^{-3}$ and $Z_r$ is the effective plant rooting depth in $m$. $U$ may account for both soil leakage away from the rooting zone and competition from other plant roots. $f_e$ was previously introduced in equation \ref{eqn:Lagrangian}. Missing in equation \ref{eqn:soil_water} is the rainfall input and this is because we are only considering drydown periods in this work. Soil leakage is modeled as free drainage such that water losses from leakage per unit soil area and per unit depth is equal to the soil conductivity $g_x$ \citep{campbell1974}:
 \begin{equation}
     \label{eqn:soil_cond}
     g_x = g_{x,sat}x^{2b+3}.
@@ -290,8 +283,7 @@ The model requires supplying environmental data acting as boundary conditions at
     \label{fig:lam_lower}
 \end{figure}
 
-
-As previously described, Soil-to-leaf plant hydraulics are prescribed through a Vulnerability Curve (VC). By setting an upper limit on $E$ and therefore $g_s$, the VC sets a lower limit on the value of the marginal use efficiency $\lambda$ (Figure \ref{fig:lam_lower}). Because of the inverse relation between $g_s$ and $\lambda$ (equation \ref{eqn:control}), an upper limit on $\lambda$ is set at $g_s=0$ because $g_s$ cannot be negative (equation \ref{eqn:control}). As the soil moisture decreases and the soil water potential gets more negative, the leaf is constrained to higher $\lambda$ while the upper limit maintains a constant value.
+As previously described, root-to-leaf plant hydraulics are prescribed through a Vulnerability Curve (VC). By setting an upper limit on $E$ and therefore $g_s$, the VC sets a lower limit on the value of the marginal use efficiency $\lambda$ (figure \ref{fig:lam_lower}) because of the inverse relation between $g_s$ and $\lambda$ (equation \ref{eqn:control}). An upper limit on $\lambda$ is set at $g_s=0$ because $g_s$ cannot be negative (equation \ref{eqn:control}). As the soil moisture decreases and the soil water potential gets more negative, the leaf is constrained to higher $\lambda$ while the upper limit maintains a constant value. A more stringent lower limit applies when the plant is more vulnerable to embolism spread as indicated by a lower $\psi_{63}$. That vulnerable plants are constrained to more efficient modes of water use means that they can only afford more conservative water use strategies (WUS) as will be discussed.
 
 \begin{figure}
     \begin{center}
@@ -301,6 +293,24 @@ As previously described, Soil-to-leaf plant hydraulics are prescribed through a 
     \label{fig:resistant_vulnerable_gs}
 \end{figure}
 
+This phenomenon is further shown in a simulation where plants use soil water over a period of $T=10$ days (figures \ref{fig:resistant_vulnerable_gs} and \ref{fig:resistant_vulnerable_lambda}). The soil water potential is preset by the boundary conditions to decrease from $x(0)=0.2$ to $x(T)=0.15$. There is no competition in this simulation to isolate plant water use from all possible effects. The half-hourly dynamics of $g_s$ show that the resistant plant ($\psi_{63}=3$) MPa maintain the same trend day to day. This is both due to the highly resistant xylem and the fact that environmental conditions are repeated day to day (figure \ref{fig:environment}). In contrast, the vulnerable plant ($\psi_{63}=1.9$) MPa starts at $t=0$ days with higher stomatal conductance than its resistant counterpart and progressively reduces its half-hour $g_s$ trend day to day. The contrast is clear when comparing the midday $g_s$ values against $t$ (figure \ref{fig:resistant_vulnerable_gs}a) and against $\psi_x$ (\ref{fig:resistant_vulnerable_gs}b). The larger sensitivity of the vulnerable plant's $g_s$ to $\psi_x$ qualify it as an isohydric species while the absent sensitivity of the resistant plant qualify it as an anisohydric species \citep{Hochberg2017}. As an intermediate case, the midrange species ($\psi_{63}=2.2$) MPa transitions from isohydric behavior when $\psi_x>-0.4$ MPa to anisohydric behavior.
+
+\begin{figure}
+    \begin{center}
+         \includegraphics[scale=0.75]{Fig4.pdf}   
+    \end{center}
+    \caption{Half-hourly trends of the marginal water use efficiency ($\lambda$; in black) and the lower limit ($\lambda_{lower}$; in red) set by the vulnerability curve of the root-leaf water pathway. The independent variable is time ($t$). Trends are shown for a resistant plant ($\psi_{63} = 3$ MPa), a vulnerable plant ($\psi_{63} = 1.9$ MPa), and a midrange plant ($\psi_{63} = 2.2$ MPa). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. This figure and figure \ref{fig:resistant_vulnerable_gs} correspond to the same simulation.}
+    \label{fig:resistant_vulnerable_lambda}
+\end{figure}
+
+This contrast in behavior is driven solely by plant hydraulics (figure \ref{fig:resistant_vulnerable_lambda}). As the soil dries and $\lambda_{lower}$ increases, it crosses the half-hourly trend in $\lambda$ for the 3 species shown but earlier for more vulnerable ones (higher $\psi_{63}$). During the crossing intervals, plant hydraulics, as limited by the VCs, drive plant water use and induces the sensitivity of $g_s$ to drying soil. Because this crossing happens earlier for the vulnerable plant, it has to resort to more aggressive water use (lower $\lambda$) to achieve the same water use as prescribed by the boundary conditions. This underscores the disadvantage of having to prescribe the initial and terminal soil moisture as boundary conditions as priori. If the resistant plant can afford to be more aggressive and be more competitive than the vulnerable plant in the same environment, then a different formulation that take WUS into account is warranted. In fact, the total carbon assimilation over the 10-day period for the resistant plant is 3.10 mol m$^{-2}$ compared to 3.02 mol m$^{-2}$ for the vulnerable plant indicating a negligible competitive advantage. This is also apparent comparing the PLC at $t=10$ days of the resistant plant of 81\% compared to the vulnerable plant's 83\%. The widely used Hamiltonian integrates both carbon assimilation and the carbon cost of using water (Appendix B):
+\begin{equation}
+    \label{eqn:Hamiltionian}
+    H = A + \lambda f_e.
+\end{equation}
+For the resistant plant , the integral of the Hamiltonian over the 10-day period is 0.78 mol m$^{-2}$ whereas it is 0.80 mol m$^{-2}$, a negligible difference. However, if one equates the amount of time above a certain threshold PLC to plant water stress, then one would be interested in observing that the vulnerable plant spends 8 days above a PLC$=50\%$ compared to the resistant plant's 2 days (figure S1).
+
+A terminal gain term that is proportional to the terminal soil moisture $x(T)$ is now used in the objective (equation \ref{eqn:terminal_gain}). The boundary conditions are now $x(0)=0.2$ as before and $\lambda=36.3$ mol m$^{-2}$ for all three plants defined as in the previous simulation. 
 % The former of these two effects is shown in figure \ref{fig:lam_lower} where the lower bound of $\lambda$ ($\lambda_{lower}$) is plotted as a functions of soil water potential. This arises from the solution of equation \ref{eqn: dg} upon replacing A using equation \ref{eqn:A_noci}. The solution provides an inverse functional relationship between $g_l$ and $\lambda$. At every $\psi_x$, equation \ref{eqn: mass_cons} is maximized to obtain an upper bound on $g_l$ which translates into a lower bound on $\lambda$. Because the maximum possible transpiration rate $E$ decreases as $\psi_x$ increases, $\lambda_{lower}$ increases with $\psi_x$.
 
 % The latter of these two effects is imposed through equation \ref{eqn: dlam}. In the simple case where no uncontrolled losses from the soil are present, $f=-E$ and therefore $\frac{d\lambda}{dt}=\lambda \frac{\partial E}{\partial x}$. Taking the partial derivative by $x$ of equation \ref{eqn: mass_cons} yields the following positively valued equation:
