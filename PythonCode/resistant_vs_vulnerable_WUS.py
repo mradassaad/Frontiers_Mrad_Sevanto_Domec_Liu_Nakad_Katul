@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 from Useful_Funcs import lam_from_trans
 from Plant_Env_Props import ca
 
-pickle_in = open("../Fig3/Fig3.resistant", "rb")
+pickle_in = open("../Fig5/Fig5.resistant_WUS", "rb")
 resistant = pickle.load(pickle_in)
 
-pickle_in = open("../Fig3/Fig3.midrange", "rb")
+pickle_in = open("../Fig5/Fig5.midrange_WUS", "rb")
 midrange = pickle.load(pickle_in)
 
-pickle_in = open("../Fig3/Fig3.vulnerable", "rb")
+pickle_in = open("../Fig5/Fig5.vulnerable_WUS", "rb")
 vulnerable = pickle.load(pickle_in)
 
 unit = 1e3 / (3600*24)
@@ -41,7 +41,7 @@ vul_gl_day, = ax.plot(vulnerable["t"][noon], vulnerable["gl"][noon] * unit, 'r:'
 legend1 = ax.legend((res_gl, res_gl_day),
                    ('Half-hourly', 'Midday'), fontsize='large', loc=1)
 
-# fig.savefig('../Fig3/gs_time.pdf', bbox_inches='tight')
+fig.savefig('../Fig5/gs_time_WUS.pdf', bbox_inches='tight')
 # ------------psi_x----------------
 
 
@@ -60,17 +60,17 @@ ax2.set_ylim(0, np.max(ax.yaxis.get_data_interval()))
 legend1 = ax2.legend((res_gl, mid_gl, vul_gl),
                    ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
 
-# fig2.savefig('../Fig3/gs_psix.pdf', bbox_inches='tight')
+fig2.savefig('../Fig5/gs_psix_WUS.pdf', bbox_inches='tight')
 
 # --------------lambda-------------
 
-pickle_in = open("../Fig3/Fig3.environment", "rb")
+pickle_in = open("../Fig5/Fig5.environment", "rb")
 env = pickle.load(pickle_in)
 
-pickle_in = open("../Fig3/Fig3.soil", "rb")
+pickle_in = open("../Fig5/Fig5.soil", "rb")
 soil = pickle.load(pickle_in)
 
-pickle_in = open("../Fig3/Fig3.plant", "rb")
+pickle_in = open("../Fig5/Fig5.plant", "rb")
 plant = pickle.load(pickle_in)
 
 t = resistant['t']
@@ -117,7 +117,7 @@ ax3.add_artist(legend1)
 legend2 = ax3.legend((res_lam, res_lam_low),
                    ('$\lambda (t)$', '$\lambda_{lower}$'), fontsize='large', loc=9)
 
-# fig3.savefig('../Fig3/lam_t.pdf', bbox_inches='tight')
+fig3.savefig('../Fig5/lam_t_WUS.pdf', bbox_inches='tight')
 
 # --------------------- PLC ---------------------
 
@@ -136,4 +136,4 @@ legend1 = ax4.legend((res_PLC, mid_PLC, vul_PLC),
                    ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
 ax4.set_ylim(0, 100)
 
-# fig4.savefig('../Fig3/PLC_t.pdf', bbox_inches='tight')
+fig4.savefig('../Fig5/PLC_t_WUS.pdf', bbox_inches='tight')

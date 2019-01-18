@@ -124,7 +124,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 10
+days = 20
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -170,15 +170,15 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
 
 import pickle
 
-pickle_out = open("../Fig3/Fig3.environment", "wb")
+pickle_out = open("../Fig5/Fig5.environment", "wb")
 pickle.dump(env, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../Fig3/Fig3.soil", "wb")
+pickle_out = open("../Fig5/Fig5.soil", "wb")
 pickle.dump(soil, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../Fig3/Fig3.plant", "wb")
+pickle_out = open("../Fig5/Fig5.plant", "wb")
 pickle.dump(plant, pickle_out)
 pickle_out.close()
 

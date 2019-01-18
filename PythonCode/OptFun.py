@@ -107,22 +107,22 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.27
+    x0 = 0.3
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 # t = np.linspace(0, days, 2000)
 maxLam = 763e-6*unit0
-Lambda = maxLam*0.65  # mol/m2
+Lambda = maxLam*0.55  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
 lam_guess = 50*np.ones((1, t.size))  # mol/m2
-x_guess = 0.25*np.ones((1, t.size))
+x_guess = 0.17*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
 # ---------------- SOLVER - SOLVER - SOLVER - SOLVER - SOLVER --------------------
 try:
-    res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
+    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
     print('Try reducing initial guess for lambda')
     import sys
@@ -240,9 +240,9 @@ env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
 lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / alpha
 
 fig, ax = plt.subplots()
-lam_line = ax.plot(res.x, lam_plot, 'r')
-lam_low_line = ax.plot(res.x, lam_low*unit1, 'r:')
-lam_high_line = ax.plot(res.x, lam_up*unit1, 'r:')
+lam_line = ax.plot(res.x, lam_plot / unit1, 'r')
+lam_low_line = ax.plot(res.x, lam_low, 'r:')
+lam_high_line = ax.plot(res.x, lam_up, 'r:')
 
 
 # --- Fig 2
@@ -267,8 +267,8 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E}
 
-import pickle
-
-pickle_out = open("../Fig3/Fig3.resistant", "wb")
-pickle.dump(inst, pickle_out)
-pickle_out.close()
+# import pickle
+#
+# pickle_out = open("../Fig5/Fig5.vulnerable_WUS", "wb")
+# pickle.dump(inst, pickle_out)
+# pickle_out.close()
