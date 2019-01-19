@@ -124,7 +124,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((20, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 20
+days = 10
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
