@@ -52,7 +52,7 @@ def RNtoPAR(RN):
 def J_val(PAR, Jmax):
     """
 
-    :param PAR: photosynthetically active photon flux density in umol/m2/s
+    :param PAR: photosynthetically active photon flux density in umol/m2/s - per leaf area
     :return: rate of electron transport at a given temperature and PAR in umol/m2/s
     """
 
@@ -169,6 +169,8 @@ def dailyAvg(data, windowsize):
 # plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
 
 def g_val(t, lam, ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp):
+
+    # --------------- k1 is per leaf area so gs is per leaf area ----------
 
     gpart11 = (ca + k2_interp(t) - 2 * alpha * lam * VPDinterp(t)) *\
               np.sqrt(alpha * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *

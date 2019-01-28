@@ -88,8 +88,8 @@ def dydt(t, y):
     dlossesdx = 0
 
     # Comment out following 2 lines if only plant hydraulic effects are sought
-    losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
-    dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
+    # losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
+    # dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
 
     f = - (losses + evap_trans)  # 1/d
     dfdx = - (dlossesdx + dEdx)  # 1/d
@@ -102,8 +102,8 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.2
-    return np.array([ya[1] - x0, yb[1] - 0.15])
+    x0 = 0.25
+    return np.array([ya[1] - x0, yb[1] - 0.228])
 
 
 def bc_wus(ya, yb):  # Water use strategy
@@ -113,16 +113,16 @@ def bc_wus(ya, yb):  # Water use strategy
 
 # t = np.linspace(0, days, 2000)
 maxLam = 763e-6*unit0
-Lambda = maxLam*0.55  # mol/m2
+Lambda = maxLam*0.55 # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 40*np.ones((1, t.size))  # mol/m2
+lam_guess = 10*np.ones((1, t.size))  # mol/m2
 x_guess = 0.25*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
 # ---------------- SOLVER - SOLVER - SOLVER - SOLVER - SOLVER --------------------
 try:
-    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
+    res = solve_bvp(dydt, bc, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
 except OverflowError:
     print('Try reducing initial guess for lambda')
     import sys
@@ -168,8 +168,8 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 psi_p = (psi_l + psi_r) / 2
 PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
 
-f = - (beta * soilM_plot ** c + alpha * E / lai + 0.1 * soilM_plot ** 2)  # day-1
-# f = - (alpha * E / lai)  # day-1
+# f = - (beta * soilM_plot ** c + alpha * E / lai + 0.1 * soilM_plot ** 2)  # day-1
+f = - (alpha * E / lai)  # day-1
 objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
@@ -267,8 +267,8 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E}
 
-import pickle
-
-pickle_out = open("../Fig6/Fig6.resistant_competition_WUS", "wb")
-pickle.dump(inst, pickle_out)
-pickle_out.close()
+# import pickle
+#
+# pickle_out = open("../Fig6/Fig6.resistant_competition_WUS", "wb")
+# pickle.dump(inst, pickle_out)
+# pickle_out.close()
