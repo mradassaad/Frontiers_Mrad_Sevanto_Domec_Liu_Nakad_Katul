@@ -194,7 +194,8 @@ $E_{demand}$ is the atmospheric demand of water, $E_{sr}$ is the soil to root wa
 
 From equation \ref{eqn: mass_cons}, as $g_s$ varies with time, $\psi_l$ also varies to match supply and demand. The hydraulic constraint from plant water supply is apparent when one realizes that while $E_{demand}$ is monotonous and increasing with $g_s$, water supply is not monotonous with respect to $\psi_l$ (equations \ref{eqn:root_leaf}, \ref{eqn: mass_cons}). The presence of a maximum water supply imposes an additional constraint on the stomatal conductance $g_s$. 
 
-This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently here. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E_{sl}$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E_{sl}}{\partial \psi_l} = 0$\Big). 
+This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently here. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E_{sl}$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E_{sl}}{\partial \psi_l} = 0$\Big). This rests on the assumption that plants take full advantage of their transpiration capacity.
+
 \subsection{Maximizing the objective}
 
 To maximize $J$ (equation \ref{eqn:Objective}), we use the method of the calculus of variations \citep{witelski2015} to derive what are known as the Euler-Lagrange equations (see equation 3.55 in the mentioned reference). For this problem, these are a set of three equations to be solved with two boundary conditions set on $x$ at the beginning of drydown $t=0$ and at the end of it $t=T$.
@@ -256,7 +257,16 @@ Equation \ref{eqn:control} provides a complex functional dependence between $g_s
         & +\frac{\sqrt{a\, \text{VPD}\, \lambda\, k_1^2 (c_a-c_p)(k_2+c_p)(k_2+c_a-2 a\, \text{VPD}\, \lambda)^2(k_2+c_a-a\, \text{VPD}\, \lambda)}}{a\, \text{VPD}\, \lambda (k_2+c_a)^2(k_2+c_a-a\, \text{VPD}\, \lambda)} ,
     \end{split}
 \end{equation}
-where $g_s$ is per leaf area
+where $g_s$ is per leaf area.
+
+Figure \ref{fig:gs_lam} shows the phase-space plot of $g_s$ with $\lambda$ for different VPD and certain environmentally determined variables detailed in the caption. While this phase-space is static in terms of the environment which is always changing in reality, the dynamics shown are still the same. In the case where water supply is not limited through the rhizosphere or the plant water pathway (equations \ref{eqn:soil_root}, \ref{eqn:root_leaf}), $g_s$ decreases as the air dries (as VPD increases) following the long-dashed two-sided arrow. The arrow is two-sided because $g_s$ goes the opposite way as the air humidifies. This constant $\lambda$ variation in $g_s$ in response to VPD is subject to the absence of competitive sinks of water (other plants and the soil leakage, etc.) ]. If these do exist, then a slight diurnal increase in $\lambda$ does occur tilting this arrow sideways (equation \ref{eqn:co_state}).
+
+The solid one-sided arrow in figure \ref{fig:gs_lam} corresponds to the day to day increase in $\lambda$ and decrease in $g_s$ when compared at the same time and for same environmental conditions. This $\lambda$ increase is also associated with competitive soil water sinks but the magnitude of the increase is large because of the larger time scale involved (24 hours vs $\leq$ 1 hour). Another cause for an increase in $\lambda$ following this solid arrow is an increasingly supply-limited transpiration stream through the rhizosphere and the plant (an increase in PLC; equation \ref{eqn:supply}). This is seen by noticing that the solid arrow has a strong component normal to the lines of constant transpiration represented by red dashed lines in figure \ref{fig:gs_lam}. If however the changes in VPD are faster that changes in PLC then $g_s$ and $\lambda$ dynamics follow the short-dashed two-sided arrow that follows transpiration isolines. 
+
+Figure \ref{fig:gs_lam} elucidates how transpiration demand through VPD and supply through the PLC can drive the midday stomatal closure. For a demand-driven tranpiration stream and a constant $\lambda=12$ mmol mol$^{-1}$, a VPD$=8$ mmol mol$^{-1}$ corresponds to a $g_s\approx 17$ mol m$^{-2}$ s$^{-1}$ for the environmental conditions depicted in the caption of the mentioned figure. If it midday the VPD doubles, $g_s\approx 0$, a sharp decrease. if however, $\lambda=5$ mmol mol$^{-1}$, then for the same VPD change $g_s$ goes from $\approx 31$ mol m$^{-2}$ s$^{-1}$ to $\approx 23$ mol m$^{-2}$ s$^{-1}$, a noticeable but less aggressive decrease in $g_s$ ($\approx 26\%$). However, a larger PAR and $T_a$ could buffer that decrease by accelerating the chemical reactions visible through increases in $k_1$ and $k_2$.
+
+Supply limited midday stomatal closures are more nuances because they also lead to variations in $\lambda$ that could be positive or negative as seen by following transpiration isolines (red dashed lines in figure \ref{fig:gs_lam}). These isolines are considered a liberal path for the decrease in $g_s$ as the air dries in supply-limited conditions because PLC is also likely to increase as water is being used up by the plant. One can therefore expect a steeper decrease in $g_s$ as the air dries.
+
 \subsection{Sensitivity of stomatal conductance to drying soil}
 
 As previously described, root-to-leaf plant hydraulics are prescribed through a Vulnerability Curve (VC). By setting an upper limit on $E$ and therefore $g_s$, the VC sets a lower limit on the value of the marginal use efficiency $\lambda$ (figure \ref{fig:lam_lower}) because of the inverse relation between $g_s$ and $\lambda$ (equation \ref{eqn:control}). An upper limit on $\lambda$ is set at $g_s=0$ because $g_s$ cannot be negative (equation \ref{eqn:control}). As the soil moisture decreases and the soil water potential gets more negative, the leaf is constrained to higher $\lambda$ while the upper limit maintains a constant value. A more stringent lower limit applies when the plant is more vulnerable to embolism spread as indicated by a lower $\psi_{63}$. That vulnerable plants are constrained to more efficient modes of water use means that they can only afford more conservative water use strategies (WUS) as will be discussed.
@@ -306,7 +316,7 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.75]{Fig1.pdf}   
+         \includegraphics[scale=0.75]{environment.pdf}   
     \end{center}
     \caption{Diurnal trends of vapor pressure deficit (VPD), temperature ($T$), and photosynthetically active radiation (PAR). These are the averaged trends using measurements from the FLUXNET project at the Blodgett forest over 20 days starting from 5-29-2004 (the start of 4-months drought). These trends are repeated for the desired simulation duration.}
     \label{fig:environment}
@@ -314,7 +324,15 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \begin{center}
-        \includegraphics[width=10cm]{Fig2.pdf}
+         \includegraphics[scale=0.75]{gs_lam.pdf}   
+    \end{center}
+    \caption{Black solid lines are the phase-space curves of stomatal conductance ($g_s$) vs the marginal water use efficiency ($\lambda$) for four values of water vapor deficit (VPD). Other pertinent variables for these curves are the two parameter of equation \ref{eqn:supply} where $k_1 = 1$ mol m$^{-2}$ d$^{-1}$ and $k_2 = 1.8 * 10^{-4}$ mol mol$^{-1}$, the carbon compensation point $\Gamma^* = 25*10^{-6}$ mol mol$^{-1}$, and an atmospheric carbon concentration of $c_a = 350*10^{-6}$ mol mol$^{-1}$. The red dashed lines are lines of equal transpiration (isolines) for four values shown. The solid one-sided arrow shows a typical trend in $g_s$ and $\lambda$ for the same environmental conditions as the soil dries. The short-dashed two-sided arrow is the diurnal change in $\lambda$ and $g_s$ as the air dries for supply limited transpiration (constant percent loss of conductivity PLC). The long-dashed two-sided arrow is the diurnal change in $g_s$ as the air dries for demand-driven transpiration (constant $\lambda$). That $k_1$ and $k_2$ are constant means that the air temperature and the incoming shortwave radiation are not changing. In reality, shifts in the shape and slope of the phase-space curves occur as the environment changes diurnally and day to day.}
+    \label{fig:gs_lam}
+\end{figure}
+
+\begin{figure}[h]
+    \begin{center}
+        \includegraphics[width=10cm]{lam_lower_upper.pdf}
     \end{center}
     \caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit ($\lambda_{lower}$). These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:root_leaf}). All of the shown curves are subject to environmental conditions at 12:00 on 5-29-2004 in Blodgett Forest (combination of vapor pressure deficit, temperature, and photosynthetically active radiation). The upper limit ($\lambda_{upper}$) is set at the point where $g_s=0$ because $g_s$ can never be negative.}
     \label{fig:lam_lower}
@@ -322,7 +340,7 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.75]{Fig3.pdf}   
+         \includegraphics[scale=0.75]{gs_resistant_vulnerable.pdf} 
     \end{center}
     \caption{Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with a) time ($t$) and b) soil water potential ($\psi_x$). Trends are shown for a resistant plant ($\psi_{63} = 3$ MPa), a vulnerable plant ($\psi_{63} = 1.9$ MPa), and a midrange plant ($\psi_{63} = 2.2$ MPa). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam.}
     \label{fig:resistant_vulnerable_gs}
@@ -330,7 +348,7 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.75]{Fig4.pdf}   
+         \includegraphics[scale=0.75]{lam_resistant_vulnerable.pdf}   
     \end{center}
     \caption{Half-hourly trends of the marginal water use efficiency ($\lambda$; in black) and the lower limit ($\lambda_{lower}$; in red) set by the vulnerability curve of the root-leaf water pathway. The independent variable is time ($t$). Trends are shown for a resistant plant ($\psi_{63} = 3$ MPa), a vulnerable plant ($\psi_{63} = 1.9$ MPa), and a midrange plant ($\psi_{63} = 2.2$ MPa). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. This figure and figure \ref{fig:resistant_vulnerable_gs} correspond to the same simulation.}
     \label{fig:resistant_vulnerable_lambda}
@@ -345,14 +363,14 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \centering
-    \includegraphics[scale=0.75]{Fig6.pdf}
+    \includegraphics[scale=0.75]{gs_resistant_vulnerable_competition_WUS.pdf}
     \caption{Simulation with terminal gain and water use strategy (WUS) as part of the objective to be maximized (equation \ref{eqn:terminal_gain}). A competitive process exists that uses water proportionally to the square of the relative soil moisture $x(t)$ ($= 0.1 x(t)^2$). All three plants with difference vulnerability curves (VCs) have similar WUS for ease of comparison. a) Temporal trends in stomatal conductance $g_s$ for the three plants at the half-hourly scale (in black) and using midday values (in red). b) Midday $g_s$ trends with soil water potential $\psi_x$.}
     \label{fig:resistant_vulnerable_gs_competition_WUS}
 \end{figure}
 
 \begin{figure}[h]
     \centering
-    \includegraphics[scale=0.75]{Fig7.pdf}
+    \includegraphics[scale=0.75]{lam_resistant_vulnerable_competition_WUS.pdf}
     \caption{The temporal trends in marginal water use efficiency $\lambda$ (in black) corresponding to the simulation shown in figure \ref{fig:resistant_vulnerable_gs_competition_WUS} for the three plants (aggressive, midrange, and vulnerable). All three trends are the same since the water use strategy (WUS) of the three plants was set to an equal value a priori and since the three plants were subject to the same competition for soil water use ($= 0.1 x(t)^2$ where $x(t)$ is the relative soil moisture). In red is the lower bound on $\lambda$ ($\lambda_{lower}$) set by the hydraulic limitation of the plant water pathway as prescribed by the vulnerability curves (VCs).}
     \label{fig:resistant_vulnerable_lam_competition_WUS}
 \end{figure}
