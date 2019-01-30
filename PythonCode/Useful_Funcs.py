@@ -282,8 +282,8 @@ def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
     :param psi_l: leaf water potential in MPa
     :param psi_63: Weibull parameter in MPa
     :param w_exp: Weibull exponent
-    :param Kmax: Saturated plant leaf area-average conductivity in mol/m2/MPa/d
-    :return: Unsaturated plant leaf area-average conductivity in mol/m2/MPa/d
+    :param Kmax: Saturated plant leaf area-average conductance in mol/m2/MPa/d
+    :return: Unsaturated plant leaf area-average conductance in mol/m2/MPa/d
     """
     cond_pot = Kmax * np.exp(- (0.5 * (psi_r + psi_l) / psi_63) ** w_exp)
 
@@ -305,7 +305,7 @@ def gSR_val(x, gamma, b, d_r, z_r, RAI):
     :param d_r: diameter of fine roots in meters
     :param z_r: rooting depth in meters
     :param RAI: Root Area Index in m/m
-    :return: soil to root hydraulic conductivity in mol/m2/MPa/d
+    :return: soil to root hydraulic conductance in mol/m2/MPa/d
     """
     lSR = np.sqrt(d_r * z_r / RAI)
     ks = gamma * x ** (2*b+3)  # Unsaturated hydraulic conductivity of soil in m/d
