@@ -107,8 +107,8 @@ legend1 = ax.legend((gSR_plot, gRL_3_3_plot),
                     fontsize='large', loc=2, title='Color')
 ax.add_artist(legend1)
 legend2 = ax.legend((gRL_3_3_plot, gRL_15_3_plot, gRL_3_1_plot),
-                   ('$\psi_{63}=-3$, $s=3$, $g_{rl,max}=2$',
-                    '$\psi_{63}=-1.5$, $s=3$, $g_{rl,max}=2$',
+                   ('$\psi_{63}=-3$, $s=4$, $g_{rl,max}=2$',
+                    '$\psi_{63}=-1.5$, $s=4$, $g_{rl,max}=2$',
                     '$\psi_{63}=-1$, $s=1$, $g_{rl,max}=8$'),
                     fontsize='small', loc=9, title='Line style')
 
@@ -228,12 +228,13 @@ legend1 = ax3.legend((lam_plot_3_3_8, lam_plot_3_3_16, lam_plot_3_3_32),
                     fontsize='small', loc=1, title='Color')
 ax3.add_artist(legend1)
 legend2 = ax3.legend((lam_plot_3_3_8, lam_plot_15_3_8, lam_plot_3_1_8),
-                   ('$\psi_{63}=-3$, $s=3$, $g_{rl,max}=2$',
-                    '$\psi_{63}=-1.5$, $s=3$, $g_{rl,max}=2$',
+                   ('$\psi_{63}=-3$, $s=4$, $g_{rl,max}=2$',
+                    '$\psi_{63}=-1.5$, $s=4$, $g_{rl,max}=2$',
                     '$\psi_{63}=-1$, $s=1$, $g_{rl,max}=8$'),
                     fontsize='small', loc=3, title='Line style')
 
 # fig3.savefig('../lam_psix.pdf', bbox_inches='tight')
+
 # lam_upper_0 = np.ones(lam_val_1.shape) * (ca - env_data[0, 0]) / env_data[1, 0] / alpha
 # lam_upper_1 = np.ones(lam_val_1.shape) * (ca - env_data[0, 1]) / env_data[1, 1] / alpha
 # lam_upper_2 = np.ones(lam_val_1.shape) * (ca - env_data[0, 2]) / env_data[1, 2] / alpha

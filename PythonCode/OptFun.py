@@ -40,6 +40,7 @@ def dydt(t, y):
 
     # ----------------- stomatal conductance based on current values -------------------
     gl = g_val(t, y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # mol/m2/d
+
     psi_x = psi_sat * y[1] ** -b
     trans_max = trans_max_interp(psi_x)
 
@@ -102,8 +103,8 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.25
-    return np.array([ya[1] - x0, yb[1] - 0.228])
+    x0 = 0.2
+    return np.array([ya[1] - x0, yb[1] - 0.15])
 
 
 def bc_wus(ya, yb):  # Water use strategy
@@ -113,10 +114,10 @@ def bc_wus(ya, yb):  # Water use strategy
 
 # t = np.linspace(0, days, 2000)
 maxLam = 763e-6*unit0
-Lambda = maxLam*0.55 # mol/m2
+Lambda = maxLam*0.55  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 10*np.ones((1, t.size))  # mol/m2
-x_guess = 0.25*np.ones((1, t.size))
+lam_guess = 9 / unit1 * np.ones((1, t.size))  # mol/m2
+x_guess = 0.19*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -240,9 +241,9 @@ env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
 lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / alpha
 
 fig, ax = plt.subplots()
-lam_line = ax.plot(res.x, lam_plot / unit1, 'r')
-lam_low_line = ax.plot(res.x, lam_low, 'r:')
-lam_high_line = ax.plot(res.x, lam_up, 'r:')
+lam_line = ax.plot(res.x, lam_plot, 'r')
+lam_low_line = ax.plot(res.x, lam_low * unit1, 'r:')
+lam_high_line = ax.plot(res.x, lam_up * unit1, 'r:')
 
 
 # --- Fig 2
@@ -267,8 +268,8 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E}
 
-# import pickle
-#
-# pickle_out = open("../Fig6/Fig6.resistant_competition_WUS", "wb")
-# pickle.dump(inst, pickle_out)
-# pickle_out.close()
+import pickle
+
+pickle_out = open("../Fig3/Fig3.vulnerable", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()
