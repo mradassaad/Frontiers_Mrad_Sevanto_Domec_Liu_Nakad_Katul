@@ -18,7 +18,7 @@ c = 2*b+3
 gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)
 # -------------------- psi_63=3, s=3 ------------------------
 psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
-w_exp = 3  # Weibull exponent
+w_exp = 4  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 1
 
@@ -43,7 +43,7 @@ gRL_3_3 = plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
 gRL_3_3[np.abs(psi_x - psi_r) < 0.01] = 0
 # -------------------- psi_63=1.5, s=3 ------------------------
 psi_63 = 1.5  # Pressure at which there is 64% loss of conductivity, MPa
-w_exp = 3  # Weibull exponent
+w_exp = 4  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 1
 
@@ -66,8 +66,8 @@ psi_r_interp_15_3 = interp1d(psi_x, psi_r, kind='cubic')
 gRL_15_3 = plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
 gRL_15_3[np.abs(psi_x - psi_r) < 0.01] = 0
 # -------------------- psi_63=1, s=1.2, Kmax=6 ------------------------
-psi_63 = 1.4  # Pressure at which there is 64% loss of conductivity, MPa
-w_exp = 1.3  # Weibull exponent
+psi_63 = 1  # Pressure at which there is 64% loss of conductivity, MPa
+w_exp = 1  # Weibull exponent
 Kmax = 8e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 1
 
@@ -96,12 +96,12 @@ gRL_3_3_plot, = ax.semilogy(-psi_x, gRL_3_3 * 1e3 / unit0, 'k')
 gRL_15_3_plot, = ax.semilogy(-psi_x, gRL_15_3 * 1e3 / unit0, 'k--')
 gRL_3_1_plot, = ax.semilogy(-psi_x, gRL_3_1 * 1e3 / unit0, 'k:')
 ax.set_ylim(1e-2, 1e0 + 4)
-ax.set_xlim(-1.5, 0)
+ax.set_xlim(-1.4, 0)
 plt.setp(ax.get_xticklabels(), FontSize=12)
 plt.setp(ax.get_yticklabels(), FontSize=12)
 
 ax.set_xlabel("Soil Water Potential, $\psi_x$, MPa", FontSize=14)
-ax.set_ylabel("Water conductance, g, mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$", FontSize=12)
+ax.set_ylabel("Maximum conductance, $g_{max}$, mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$", FontSize=12)
 legend1 = ax.legend((gSR_plot, gRL_3_3_plot),
                    ('$g_{sr}$', '$g_{rl}$'),
                     fontsize='large', loc=2, title='Color')
@@ -109,10 +109,10 @@ ax.add_artist(legend1)
 legend2 = ax.legend((gRL_3_3_plot, gRL_15_3_plot, gRL_3_1_plot),
                    ('$\psi_{63}=-3$, $s=3$, $g_{rl,max}=2$',
                     '$\psi_{63}=-1.5$, $s=3$, $g_{rl,max}=2$',
-                    '$\psi_{63}=-1.4$, $s=1.3$, $g_{rl,max}=8$'),
+                    '$\psi_{63}=-1$, $s=1$, $g_{rl,max}=8$'),
                     fontsize='small', loc=9, title='Line style')
 
-fig.savefig('../g_psix.pdf', bbox_inches='tight')
+# fig.savefig('../g_psix.pdf', bbox_inches='tight')
 
 fig2, ax2 = plt.subplots()
 trans_3_3, = ax2.semilogy(-psi_x,
@@ -121,7 +121,7 @@ trans_15_3, = ax2.semilogy(-psi_x,
              trans_max_interp_15_3(psi_x) * 1e3 / unit0, 'k--', linewidth=3)
 trans_3_1, = ax2.semilogy(-psi_x,
              trans_max_interp_3_1(psi_x) * 1e3 / unit0, 'k:', linewidth=3)
-ax2.set_xlim(-1.5, 0)
+ax2.set_xlim(-1.4, 0)
 ax2.set_xlabel('Soil water potential, $\psi_x$, MPa', FontSize=14)
 ax2.set_ylabel('Maximum transpiration, $E_{max}$, mmol m$^{-2}$ s$^{-1}$', FontSize=12)
 
@@ -135,13 +135,13 @@ psi_r_3_3, = ax2_2.plot(-psi_x, -psi_r_interp_3_3(psi_x), 'b', alpha=0.7)
 psi_r_15_3, = ax2_2.plot(-psi_x, -psi_r_interp_15_3(psi_x), 'b--', alpha=0.7)
 psi_r_3_1, = ax2_2.plot(-psi_x, -psi_r_interp_3_1(psi_x), 'b:', alpha=0.7)
 
-ax2_2.set_ylim(-6, 0)
+ax2_2.set_ylim(-7, 0)
 
 legend1 = ax2.legend((trans_3_3, psi_l_3_3, psi_r_3_3),
                    ('$E$', '$\psi_l$', '$\psi_r$'),
                     fontsize='large', loc=2, title='Color')
 
-fig2.savefig('../E_psil_psir_psix.pdf', bbox_inches='tight')
+# fig2.savefig('../E_psil_psir_psix.pdf', bbox_inches='tight')
 # ax2.add_artist(legend1)
 # legend2 = ax2.legend((trans_3_3, trans_15_3, trans_3_1),
 #                    ('$\psi_{63}=-3$, $s=3$, $g_{rl,max}=2$',
@@ -218,7 +218,7 @@ lam_plot_3_3_32, = ax3.plot(-psi_x, lam_val_3_3_32 * 1e3, 'g')
 lam_plot_15_3_32, = ax3.plot(-psi_x, lam_val_15_3_32 * 1e3, 'g--')
 lam_plot_3_1_32, = ax3.plot(-psi_x, lam_val_3_1_32 * 1e3, 'g:')
 
-ax3.set_xlim(-1.5,0)
+ax3.set_xlim(-1.4, 0)
 
 ax3.set_xlabel('Soil water potential, $\psi_x$, MPa', FontSize=14)
 ax3.set_ylabel('Lower bound on $\lambda$, $\lambda_{lower}$, mmol mol$^{-1}$', FontSize=12)
@@ -230,10 +230,10 @@ ax3.add_artist(legend1)
 legend2 = ax3.legend((lam_plot_3_3_8, lam_plot_15_3_8, lam_plot_3_1_8),
                    ('$\psi_{63}=-3$, $s=3$, $g_{rl,max}=2$',
                     '$\psi_{63}=-1.5$, $s=3$, $g_{rl,max}=2$',
-                    '$\psi_{63}=-1.4$, $s=1.3$, $g_{rl,max}=8$'),
+                    '$\psi_{63}=-1$, $s=1$, $g_{rl,max}=8$'),
                     fontsize='small', loc=3, title='Line style')
 
-fig3.savefig('../lam_psix.pdf', bbox_inches='tight')
+# fig3.savefig('../lam_psix.pdf', bbox_inches='tight')
 # lam_upper_0 = np.ones(lam_val_1.shape) * (ca - env_data[0, 0]) / env_data[1, 0] / alpha
 # lam_upper_1 = np.ones(lam_val_1.shape) * (ca - env_data[0, 1]) / env_data[1, 1] / alpha
 # lam_upper_2 = np.ones(lam_val_1.shape) * (ca - env_data[0, 2]) / env_data[1, 2] / alpha
