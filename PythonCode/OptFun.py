@@ -39,19 +39,20 @@ def dydt(t, y):
         raise GuessError('y[0] < 0')
 
     # ----------------- stomatal conductance based on current values -------------------
-    gl = g_val(t, y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # mol/m2/d
+    gl = g_val(t, y[0], ca,
+               VPDinterp, k1_interp, k2_interp, cp_interp)  # mol/m2/d per unit LEAF area
 
     psi_x = psi_sat * y[1] ** -b
-    trans_max = trans_max_interp(psi_x)
+    trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
 
-    ok = np.less_equal(lai * gl * VPDinterp(t), trans_max)
+    ok = np.less_equal(1.6 * gl * VPDinterp(t), trans_max)
     Nok = ~ok
 
-    psi_r = np.zeros(t.shape); psi_l = np.zeros(t.shape); dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape);
-    dlamdt = np.zeros(t.shape); dA_dx = np.zeros(t.shape)
+    psi_r = np.zeros(t.shape); psi_l = np.zeros(t.shape)
+    dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape); dA_dx = np.zeros(t.shape)
 
     psi_r[ok] = psi_r_val(y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, t[ok])
-    evap_trans[ok] = alpha * gl[ok] * VPDinterp(t[ok])  # 1/d
+    evap_trans[ok] = alpha * gl[ok] * VPDinterp(t[ok])  # 1/d, m3 per unit leaf area per rooting depth
     dEdx[ok] = 0
     # ----------------------------------- Find psi_l ------------------------
     with warnings.catch_warnings():
@@ -69,7 +70,7 @@ def dydt(t, y):
 
     # ----------------------------- When  transpiration limit is reached --------------
     if np.any(np.equal(Nok, True)):
-        evap_trans[Nok] = trans_max_interp(psi_x[Nok]) * alpha / lai
+        evap_trans[Nok] = trans_max_interp(psi_x[Nok]) * alpha
         psi_r[Nok] = psi_r_interp(psi_x[Nok])
         psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
@@ -92,7 +93,7 @@ def dydt(t, y):
     # losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
     # dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
 
-    f = - (losses + evap_trans)  # 1/d
+    f = - (losses + evap_trans)  # 1/d, m3 per unit leaf area per rooting depth
     dfdx = - (dlossesdx + dEdx)  # 1/d
     dlamdt = - dA_dx - y[0] * dfdx  # mol/m2/d
     # dlamdt = - y[0] * dfdx  # mol/m2/d
@@ -157,10 +158,10 @@ psi_r[ok] = psi_r_val(res.y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], la
 psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], lai, VPDinterp, res.x[ok], reversible),
                  method='hybr')
 psi_l[ok] = psi_l_res.x
-E[ok] = lai * gl[ok] * VPDinterp(res.x[ok])
+E[ok] = gl[ok] * VPDinterp(res.x[ok])  # mol m-2 d-1 per unit leaf area
 
 E[Nok] = trans_max_interp(psi_x[Nok])
-gl[Nok] = E[Nok] / lai / VPDinterp(res.x[Nok])
+gl[Nok] = E[Nok] / a / VPDinterp(res.x[Nok])  # mol m-2 d-1 per unit leaf area
 A_val[Nok] = A(res.x[Nok], gl[Nok], ca, k1_interp, k2_interp, cp_interp)
 ci[Nok] = ca - A_val[Nok] / gl[Nok]
 psi_r[Nok] = psi_r_interp(psi_x[Nok])
@@ -170,10 +171,14 @@ psi_p = (psi_l + psi_r) / 2
 PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
 
 # f = - (beta * soilM_plot ** c + alpha * E / lai + 0.1 * soilM_plot ** 2)  # day-1
-f = - (alpha * E / lai)  # day-1
+f = - (alpha * E)  # day-1
 objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
+
+# ------------ profit ---------
+
+profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, gl, ca, k1, k2, cp, VPD)
 
 
 # --- for debugging and insight
@@ -201,7 +206,7 @@ plt.plot(res.x, A_val * 1e6 / unit0)
 plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
 
 plt.subplot(335)
-plt.plot(res.x, (E * alpha * n * z_r / lai))
+plt.plot(res.x, (E * alpha * n * z_r))  # per unit leaf area
 # plt.xlabel("time, days")
 plt.ylabel("$E, m.d^{-1}$")
 

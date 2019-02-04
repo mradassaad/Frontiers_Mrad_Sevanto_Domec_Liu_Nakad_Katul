@@ -36,7 +36,7 @@ RAI = 10  # root area index
 lai = 1.5
 m_w = 0.018  # kg/mol
 rho_w = 1000  # kg/m3
-nu = lai * m_w / rho_w  # m3/mol
+nu = m_w / rho_w  # m3/mol
 
 unit0 = 24 * 3600   # 1/s -> 1/d
 unit1 = 10 ** 3 * nu / (n * z_r)  # mol/m2 -> mmol/mol
@@ -76,7 +76,7 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 1.5  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 4  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
@@ -96,12 +96,12 @@ for x in xvals:
     psi_r_vals[i] = trans_res[1]
     i += 1
 
-trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')
+trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')  # per unit LEAF area
 psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
 psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
 
-dtrans_max_dx = np.gradient(trans_vals, psi_x_vals)  # mol/m2/d
-dtrans_max_dx_interp = interp1d(psi_x_vals, dtrans_max_dx, kind='cubic')
+# dtrans_max_dx = np.gradient(trans_vals, psi_x_vals)  # mol/m2/d
+# dtrans_max_dx_interp = interp1d(psi_x_vals, dtrans_max_dx, kind='cubic')
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s

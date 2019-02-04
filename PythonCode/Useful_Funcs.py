@@ -90,11 +90,11 @@ def cp_val(Tl):
     return cp
 
 
-def A(t, gl, ca, k1_interp, k2_interp, cp_interp):
+def A(t, gs, ca, k1_interp, k2_interp, cp_interp):
     """
 
-    :param gl: stomatal conductance in umol/m2/s
-    :return: value of A at a particular value of g in umol/m2/s
+    :param gs: stomatal conductance in umol/m2/s per unit LEAF area
+    :return: value of A at a particular value of g in mol/m2/s
     """
     '''J: Electron transport rate in umol/m2/s
      Vc_max: maximum rate of rubisco activity in umol/m2/s
@@ -103,10 +103,10 @@ def A(t, gl, ca, k1_interp, k2_interp, cp_interp):
      ca: ambient CO2 mole fraction in the air in umol/mol
     cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol'''
 
-    delta = np.sqrt(((k2_interp(t) + ca) * gl + k1_interp(t)) ** 2 -
-                    4 * k1_interp(t) * (ca - cp_interp(t)) * gl)  # mol/mol
+    delta = np.sqrt(((k2_interp(t) + ca) * gs + k1_interp(t)) ** 2 -
+                    4 * k1_interp(t) * (ca - cp_interp(t)) * gs)  # mol/mol
 
-    A = 0.5 * (k1_interp(t) + gl * (ca + k2_interp(t)) - delta)  # mol/m2/d
+    A = 0.5 * (k1_interp(t) + gs * (ca + k2_interp(t)) - delta)  # mol/m2/d
     # A *= 1e6/unit0
 
     return A
@@ -168,15 +168,16 @@ def dailyAvg(data, windowsize):
 # plt.xlabel('Time step (half-hour)')
 # plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
 
-def g_val(t, lam, ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp):
+def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp):
 
+    a = 1.6
     # --------------- k1 is per leaf area so gs is per leaf area ----------
 
-    gpart11 = (ca + k2_interp(t) - 2 * alpha * lam * VPDinterp(t)) *\
-              np.sqrt(alpha * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-              (ca + k2_interp(t) - alpha * lam * VPDinterp(t)))  # mol/m2/d
+    gpart11 = (ca + k2_interp(t) - 2 * a * lam * VPDinterp(t)) *\
+              np.sqrt(a * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
+              (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/m2/d
 
-    gpart12 = alpha * lam * VPDinterp(t) * ((ca + k2_interp(t)) - alpha * lam * VPDinterp(t))  # mol/mol
+    gpart12 = a * lam * VPDinterp(t) * ((ca + k2_interp(t)) - a * lam * VPDinterp(t))  # mol/mol
 
     gpart21 = gpart11 / gpart12  # mol/m2/d
 
@@ -184,39 +185,34 @@ def g_val(t, lam, ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp):
 
     gpart3 = gpart21 + gpart22  # mol/m2/d
 
-    gpart4 = (ca + k2_interp(t))**2  # mol2/mol2
+    gpart4 = (ca + k2_interp(t))**2  # mol2 mol-2
 
-    gl = k1_interp(t) * gpart3 / gpart4  # mol/m2/d
+    gl = k1_interp(t) * gpart3 / gpart4  # mol/m2/d per unit LEAF area
 
     return gl
 
 
-def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gl, lai, VPDinterp, t, reversible=0):
-    # psi_l_mask = ma.masked_greater_equal(psi_l, psi_x)
-    # f_psi_l = np.zeros(psi_l.size)
-    # temp = psi_l - lai * gl * VPDinterp(t) / (Kmax * np.exp(- (0.5 * (psi_x + psi_l) / psi_63) ** w_exp)) - psi_x
-    #
-    # f_psi_l[psi_l_mask.mask] = temp[psi_l_mask.mask]
+def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, lai, VPDinterp, t, reversible=0):
 
     trans_res = (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
 
     if np.any(
-            np.logical_not(np.isfinite(trans_res - lai * gl * VPDinterp(t)))):
+            np.logical_not(np.isfinite(trans_res - 1.6 * gs * VPDinterp(t)))):
         raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
 
-    return trans_res - lai * gl * VPDinterp(t)
+    return trans_res - 1.6 * gs * VPDinterp(t)  # all in unit LEAF area
 
 
 def psi_r_val(x, psi_sat, gamma, b, d_r, z_r, RAI, gl, lai, VPDinterp, t):
 
     psi_x = psi_sat * x ** -b
-    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)
-    trans = lai * gl * VPDinterp(t)
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)  # per unit LEAF area
+    trans = 1.6 * gl * VPDinterp(t)  # per unit LEAF area
     return psi_x + trans / gSR
 
 
 
-def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
+def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
     """
 
     :param psi_l: leaf water potential in MPa
@@ -230,49 +226,54 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     :param d_r: diameter of fine roots in meters
     :param z_r: rooting depth in meters
     :param RAI: Root Area Index in m/m
-    :return: transpiration rate in mol/m2/d
+    :return: transpiration rate in mol/m2/d per unit LEAF area
     """
     psi_x = psi_sat * x ** -b
 
 
-    res = root(lambda psi_r: (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI) -
+    res = root(lambda psi_r: (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI, lai) -
                             (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible),
                 psi_x + 0.1, method='broyden1')
 
     psi_r = res.get('x')
 
-    #  returns transpiration in mol/m2/d
-    return (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI), psi_r
+    #  returns transpiration in mol/m2/d per unit LEAF area
+    return (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI, lai), psi_r
 
 
-def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
+def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
+    #  per unit LEAF area
+    return - transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)[0]
 
-    return - transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
 
-
-def trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
+def trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
+    #  per unit LEAF area
     psi_x = psi_sat * x ** -b
     OptRes = minimize(trans_opt, psi_x,
-                      args=(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
+                      args=(x,
+                            psi_sat, gamma, b, psi_63, w_exp, Kmax,
+                            d_r, z_r, RAI, lai, reversible))
     psi_l_max = OptRes.x
-    trans_res = transpiration(OptRes.x, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
+    trans_res = transpiration(OptRes.x, x,
+                              psi_sat, gamma, b, psi_63, w_exp, Kmax,
+                              d_r, z_r, RAI, lai, reversible)
     trans_max = trans_res[0]
     psi_r_max = trans_res[1]
 
     return trans_max, psi_l_max, psi_r_max
 
 
-def dtransdx(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
-
-    psi_x = psi_sat * x ** -b
-    dpsi_xdx = -b * psi_sat * x ** (-b-1)
-    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)
-    dgSR_dx = dgSR_dx_val(x, gamma, b, d_r, z_r, RAI)
-    psi_r = transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[1]
-    ktot = (plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible) ** -1 + gSR_val(x, gamma, b, d_r, z_r, RAI) ** -1) ** -1
-    dEdx = - dpsi_xdx * ktot + (psi_l - psi_x) * dgSR_dx * ktot ** 2 / (gSR ** 2)
-
-    return dEdx  # mol/m2/d
+# def dtransdx(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
+#
+#     psi_x = psi_sat * x ** -b
+#     dpsi_xdx = -b * psi_sat * x ** (-b-1)
+#     gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)
+#     dgSR_dx = dgSR_dx_val(x, gamma, b, d_r, z_r, RAI)
+#     psi_r = transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[1]
+#     ktot = (plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible) ** -1 + gSR_val(x, gamma, b, d_r, z_r, RAI) ** -1) ** -1
+#     dEdx = - dpsi_xdx * ktot + (psi_l - psi_x) * dgSR_dx * ktot ** 2 / (gSR ** 2)
+#
+#     return dEdx  # mol/m2/d
 
 
 def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
@@ -282,8 +283,8 @@ def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
     :param psi_l: leaf water potential in MPa
     :param psi_63: Weibull parameter in MPa
     :param w_exp: Weibull exponent
-    :param Kmax: Saturated plant leaf area-average conductance in mol/m2/MPa/d
-    :return: Unsaturated plant leaf area-average conductance in mol/m2/MPa/d
+    :param Kmax: Saturated plant LEAF area-average conductance in mol/m2/MPa/d
+    :return: Unsaturated plant LEAF area-average conductance in mol/m2/MPa/d
     """
     cond_pot = Kmax * np.exp(- (0.5 * (psi_r + psi_l) / psi_63) ** w_exp)
 
@@ -296,7 +297,7 @@ def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
         return cond_pot
 
 
-def gSR_val(x, gamma, b, d_r, z_r, RAI):
+def gSR_val(x, gamma, b, d_r, z_r, RAI, lai):
     """
 
     :param x: Soil moisture in m3.m-3
@@ -305,7 +306,7 @@ def gSR_val(x, gamma, b, d_r, z_r, RAI):
     :param d_r: diameter of fine roots in meters
     :param z_r: rooting depth in meters
     :param RAI: Root Area Index in m/m
-    :return: soil to root hydraulic conductance in mol/m2/MPa/d
+    :return: soil to root hydraulic conductance in mol/m2/MPa/d per LEAF area
     """
     lSR = np.sqrt(d_r * z_r / RAI)
     ks = gamma * x ** (2*b+3)  # Unsaturated hydraulic conductivity of soil in m/d
@@ -314,35 +315,35 @@ def gSR_val(x, gamma, b, d_r, z_r, RAI):
     M_w = 0.018  # molar mass of water in Kg/mol
     gSR = ks / unit / grav / lSR  # kg/N/s
     gSR *= 1e6 / M_w  # mol/MPa/m2/s
-    gSR *= unit  # mol/MPa/m2/d
+    gSR *= unit / lai  # mol/MPa/m2/d per unit LEAF area
     return gSR
 
-def dgSR_dx_val(x, gamma, b, d_r, z_r, RAI):
-    """
+# def dgSR_dx_val(x, gamma, b, d_r, z_r, RAI):
+#     """
+#
+#     :param x: Soil moisture in m3.m-3
+#     :param gamma: Saturated hydraulic conductivity of soil in m.d-1
+#     :param b: exponent of relation
+#     :param d_r: diameter of fine roots in meters
+#     :param z_r: rooting depth in meters
+#     :param RAI: Root Area Index in m/m
+#     :return: partial derivative of the soil to root hydraulic conductivity wrt x in mol/m2/MPa/d
+#     """
+#     lSR = np.sqrt(d_r * z_r / RAI)
+#     dks_dx = (2*b+3) * gamma * x ** (2*b+2)  # Partial derivative of unsaturated hydraulic conductivity of soil in m/d
+#     unit = 24 * 3600  # 1/s -> 1/d
+#     grav = 9.81  # gravitational acceleration in N/Kg
+#     M_w = 0.018  # molar mass of water in Kg/mol
+#     dgSR = dks_dx / unit / grav / lSR  # kg/N/s
+#     dgSR *= 1e6 / M_w  # mol/MPa/m2/s
+#     dgSR *= unit  # mol/MPa/m2/d
+#     return dgSR
 
-    :param x: Soil moisture in m3.m-3
-    :param gamma: Saturated hydraulic conductivity of soil in m.d-1
-    :param b: exponent of relation
-    :param d_r: diameter of fine roots in meters
-    :param z_r: rooting depth in meters
-    :param RAI: Root Area Index in m/m
-    :return: partial derivative of the soil to root hydraulic conductivity wrt x in mol/m2/MPa/d
-    """
-    lSR = np.sqrt(d_r * z_r / RAI)
-    dks_dx = (2*b+3) * gamma * x ** (2*b+2)  # Partial derivative of unsaturated hydraulic conductivity of soil in m/d
-    unit = 24 * 3600  # 1/s -> 1/d
-    grav = 9.81  # gravitational acceleration in N/Kg
-    M_w = 0.018  # molar mass of water in Kg/mol
-    dgSR = dks_dx / unit / grav / lSR  # kg/N/s
-    dgSR *= 1e6 / M_w  # mol/MPa/m2/s
-    dgSR *= unit  # mol/MPa/m2/d
-    return dgSR
 
-
-def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2, lai):
-    gl_vals = trans / (VPD * lai)
-    part11 = ca ** 2 * gl_vals + 2 * cp * k1 - ca * (k1 - 2 * gl_vals * k2) + k2 * (k1 + gl_vals * k2)
-    part12 = np.sqrt(4 * (cp - ca) * gl_vals * k1 + (k1 + gl_vals * (ca + k2)) ** 2)
+def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2):
+    gs_vals = trans / (VPD)  # per unit LEAF area
+    part11 = ca ** 2 * gs_vals + 2 * cp * k1 - ca * (k1 - 2 * gs_vals * k2) + k2 * (k1 + gs_vals * k2)
+    part12 = np.sqrt(4 * (cp - ca) * gs_vals * k1 + (k1 + gs_vals * (ca + k2)) ** 2)
     part1 = part11 / part12
 
     part2 = ca + k2
@@ -369,7 +370,7 @@ def rel_loss(psi_x, psi_l, psi_63, w_exp):
     return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit
 
 
-def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, gs, ca, k1, k2, cp, VPD):
+def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, ca, k1, k2, cp, VPD):
 
     k1 /= 24 * 3600  # mol m-2 s-1
     Kmax /= 24 * 3600  # mol m-2 s-1
@@ -378,7 +379,7 @@ def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, gs, ca, k1, k2, cp, VPD):
     PP = np.linspace(psi_x, Pcrit, 1000)
     E_temp = np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp)
     EE = np.cumsum(E_temp)
-    E_crit = np.sum(np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp))  # mmol m-2 s-1; per unit leaf area
+    E_crit = np.sum(np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp))  # mol m-2 s-1; per unit leaf area
 
     def A_here(gl, ca, k1, k2, cp):
         delta = np.sqrt(((k2 + ca) * gl + k1) ** 2 -
@@ -392,16 +393,13 @@ def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, gs, ca, k1, k2, cp, VPD):
     ggss = EE / 1.6 / VPD  # mol/m2/s
     AA = A_here(ggss, ca, k1, k2, cp)
 
-    gs_ind = np.argmin(np.abs(ggss - gs))
-    A_sim = A_here(ggss[gs_ind], ca, k1, k2, cp)
-
     gs_crit = E_crit / 1.6 / VPD  # mol m-2 s-1
     A_crit = A_here(gs_crit, ca, k1, k2, cp)
 
-    max_ind = np.argmin(np.abs(AA / A_crit - rel_loss(psi_x, PP[1:], psi_63, w_exp)))
+    max_ind = np.argmin(np.abs(AA / A_crit - rel_loss(psi_x, PP[1:], psi_63, w_exp)[0]))
     P_max = PP[1:][max_ind]
     A_max = AA[1:][max_ind]
     E_max = EE[1:][max_ind]
 
-    return E_crit, A_crit, A_sim, gs_ind, P_max, A_max, E_max
+    return E_crit, A_crit, P_max, A_max, E_max
 
