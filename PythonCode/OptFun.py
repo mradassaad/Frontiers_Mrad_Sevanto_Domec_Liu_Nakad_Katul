@@ -103,20 +103,20 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.2
-    return np.array([ya[1] - x0, yb[1] - 0.15])
+    x0 = 0.26
+    return np.array([ya[1] - x0, yb[1] - 0.16])
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.25
+    x0 = 0.2
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 # t = np.linspace(0, days, 2000)
 maxLam = 763e-6*unit0
-Lambda = maxLam*0.55  # mol/m2
+Lambda = 6.1  # mol/m2
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 9 / unit1 * np.ones((1, t.size))  # mol/m2
+lam_guess = 5 / unit1 * np.ones((1, t.size))  # mol/m2
 x_guess = 0.19*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
@@ -268,8 +268,8 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E}
 
-import pickle
-
-pickle_out = open("../Fig3/Fig3.vulnerable", "wb")
-pickle.dump(inst, pickle_out)
-pickle_out.close()
+# import pickle
+#
+# pickle_out = open("../Fig3/Fig3.vulnerable", "wb")
+# pickle.dump(inst, pickle_out)
+# pickle_out.close()

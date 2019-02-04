@@ -358,3 +358,50 @@ def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2, lai):
 #     dtrans_max_dx = derivative(fun, x, dx=1e-5)
 #
 #     return dlam_dtrans * dtrans_max_dx
+
+
+def rel_loss(psi_x, psi_l, psi_63, w_exp):
+
+    k_x_max = np.exp(-(psi_x / psi_63) ** w_exp)
+    k_l_max = np.exp(-(psi_l / psi_63) ** w_exp)
+    k_crit = 0.05 * k_x_max
+    Pcrit = psi_63 * (- np.log(k_crit)) ** (1 / w_exp)
+    return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit
+
+
+def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, gs, ca, k1, k2, cp, VPD):
+
+    k1 /= 24 * 3600  # mol m-2 s-1
+    Kmax /= 24 * 3600  # mol m-2 s-1
+    _, Pcrit = rel_loss(psi_x, psi_l, psi_63, w_exp)
+
+    PP = np.linspace(psi_x, Pcrit, 1000)
+    E_temp = np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp)
+    EE = np.cumsum(E_temp)
+    E_crit = np.sum(np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp))  # mmol m-2 s-1; per unit leaf area
+
+    def A_here(gl, ca, k1, k2, cp):
+        delta = np.sqrt(((k2 + ca) * gl + k1) ** 2 -
+                        4 * k1 * (ca - cp) * gl)  # mol/mol
+
+        AAA = 0.5 * (k1 + gl * (ca + k2) - delta)  # mol/m2/s
+        # A *= 1e6/unit0
+
+        return AAA
+
+    ggss = EE / 1.6 / VPD  # mol/m2/s
+    AA = A_here(ggss, ca, k1, k2, cp)
+
+    gs_ind = np.argmin(np.abs(ggss - gs))
+    A_sim = A_here(ggss[gs_ind], ca, k1, k2, cp)
+
+    gs_crit = E_crit / 1.6 / VPD  # mol m-2 s-1
+    A_crit = A_here(gs_crit, ca, k1, k2, cp)
+
+    max_ind = np.argmin(np.abs(AA / A_crit - rel_loss(psi_x, PP[1:], psi_63, w_exp)))
+    P_max = PP[1:][max_ind]
+    A_max = AA[1:][max_ind]
+    E_max = EE[1:][max_ind]
+
+    return E_crit, A_crit, A_sim, gs_ind, P_max, A_max, E_max
+
