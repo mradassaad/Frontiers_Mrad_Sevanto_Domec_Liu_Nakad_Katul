@@ -36,7 +36,7 @@ RAI = 10  # root area index
 lai = 1.5
 m_w = 0.018  # kg/mol
 rho_w = 1000  # kg/m3
-nu = m_w / rho_w  # m3/mol
+nu = lai * m_w / rho_w  # m3/mol
 
 unit0 = 24 * 3600   # 1/s -> 1/d
 unit1 = 10 ** 3 * nu / (n * z_r)  # mol/m2 -> mmol/mol
@@ -48,12 +48,12 @@ unit6 = 1e-3  # J/Kg of water to MPa
 atmP = 0.1013  # atmospheric pressure, MPa
 
 # Medlyn 2002 pinus radiata fert.
-v_opt = 174.33  # umol/m2/s
+v_opt = 174.33  # umol/m2/s per LEAF area
 Hav = 51.32  # kJ/mol
 Hdv = 200  # kJ/mol
 Topt_v = 37.74 + 273.15  # K
 
-j_opt = 189.66  # umol/m2/s
+j_opt = 189.66  # umol/m2/s per LEAF area
 Haj = 43.18  # kJ/mol
 Hdj = 200  # kJ/mol
 Topt_j = 29.01 + 273.15  # K
@@ -89,9 +89,9 @@ psi_r_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
 i = 0
 for x in xvals:
-    OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
+    OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible))
     psi_l_vals[i] = OptRes.x
-    trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
+    trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
     trans_vals[i] = trans_res[0]
     psi_r_vals[i] = trans_res[1]
     i += 1
@@ -107,7 +107,7 @@ psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
 # gc = 0.1 # mol CO2 /m2/s
 TEMPfull = np.array(drydown['TEMP'])  # K
 RNfull = np.array(drydown['RNET'])  # shortwave radiation on leaves, W/m2
-PARfull = RNtoPAR(RNfull)  # umol/m2/s
+PARfull = RNtoPAR(RNfull) * lai # umol/m2/s per unit leaf area
 VPDfull = np.array(drydown['VPD'])  # mol/mol
 
 AvgNbDay = 20
@@ -144,7 +144,7 @@ Vmax = max_val(v_opt, Hav, Hdv, TEMP, Topt_v)  # umol/m2/s
 Vmax *= 1e-6 * unit0  # mol/m2/d
 
 Jmax = max_val(j_opt, Haj, Hdj, TEMP, Topt_j)  # umol/m2/s
-J = J_val(PAR, Jmax)  # umol/m2/s
+J = J_val(PAR, Jmax)  # umol/m2/s per unit LEAF area
 J *= 1e-6 * unit0  # mol/m2/d
 
 k1 = J / 4  # mol/m2/d

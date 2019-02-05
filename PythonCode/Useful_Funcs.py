@@ -22,7 +22,7 @@ class GuessError(Error):
 def max_val(k_opt, H_a, H_d, Tl, T_opt):
     """
 
-    :param: k_opt: value of either J_max or V_cmax at Topt in umol/m2/s
+    :param: k_opt: value of either J_max or V_cmax at Topt in umol/m2/s per unit LEAF area
     :param: H_a: parameter describing the peaked function that depends on species and growth conditions in kJ/mol
     :param: H_d: another parameter in kJ/mol
     :param Tl: leaf temperature in K
@@ -45,14 +45,14 @@ def RNtoPAR(RN):
     wavelen = 500e-9  # wavelength of light, m
     EE = hc / wavelen  # energy of photon, J
     NA = 6.02e23  # Avogadro's constant, /mol
-    PAR = RN / (EE * NA) * 1e6  # absorbed photon irradiance, umol photons /m2/s, PAR
+    PAR = RN / (EE * NA) * 1e6  # absorbed photon irradiance, umol photons /m2/s, PAR per unit GROUND area
     return PAR
 
 
 def J_val(PAR, Jmax):
     """
 
-    :param PAR: photosynthetically active photon flux density in umol/m2/s - per leaf area
+    :param PAR: photosynthetically active photon flux density in umol/m2/s - per LEAF area
     :return: rate of electron transport at a given temperature and PAR in umol/m2/s
     """
 
@@ -175,15 +175,15 @@ def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp):
 
     gpart11 = (ca + k2_interp(t) - 2 * a * lam * VPDinterp(t)) *\
               np.sqrt(a * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-              (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/m2/d
+              (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/mol
 
     gpart12 = a * lam * VPDinterp(t) * ((ca + k2_interp(t)) - a * lam * VPDinterp(t))  # mol/mol
 
-    gpart21 = gpart11 / gpart12  # mol/m2/d
+    gpart21 = gpart11 / gpart12  # mol/mol
 
-    gpart22 = (ca - (2 * cp_interp(t) + k2_interp(t)))  # mol/m2/d
+    gpart22 = ca - 2 * cp_interp(t) - k2_interp(t)  # mol/mol
 
-    gpart3 = gpart21 + gpart22  # mol/m2/d
+    gpart3 = gpart21 + gpart22  # mol/mol
 
     gpart4 = (ca + k2_interp(t))**2  # mol2 mol-2
 
@@ -192,7 +192,7 @@ def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp):
     return gl
 
 
-def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, lai, VPDinterp, t, reversible=0):
+def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
 
     trans_res = (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
 
@@ -206,7 +206,7 @@ def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, lai, VPDinterp, t, reversibl
 def psi_r_val(x, psi_sat, gamma, b, d_r, z_r, RAI, gl, lai, VPDinterp, t):
 
     psi_x = psi_sat * x ** -b
-    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI)  # per unit LEAF area
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)  # per unit LEAF area
     trans = 1.6 * gl * VPDinterp(t)  # per unit LEAF area
     return psi_x + trans / gSR
 
@@ -340,16 +340,16 @@ def gSR_val(x, gamma, b, d_r, z_r, RAI, lai):
 #     return dgSR
 
 
-def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2):
-    gs_vals = trans / (VPD)  # per unit LEAF area
+def lam_from_trans(trans, ca, cp, VPD, k1, k2):
+    gs_vals = trans / (1.6 * VPD)  # per unit LEAF area
     part11 = ca ** 2 * gs_vals + 2 * cp * k1 - ca * (k1 - 2 * gs_vals * k2) + k2 * (k1 + gs_vals * k2)
     part12 = np.sqrt(4 * (cp - ca) * gs_vals * k1 + (k1 + gs_vals * (ca + k2)) ** 2)
     part1 = part11 / part12
 
     part2 = ca + k2
 
-    part3 = 2 * VPD * alpha
-    return (part2 - part1) / part3  # mol/m2
+    part3 = 2 * VPD * 1.6
+    return (part2 - part1) / part3  # mol/mol
 
 #
 # def dlam_dx(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, ca, alpha, cp, VPD, k1, k2, lai, reversible=0):
@@ -361,25 +361,43 @@ def lam_from_trans(trans, ca, alpha, cp, VPD, k1, k2):
 #     return dlam_dtrans * dtrans_max_dx
 
 
-def rel_loss(psi_x, psi_l, psi_63, w_exp):
+def rel_loss(psi_x, psi_l, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai):
 
-    k_x_max = np.exp(-(psi_x / psi_63) ** w_exp)
-    k_l_max = np.exp(-(psi_l / psi_63) ** w_exp)
+    # k_x_max = np.exp(-(psi_x / psi_63) ** w_exp)
+    # k_l_max = np.exp(-(psi_l / psi_63) ** w_exp)
+    # k_crit = 0.05 * k_x_max
+    # Pcrit = psi_63 * (- np.log(k_crit)) ** (1 / w_exp)
+    k_x_max = (1/plant_cond(psi_x, psi_x, psi_63, w_exp, Kmax, 1) +
+              1/gSR_val((psi_x/psi_sat)**(-1/b), gamma, b, d_r, z_r, RAI, lai)) ** (-1)
+
+    k_l_max = (1 / plant_cond(psi_l, psi_l, psi_63, w_exp, Kmax, 1) +
+               1 / gSR_val((psi_x / psi_sat) ** (-1 / b), gamma, b, d_r, z_r, RAI, lai)) ** (-1)
+
     k_crit = 0.05 * k_x_max
-    Pcrit = psi_63 * (- np.log(k_crit)) ** (1 / w_exp)
+
+    res = root(lambda PPP: plant_cond(PPP, PPP, psi_63, w_exp, Kmax, 1) -
+            1 / (-1 / gSR_val((psi_x / psi_sat) ** (-1 / b), gamma, b, d_r, z_r, RAI, lai) + 1/k_crit),
+            psi_x + 1, method='hybr')
+
+    Pcrit = res.get('x')
+
     return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit
 
 
-def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, ca, k1, k2, cp, VPD):
+def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca, k1, k2, cp, VPD):
 
-    k1 /= 24 * 3600  # mol m-2 s-1
-    Kmax /= 24 * 3600  # mol m-2 s-1
-    _, Pcrit = rel_loss(psi_x, psi_l, psi_63, w_exp)
+    k1 /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
+    Kmax /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
+    if np.less(k1, np.finfo(float).eps) :
+        return 0, 0, psi_x, psi_x, 0, 0
 
-    PP = np.linspace(psi_x, Pcrit, 1000)
-    E_temp = np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp)
+    _, Pcrit = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
+
+    PP = np.linspace(psi_x, Pcrit, 100)
+    E_temp, psi_r = transpiration(PP[1:], (PP[:-1]/psi_sat) ** (-1 / b), psi_sat, gamma, b,
+                  psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
     EE = np.cumsum(E_temp)
-    E_crit = np.sum(np.diff(PP) * Kmax * np.exp(-(PP[1:] / psi_63) ** w_exp))  # mol m-2 s-1; per unit leaf area
+    E_crit = np.sum(E_temp)  # mol m-2 s-1; per unit leaf area
 
     def A_here(gl, ca, k1, k2, cp):
         delta = np.sqrt(((k2 + ca) * gl + k1) ** 2 -
@@ -396,10 +414,12 @@ def profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, ca, k1, k2, cp, VPD):
     gs_crit = E_crit / 1.6 / VPD  # mol m-2 s-1
     A_crit = A_here(gs_crit, ca, k1, k2, cp)
 
-    max_ind = np.argmin(np.abs(AA / A_crit - rel_loss(psi_x, PP[1:], psi_63, w_exp)[0]))
+    max_ind = np.argmin(np.abs(np.gradient(AA / A_crit, PP[1:]) -
+                               np.gradient(rel_loss(psi_x, PP[1:], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)[0], PP[1:])))
     P_max = PP[1:][max_ind]
-    A_max = AA[1:][max_ind]
-    E_max = EE[1:][max_ind]
+    psi_r_max = psi_r[max_ind]
+    A_max = AA[max_ind]
+    E_max = EE[max_ind]
 
-    return E_crit, A_crit, P_max, A_max, E_max
+    return E_crit, A_crit, P_max, psi_r_max, A_max, E_max
 

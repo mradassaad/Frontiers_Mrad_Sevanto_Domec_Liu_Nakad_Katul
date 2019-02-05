@@ -7,7 +7,7 @@ from Plant_Env_Props import*
 from Useful_Funcs import*
 from scipy.interpolate import interp1d
 
-np.seterr(divide='warn')
+np.seterr(divide='raise')
 
 
 class ConvergenceError(Error):
@@ -31,7 +31,7 @@ def dydt(t, y):
     :return:
     """
 
-    if np.any(y[0] > (ca - cp_interp(t))/(VPDinterp(t) * alpha)):
+    if np.any(y[0] > (ca - cp_interp(t))/(VPDinterp(t) * 1.6)):
         raise GuessError('y[0] too large')
 
     elif np.any(y[0] < 0):
@@ -52,14 +52,14 @@ def dydt(t, y):
     dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape); dA_dx = np.zeros(t.shape)
 
     psi_r[ok] = psi_r_val(y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, t[ok])
-    evap_trans[ok] = alpha * gl[ok] * VPDinterp(t[ok])  # 1/d, m3 per unit leaf area per rooting depth
+    evap_trans[ok] = 1.6 * gl[ok] * VPDinterp(t[ok])  # mol m-2 d-1 per unit leaf area per rooting depth
     dEdx[ok] = 0
     # ----------------------------------- Find psi_l ------------------------
     with warnings.catch_warnings():
         warnings.filterwarnings('error', category=RuntimeWarning)
         try:
             res_fsolve = root(psil_val, psi_r[ok] + 0.1,
-                                args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], lai, VPDinterp, t[ok], reversible),
+                                args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, t[ok], reversible),
                                 method='hybr')
         except RuntimeWarning:
             print('stomatal conductance exceeds transpiration capacity: increase lam guess or no sols')
@@ -70,7 +70,7 @@ def dydt(t, y):
 
     # ----------------------------- When  transpiration limit is reached --------------
     if np.any(np.equal(Nok, True)):
-        evap_trans[Nok] = trans_max_interp(psi_x[Nok]) * alpha
+        evap_trans[Nok] = trans_max_interp(psi_x[Nok])
         psi_r[Nok] = psi_r_interp(psi_x[Nok])
         psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
@@ -93,11 +93,11 @@ def dydt(t, y):
     # losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
     # dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
 
-    f = - (losses + evap_trans)  # 1/d, m3 per unit leaf area per rooting depth
-    dfdx = - (dlossesdx + dEdx)  # 1/d
+    f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
+    dfdx = - (dlossesdx + dEdx)  # mol m-2 d-1
     dlamdt = - dA_dx - y[0] * dfdx  # mol/m2/d
     # dlamdt = - y[0] * dfdx  # mol/m2/d
-    dxdt = f  # 1/d
+    dxdt = f * nu / n / z_r  # 1/d
     return np.vstack((dlamdt, dxdt))
 
 
@@ -114,10 +114,10 @@ def bc_wus(ya, yb):  # Water use strategy
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 # t = np.linspace(0, days, 2000)
-maxLam = 763e-6*unit0
-Lambda = 6.1  # mol/m2
+# maxLam = 763e-6*unit0
+Lambda = 5 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 5 / unit1 * np.ones((1, t.size))  # mol/m2
+lam_guess = 5 * 1e-3 * np.ones((1, t.size))  # mol/mol
 x_guess = 0.19*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
@@ -132,10 +132,11 @@ except OverflowError:
 
 # ---------------- PLOT - PLOT - PLOT - PLOT - PLOT --------------------
 
-lam_plot = res.y[0]*unit1
+lam_plot = res.y[0] * 1e3
 soilM_plot = res.y[1]
 
-gl = g_val(res.x, res.y[0], ca, alpha, VPDinterp, k1_interp, k2_interp, cp_interp)  # stomatal conductance, mol/m2/d
+gl = g_val(res.x, res.y[0], ca, VPDinterp, k1_interp, k2_interp, cp_interp)  # stomatal conductance, mol/m2/d
+# per unit LEAF area
 gl[gl < 0] = 0
 
 A_val = A(res.x, gl, ca, k1_interp, k2_interp, cp_interp)  # mol/m2/d
@@ -146,8 +147,8 @@ ci = np.zeros(res.x.shape)
 notZero = gl != 0
 ci[notZero] = ca - A_val[notZero] / gl[notZero]  # internal carbon concentration, mol/mol
 
-trans_max = trans_max_interp(psi_x)
-ok = np.less_equal(lai * gl * VPDinterp(res.x), trans_max)
+trans_max = trans_max_interp(psi_x)  # mol m-2 d-1 per unit LEAF area
+ok = np.less_equal(1.6 * gl * VPDinterp(res.x), trans_max)
 Nok = ~ok
 
 psi_r = np.zeros(res.x.shape)
@@ -155,10 +156,10 @@ psi_l = np.zeros(res.x.shape)
 E = np.zeros(res.x.shape)
 
 psi_r[ok] = psi_r_val(res.y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, res.x[ok])
-psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], lai, VPDinterp, res.x[ok], reversible),
+psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
                  method='hybr')
 psi_l[ok] = psi_l_res.x
-E[ok] = gl[ok] * VPDinterp(res.x[ok])  # mol m-2 d-1 per unit leaf area
+E[ok] = a * gl[ok] * VPDinterp(res.x[ok])  # mol m-2 d-1 per unit leaf area
 
 E[Nok] = trans_max_interp(psi_x[Nok])
 gl[Nok] = E[Nok] / a / VPDinterp(res.x[Nok])  # mol m-2 d-1 per unit leaf area
@@ -170,15 +171,24 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 psi_p = (psi_l + psi_r) / 2
 PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
 
-# f = - (beta * soilM_plot ** c + alpha * E / lai + 0.1 * soilM_plot ** 2)  # day-1
-f = - (alpha * E)  # day-1
-objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:]))  # mol/m2
-objective_term_2 = Lambda * soilM_plot[-1]  # mol/m2
+# f = - (gamma / lai * soilM_plot ** c + 1.6 * E / lai + 0.1 * soilM_plot ** 2)  # mol m-2 day-1 per unit LEAF area
+f = - (E)  # mol m-2 day-1 per unit LEAF area
+objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:])) * lai # mol/m2 per GROUND area
+objective_term_2 = Lambda * soilM_plot[-1]  # mol/mol
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
 
 # ------------ profit ---------
+E_crit = np.zeros(psi_x.shape)
+A_crit = np.zeros(psi_x.shape)
+P_max = np.zeros(psi_x.shape)
+psi_r_max = np.zeros(psi_x.shape)
+A_max = np.zeros(psi_x.shape)
+E_max = np.zeros(psi_x.shape)
 
-profit_max(psi_x, psi_l, psi_63, w_exp, Kmax, gl, ca, k1, k2, cp, VPD)
+for i in range(psi_x.shape[0]):
+    E_crit[i], A_crit[i], P_max[i], psi_r_max[i], A_max[i], E_max[i] = \
+         profit_max(psi_x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
+                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]))
 
 
 # --- for debugging and insight
@@ -206,9 +216,9 @@ plt.plot(res.x, A_val * 1e6 / unit0)
 plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
 
 plt.subplot(335)
-plt.plot(res.x, (E * alpha * n * z_r))  # per unit leaf area
+plt.plot(res.x, E * 1e3 / unit0)  # mmol m-2 s-1
 # plt.xlabel("time, days")
-plt.ylabel("$E, m.d^{-1}$")
+plt.ylabel("$E, mmol m^{-2} s^{-1}$")
 
 plt.subplot(336)
 plt.plot(res.x, psi_x)
@@ -238,17 +248,17 @@ env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
 
 
-lam_low = lam_from_trans(trans_max_interp(psi_x), ca, alpha,
-                         env_data[0], env_data[1], env_data[2], env_data[3], lai)
+lam_low = lam_from_trans(trans_max_interp(psi_x), ca,
+                         env_data[0], env_data[1], env_data[2], env_data[3]) * 1e3
 
 env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
-lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / alpha
+lam_up = np.ones(lam_low.shape) * 1e3 * (ca - env_data[0]) / env_data[1] / 1.6  # mmol mol-1
 
 fig, ax = plt.subplots()
 lam_line = ax.plot(res.x, lam_plot, 'r')
-lam_low_line = ax.plot(res.x, lam_low * unit1, 'r:')
-lam_high_line = ax.plot(res.x, lam_up * unit1, 'r:')
+lam_low_line = ax.plot(res.x, lam_low, 'r:')
+lam_high_line = ax.plot(res.x, lam_up, 'r:')
 
 
 # --- Fig 2
