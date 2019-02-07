@@ -89,11 +89,13 @@ psi_r_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
 i = 0
 for x in xvals:
-    OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible))
-    psi_l_vals[i] = OptRes.x
-    trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
+    # OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible))
+    # psi_l_vals[i] = OptRes.x
+    # trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
+    trans_res = trans_opt_integral(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
     trans_vals[i] = trans_res[0]
     psi_r_vals[i] = trans_res[1]
+    psi_l_vals[i] = trans_res[2]
     i += 1
 
 trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')  # per unit LEAF area

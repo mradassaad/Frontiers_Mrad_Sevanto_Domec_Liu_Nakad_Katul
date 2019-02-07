@@ -8,6 +8,7 @@ from Useful_Funcs import*
 from scipy.interpolate import interp1d
 
 np.seterr(divide='raise')
+np.seterr(divide='raise')
 
 
 class ConvergenceError(Error):
@@ -49,7 +50,7 @@ def dydt(t, y):
     Nok = ~ok
 
     psi_r = np.zeros(t.shape); psi_l = np.zeros(t.shape)
-    dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape); dA_dx = np.zeros(t.shape)
+    dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape)
 
     psi_r[ok] = psi_r_val(y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, t[ok])
     evap_trans[ok] = 1.6 * gl[ok] * VPDinterp(t[ok])  # mol m-2 d-1 per unit leaf area per rooting depth
@@ -58,7 +59,7 @@ def dydt(t, y):
     with warnings.catch_warnings():
         warnings.filterwarnings('error', category=RuntimeWarning)
         try:
-            res_fsolve = root(psil_val, psi_r[ok] + 0.1,
+            res_fsolve = root(psil_val_integral, psi_r[ok] + 0.1,
                                 args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, t[ok], reversible),
                                 method='hybr')
         except RuntimeWarning:
@@ -74,17 +75,6 @@ def dydt(t, y):
         psi_r[Nok] = psi_r_interp(psi_x[Nok])
         psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
-        # dgdx = dtrans_max_dx_interp(psi_x[Nok]) * psi_sat * (-b) * y[1][Nok] ** (-b-1) \
-        #        / lai / VPDinterp(t[Nok])  # mol/m2/d
-        # dEdx[Nok] = dtrans_max_dx_interp(psi_x[Nok]) * psi_sat * (-b) * y[1][Nok] ** (-b-1) *\
-        #             alpha / lai  # 1/d
-        # A_fun = lambda gg: A(t[Nok], gg, ca, k1_interp, k2_interp, cp_interp)
-        # dA_dx[Nok] = derivative(A_fun, trans_max_interp(psi_x[Nok])/ lai / VPDinterp(t[Nok]), dx=1e-5) * dgdx  # mol/m2/d
-        # y[0][Nok] = lam_from_trans(trans_max_interp(psi_x[Nok]), ca, alpha,
-        #                            cp_interp(t[Nok]), VPDinterp(t[Nok]), k1_interp(t[Nok]), k2_interp(t[Nok]), lai)
-
-        # dlamdt[Nok] = dA_dx + y[0][Nok] * (beta * c * y[1][Nok] ** (c - 1) + dEdx[Nok])
-
     # -------------- uncontrolled losses and evapo-trans ------------------------
     losses = 0
     dlossesdx = 0
@@ -95,8 +85,7 @@ def dydt(t, y):
 
     f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
     dfdx = - (dlossesdx + dEdx)  # mol m-2 d-1
-    dlamdt = - dA_dx - y[0] * dfdx  # mol/m2/d
-    # dlamdt = - y[0] * dfdx  # mol/m2/d
+    dlamdt = - y[0] * dfdx  # mol/m2/d
     dxdt = f * nu / n / z_r  # 1/d
     return np.vstack((dlamdt, dxdt))
 
@@ -156,7 +145,9 @@ psi_l = np.zeros(res.x.shape)
 E = np.zeros(res.x.shape)
 
 psi_r[ok] = psi_r_val(res.y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, res.x[ok])
-psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
+# psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
+#                  method='hybr')
+psi_l_res = root(psil_val_integral, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
                  method='hybr')
 psi_l[ok] = psi_l_res.x
 E[ok] = a * gl[ok] * VPDinterp(res.x[ok])  # mol m-2 d-1 per unit leaf area
@@ -169,11 +160,12 @@ psi_r[Nok] = psi_r_interp(psi_x[Nok])
 psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
 psi_p = (psi_l + psi_r) / 2
-PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
+# PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
+PLC = 100*(1 - plant_cond_integral(psi_l, psi_63, w_exp, 1, 1))
 
 # f = - (gamma / lai * soilM_plot ** c + 1.6 * E / lai + 0.1 * soilM_plot ** 2)  # mol m-2 day-1 per unit LEAF area
 f = - (E)  # mol m-2 day-1 per unit LEAF area
-objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:])) * lai # mol/m2 per GROUND area
+objective_term_1 = np.sum(np.diff(res.x) * (A_val[1:] + res.y[0][1:] * f[1:])) * lai  # mol/m2 per GROUND area
 objective_term_2 = Lambda * soilM_plot[-1]  # mol/mol
 theta = objective_term_2 / (objective_term_1 + objective_term_2)
 
@@ -186,9 +178,10 @@ A_max = np.zeros(psi_x.shape)
 E_max = np.zeros(psi_x.shape)
 
 for i in range(psi_x.shape[0]):
+    print(i)
     E_crit[i], A_crit[i], P_max[i], psi_r_max[i], A_max[i], E_max[i] = \
          profit_max(psi_x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
-                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]))
+                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]), 0.1)
 
 
 # --- for debugging and insight

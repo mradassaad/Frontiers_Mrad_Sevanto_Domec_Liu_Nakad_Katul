@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.optimize import root
 from scipy.optimize import minimize
+from scipy.integrate import quad
 from scipy.misc import derivative
 
 class Error(Exception):
@@ -192,6 +193,27 @@ def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp):
     return gl
 
 
+def create_ranges(start, stop, N, endpoint=True):
+    if endpoint:
+        divisor = N-1
+    else:
+        divisor = N
+    steps = (1.0/divisor) * (stop - start)
+    return steps[:, None]*np.arange(N) + start[:, None]
+
+
+def psil_val_integral(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
+
+    PP = create_ranges(psi_r, psi_l, 100)
+    trans_res = np.trapz(plant_cond_integral(PP, psi_63, w_exp, Kmax, 1), x=PP)
+
+    if np.any(
+            np.logical_not(np.isfinite(trans_res - 1.6 * gs * VPDinterp(t)))):
+        raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
+
+    return trans_res - 1.6 * gs * VPDinterp(t)  # all in unit LEAF area
+
+
 def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
 
     trans_res = (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
@@ -229,16 +251,39 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     :return: transpiration rate in mol/m2/d per unit LEAF area
     """
     psi_x = psi_sat * x ** -b
+    # if np.less(np.abs(psi_x - psi_l), 1e-5):
+    #     return 0, psi_x
+
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
+    plant_x = plant_cond(psi_x, psi_l, psi_63, w_exp, Kmax, 1)
+    psi_r_guess = (psi_x * gSR + psi_l * plant_x) / (gSR + plant_x)
+    # psi_r_guess = psi_x + 0.1
+    #
+    # res = root(lambda psi_r: (psi_r - psi_x) * gSR -
+    #                         (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible),
+    #            psi_r_guess, method='hybr')
 
 
-    res = root(lambda psi_r: (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI, lai) -
-                            (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible),
-                psi_x + 0.1, method='broyden1')
+    res = root(lambda psi_r: (psi_r - psi_x) * gSR -
+                             np.trapz(plant_cond_integral(create_ranges(psi_r, psi_l, 100), psi_63, w_exp, Kmax, 1),
+                                      x=create_ranges(psi_r, psi_l, 100)),
+               psi_r_guess, method='hybr')
+
 
     psi_r = res.get('x')
 
     #  returns transpiration in mol/m2/d per unit LEAF area
-    return (psi_r - psi_x) * gSR_val(x, gamma, b, d_r, z_r, RAI, lai), psi_r
+    return (psi_r - psi_x) * gSR, psi_r
+
+
+def trans_opt_integral(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
+    #  per unit LEAF area
+    psi_x = psi_sat * x **(-b)
+
+    _, Pcrit, k_crit = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
+    trans_res, psi_r = transpiration(Pcrit, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
+
+    return trans_res, psi_r, Pcrit
 
 
 def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
@@ -246,21 +291,21 @@ def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, l
     return - transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)[0]
 
 
-def trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
-    #  per unit LEAF area
-    psi_x = psi_sat * x ** -b
-    OptRes = minimize(trans_opt, psi_x,
-                      args=(x,
-                            psi_sat, gamma, b, psi_63, w_exp, Kmax,
-                            d_r, z_r, RAI, lai, reversible))
-    psi_l_max = OptRes.x
-    trans_res = transpiration(OptRes.x, x,
-                              psi_sat, gamma, b, psi_63, w_exp, Kmax,
-                              d_r, z_r, RAI, lai, reversible)
-    trans_max = trans_res[0]
-    psi_r_max = trans_res[1]
-
-    return trans_max, psi_l_max, psi_r_max
+# def trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
+#     #  per unit LEAF area
+#     psi_x = psi_sat * x ** -b
+#     OptRes = minimize(trans_opt, psi_x,
+#                       args=(x,
+#                             psi_sat, gamma, b, psi_63, w_exp, Kmax,
+#                             d_r, z_r, RAI, lai, reversible))
+#     psi_l_max = OptRes.x
+#     trans_res = transpiration(OptRes.x, x,
+#                               psi_sat, gamma, b, psi_63, w_exp, Kmax,
+#                               d_r, z_r, RAI, lai, reversible)
+#     trans_max = trans_res[0]
+#     psi_r_max = trans_res[1]
+#
+#     return trans_max, psi_l_max, psi_r_max
 
 
 # def dtransdx(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible=0):
@@ -275,6 +320,25 @@ def trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai,
 #
 #     return dEdx  # mol/m2/d
 
+def plant_cond_integral(psi_p, psi_63, w_exp, Kmax, reversible=0):
+    """
+
+    :param psi_r: root water potential in MPa
+    :param psi_l: leaf water potential in MPa
+    :param psi_63: Weibull parameter in MPa
+    :param w_exp: Weibull exponent
+    :param Kmax: Saturated plant LEAF area-average conductance in mol/m2/MPa/d
+    :return: Unsaturated plant LEAF area-average conductance in mol/m2/MPa/d
+    """
+    cond_pot = Kmax * np.exp(- (psi_p / psi_63) ** w_exp)
+
+    if reversible:
+        return cond_pot
+    else:
+
+        cond_pot = np.minimum.accumulate(cond_pot)
+
+        return cond_pot
 
 def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
     """
@@ -367,55 +431,76 @@ def rel_loss(psi_x, psi_l, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI
     # k_l_max = np.exp(-(psi_l / psi_63) ** w_exp)
     # k_crit = 0.05 * k_x_max
     # Pcrit = psi_63 * (- np.log(k_crit)) ** (1 / w_exp)
-    k_x_max = (1/plant_cond(psi_x, psi_x, psi_63, w_exp, Kmax, 1) +
-              1/gSR_val((psi_x/psi_sat)**(-1/b), gamma, b, d_r, z_r, RAI, lai)) ** (-1)
+    rhizo_cond = gSR_val((psi_x/psi_sat)**(-1/b), gamma, b, d_r, z_r, RAI, lai)
 
-    k_l_max = (1 / plant_cond(psi_l, psi_l, psi_63, w_exp, Kmax, 1) +
-               1 / gSR_val((psi_x / psi_sat) ** (-1 / b), gamma, b, d_r, z_r, RAI, lai)) ** (-1)
+    k_x_max = (1/plant_cond(psi_x, psi_x, psi_63, w_exp, Kmax, 1) + 1/rhizo_cond) ** (-1)
+
+    k_l_max = (1 / plant_cond(psi_l, psi_l, psi_63, w_exp, Kmax, 1) + 1 / rhizo_cond) ** (-1)
 
     k_crit = 0.05 * k_x_max
 
-    res = root(lambda PPP: plant_cond(PPP, PPP, psi_63, w_exp, Kmax, 1) -
-            1 / (-1 / gSR_val((psi_x / psi_sat) ** (-1 / b), gamma, b, d_r, z_r, RAI, lai) + 1/k_crit),
-            psi_x + 1, method='hybr')
+    Pcrit = psi_63 * (- np.log((-1 / rhizo_cond + 1/k_crit) ** (-1) / Kmax)) ** (1 / w_exp)
 
-    Pcrit = res.get('x')
-
-    return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit
+    return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit, k_crit
 
 
-def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca, k1, k2, cp, VPD):
-
-    k1 /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
-    Kmax /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
-    if np.less(k1, np.finfo(float).eps) :
-        return 0, 0, psi_x, psi_x, 0, 0
-
-    _, Pcrit = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
-
-    PP = np.linspace(psi_x, Pcrit, 100)
-    E_temp, psi_r = transpiration(PP[1:], (PP[:-1]/psi_sat) ** (-1 / b), psi_sat, gamma, b,
-                  psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
-    EE = np.cumsum(E_temp)
-    E_crit = np.sum(E_temp)  # mol m-2 s-1; per unit leaf area
-
-    def A_here(gl, ca, k1, k2, cp):
-        delta = np.sqrt(((k2 + ca) * gl + k1) ** 2 -
+def A_here(gl, ca, k1, k2, cp):
+    delta = np.sqrt(((k2 + ca) * gl + k1) ** 2 -
                         4 * k1 * (ca - cp) * gl)  # mol/mol
 
-        AAA = 0.5 * (k1 + gl * (ca + k2) - delta)  # mol/m2/s
-        # A *= 1e6/unit0
+    AAA = 0.5 * (k1 + gl * (ca + k2) - delta)  # mol/m2/s
+    # A *= 1e6/unit0
 
-        return AAA
+    return AAA
 
-    ggss = EE / 1.6 / VPD  # mol/m2/s
+
+def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca, k1, k2, cp, VPD, step=0.02):
+
+    # k1 /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
+    # Kmax /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
+    if np.less(k1, np.finfo(float).eps):
+        return 0, 0, psi_x, psi_x, 0, 0
+
+    _, Pcrit, _ = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
+
+    rhizo_cond = gSR_val((psi_x / psi_sat) ** (-1 / b), gamma, b, d_r, z_r, RAI, lai)
+
+    PP = np.arange(psi_x, Pcrit, step)
+
+    E_temp, _ = transpiration(PP[1:], (PP[:-1] / psi_sat) ** (-1 / b), psi_sat, gamma, b,
+                  psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
+    #
+    # x = (PP[:-1]/psi_sat) ** (-1/b)
+    # gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
+    # plant_x = plant_cond(psi_x, PP[1:], psi_63, w_exp, Kmax, 1)
+    # psi_r_guess = (PP[:-1] * gSR + PP[1:] * plant_x) / (gSR + plant_x)
+    # # psi_r_guess = psi_x + 0.1
+    #
+    # res = root(lambda psi_r: (psi_r - PP[:-1]) * gSR -
+    #                          (PP[1:] - psi_r) * plant_cond(psi_r, PP[1:], psi_63, w_exp, Kmax, 1),
+    #            psi_r_guess, method='hybr')
+    #
+    # psi_r = res.get('x')
+    # E_temp = (psi_r - PP[:-1]) * gSR
+
+    EE = np.cumsum(E_temp)
+    E_crit = np.sum(E_temp)  # mol m-2 d-1; per unit leaf area
+
+    ggss = EE / 1.6 / VPD  # mol/m2/d
+
+    gSR = gSR_val((psi_x/psi_sat) ** (-1/b), gamma, b, d_r, z_r, RAI, lai)  # per unit LEAF area
+    trans = 1.6 * ggss * VPD  # per unit LEAF area
+    psi_r = psi_x + trans / gSR
+
     AA = A_here(ggss, ca, k1, k2, cp)
 
-    gs_crit = E_crit / 1.6 / VPD  # mol m-2 s-1
+    gs_crit = E_crit / 1.6 / VPD  # mol m-2 d-1
     A_crit = A_here(gs_crit, ca, k1, k2, cp)
 
     max_ind = np.argmin(np.abs(np.gradient(AA / A_crit, PP[1:]) -
-                               np.gradient(rel_loss(psi_x, PP[1:], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)[0], PP[1:])))
+                            np.gradient(rel_loss(psi_x, PP[1:], psi_sat, gamma, b,
+                                                 psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)[0], PP[1:])))
+
     P_max = PP[1:][max_ind]
     psi_r_max = psi_r[max_ind]
     A_max = AA[max_ind]
