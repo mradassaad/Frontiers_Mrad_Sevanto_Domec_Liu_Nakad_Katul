@@ -161,7 +161,9 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
 psi_p = (psi_l + psi_r) / 2
 # PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
-PLC = 100*(1 - plant_cond_integral(psi_l, psi_63, w_exp, 1, 1))
+PLC_time = res.x[E>0.01]
+PLC = 100 * \
+      np.maximum.accumulate(1 - E[E > 0.01] / (psi_l[E > 0.01] - psi_r[E > 0.01]) / Kmax)
 
 # f = - (gamma / lai * soilM_plot ** c + 1.6 * E / lai + 0.1 * soilM_plot ** 2)  # mol m-2 day-1 per unit LEAF area
 f = - (E)  # mol m-2 day-1 per unit LEAF area
@@ -186,8 +188,8 @@ for i in range(psi_x.shape[0]):
 
 # --- for debugging and insight
 
-plt.figure()
 plt.subplot(331)
+plt.figure()
 plt.plot(res.x, lam_plot)
 #plt.xlabel("days")
 plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
@@ -229,7 +231,7 @@ plt.xlabel("time, days")
 plt.ylabel("$\psi_p, MPa$")
 
 plt.subplot(339)
-plt.plot(res.x, PLC)
+plt.plot(PLC_time, PLC)
 plt.xlabel("time, days")
 plt.ylabel("PLC, %")
 

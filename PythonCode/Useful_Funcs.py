@@ -205,7 +205,7 @@ def create_ranges(start, stop, N, endpoint=True):
 def psil_val_integral(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
 
     PP = create_ranges(psi_r, psi_l, 100)
-    trans_res = np.trapz(plant_cond_integral(PP, psi_63, w_exp, Kmax, 1), x=PP)
+    trans_res = np.trapz(plant_cond_integral(PP, psi_63, w_exp, Kmax, reversible), x=PP)
 
     if np.any(
             np.logical_not(np.isfinite(trans_res - 1.6 * gs * VPDinterp(t)))):
@@ -276,14 +276,27 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     return (psi_r - psi_x) * gSR, psi_r
 
 
-def trans_opt_integral(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
+def trans_crit(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
     #  per unit LEAF area
     psi_x = psi_sat * x **(-b)
 
-    _, Pcrit, k_crit = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
-    trans_res, psi_r = transpiration(Pcrit, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
+    PP = np.arange(psi_x, 7, 0.1)
+    EE, psi_r = transpiration(PP, x, psi_sat, gamma, b,
+                          psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
+    kk = np.gradient(EE, PP)
+    k_max = kk[0]
+    # Find critical point
 
-    return trans_res, psi_r, Pcrit
+    crit_ind = np.argmin(np.abs(kk / k_max - 0.05))
+
+    E_crit = EE[crit_ind]  # mol m-2 d-1; per unit leaf area
+    k_crit = kk[crit_ind]
+    P_crit = PP[crit_ind]
+
+    # _, Pcrit, k_crit = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
+    # trans_res, psi_r = transpiration(Pcrit, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
+
+    return E_crit, psi_r[crit_ind], P_crit
 
 
 def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
@@ -425,23 +438,23 @@ def lam_from_trans(trans, ca, cp, VPD, k1, k2):
 #     return dlam_dtrans * dtrans_max_dx
 
 
-def rel_loss(psi_x, psi_l, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai):
-
-    # k_x_max = np.exp(-(psi_x / psi_63) ** w_exp)
-    # k_l_max = np.exp(-(psi_l / psi_63) ** w_exp)
-    # k_crit = 0.05 * k_x_max
-    # Pcrit = psi_63 * (- np.log(k_crit)) ** (1 / w_exp)
-    rhizo_cond = gSR_val((psi_x/psi_sat)**(-1/b), gamma, b, d_r, z_r, RAI, lai)
-
-    k_x_max = (1/plant_cond(psi_x, psi_x, psi_63, w_exp, Kmax, 1) + 1/rhizo_cond) ** (-1)
-
-    k_l_max = (1 / plant_cond(psi_l, psi_l, psi_63, w_exp, Kmax, 1) + 1 / rhizo_cond) ** (-1)
-
-    k_crit = 0.05 * k_x_max
-
-    Pcrit = psi_63 * (- np.log((-1 / rhizo_cond + 1/k_crit) ** (-1) / Kmax)) ** (1 / w_exp)
-
-    return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit, k_crit
+# def rel_loss(psi_x, psi_l, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai):
+#
+#     # k_x_max = np.exp(-(psi_x / psi_63) ** w_exp)
+#     # k_l_max = np.exp(-(psi_l / psi_63) ** w_exp)
+#     # k_crit = 0.05 * k_x_max
+#     # Pcrit = psi_63 * (- np.log(k_crit)) ** (1 / w_exp)
+#     rhizo_cond = gSR_val((psi_x/psi_sat)**(-1/b), gamma, b, d_r, z_r, RAI, lai)
+#
+#     k_x_max = (1/plant_cond(psi_x, psi_x, psi_63, w_exp, Kmax, 1) + 1/rhizo_cond) ** (-1)
+#
+#     k_l_max = (1 / plant_cond(psi_l, psi_l, psi_63, w_exp, Kmax, 1) + 1 / rhizo_cond) ** (-1)
+#
+#     k_crit = 0.05 * k_x_max
+#
+#     Pcrit = psi_63 * (- np.log((-1 / rhizo_cond + 1/k_crit) ** (-1) / Kmax)) ** (1 / w_exp)
+#
+#     return (k_x_max - k_l_max) / (k_x_max - k_crit), Pcrit, k_crit
 
 
 def A_here(gl, ca, k1, k2, cp):
@@ -456,55 +469,51 @@ def A_here(gl, ca, k1, k2, cp):
 
 def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca, k1, k2, cp, VPD, step=0.02):
 
-    # k1 /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
-    # Kmax /= 24 * 3600  # mol m-2 s-1, per unit LEAF area
     if np.less(k1, np.finfo(float).eps):
         return 0, 0, psi_x, psi_x, 0, 0
+    x = (psi_x / psi_sat) ** (-1 / b)
+    # _, Pcrit, _ = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
 
-    _, Pcrit, _ = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)  # per unit LEAF area
 
-    rhizo_cond = gSR_val((psi_x / psi_sat) ** (-1 / b), gamma, b, d_r, z_r, RAI, lai)
-
-    PP = np.arange(psi_x, Pcrit, step)
-
-    E_temp, _ = transpiration(PP[1:], (PP[:-1] / psi_sat) ** (-1 / b), psi_sat, gamma, b,
+    PP = np.arange(psi_x, 7, 0.1)
+    EE, _ = transpiration(PP, x, psi_sat, gamma, b,
                   psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
-    #
-    # x = (PP[:-1]/psi_sat) ** (-1/b)
-    # gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
-    # plant_x = plant_cond(psi_x, PP[1:], psi_63, w_exp, Kmax, 1)
-    # psi_r_guess = (PP[:-1] * gSR + PP[1:] * plant_x) / (gSR + plant_x)
-    # # psi_r_guess = psi_x + 0.1
-    #
-    # res = root(lambda psi_r: (psi_r - PP[:-1]) * gSR -
-    #                          (PP[1:] - psi_r) * plant_cond(psi_r, PP[1:], psi_63, w_exp, Kmax, 1),
-    #            psi_r_guess, method='hybr')
-    #
-    # psi_r = res.get('x')
-    # E_temp = (psi_r - PP[:-1]) * gSR
+    kk = np.gradient(EE, PP)
+    k_max = kk[0]
+    # Find critical point
 
-    EE = np.cumsum(E_temp)
-    E_crit = np.sum(E_temp)  # mol m-2 d-1; per unit leaf area
+    crit_ind = np.argmin(np.abs(kk / k_max - 0.05))
+
+    E_crit = EE[crit_ind]  # mol m-2 d-1; per unit leaf area
+    k_crit = kk[crit_ind]
+    P_crit = PP[crit_ind]
+    # Finer Mesh
+
+    PP = np.arange(psi_x, P_crit, step)
+    EE, _ = transpiration(PP, x, psi_sat, gamma, b,
+                          psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
+    kk = np.gradient(EE, PP)
 
     ggss = EE / 1.6 / VPD  # mol/m2/d
-
-    gSR = gSR_val((psi_x/psi_sat) ** (-1/b), gamma, b, d_r, z_r, RAI, lai)  # per unit LEAF area
-    trans = 1.6 * ggss * VPD  # per unit LEAF area
-    psi_r = psi_x + trans / gSR
 
     AA = A_here(ggss, ca, k1, k2, cp)
 
     gs_crit = E_crit / 1.6 / VPD  # mol m-2 d-1
     A_crit = A_here(gs_crit, ca, k1, k2, cp)
 
-    max_ind = np.argmin(np.abs(np.gradient(AA / A_crit, PP[1:]) -
-                            np.gradient(rel_loss(psi_x, PP[1:], psi_sat, gamma, b,
-                                                 psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)[0], PP[1:])))
+    trans = 1.6 * ggss * VPD  # per unit LEAF area
+    psi_r = psi_x + trans / gSR
 
-    P_max = PP[1:][max_ind]
-    psi_r_max = psi_r[max_ind]
-    A_max = AA[max_ind]
-    E_max = EE[max_ind]
+    rel_gain = np.gradient(AA / A_crit, PP)
+    rel_loss = np.gradient((k_max - kk) / (k_max - k_crit), PP)
 
-    return E_crit, A_crit, P_max, psi_r_max, A_max, E_max
+    opt_ind = np.argmin(np.abs(rel_gain - rel_loss))
+
+    P_opt = PP[opt_ind]
+    psi_r_opt = psi_r[opt_ind]
+    A_opt = AA[opt_ind]
+    E_opt = EE[opt_ind]
+
+    return E_crit, A_crit, P_opt, psi_r_opt, A_opt, E_opt
 
