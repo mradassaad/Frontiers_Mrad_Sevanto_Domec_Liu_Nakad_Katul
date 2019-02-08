@@ -161,7 +161,7 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
 psi_p = (psi_l + psi_r) / 2
 # PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
-PLC_time = res.x[E>0.01]
+PLC_time = res.x[E > 0.01]
 PLC = 100 * \
       np.maximum.accumulate(1 - E[E > 0.01] / (psi_l[E > 0.01] - psi_r[E > 0.01]) / Kmax)
 
@@ -174,66 +174,66 @@ theta = objective_term_2 / (objective_term_1 + objective_term_2)
 # ------------ profit ---------
 E_crit = np.zeros(psi_x.shape)
 A_crit = np.zeros(psi_x.shape)
-P_max = np.zeros(psi_x.shape)
-psi_r_max = np.zeros(psi_x.shape)
-A_max = np.zeros(psi_x.shape)
-E_max = np.zeros(psi_x.shape)
+P_crit = np.zeros(psi_x.shape)
+P_opt = np.zeros(psi_x.shape)
+psi_r_opt = np.zeros(psi_x.shape)
+A_opt = np.zeros(psi_x.shape)
+E_opt = np.zeros(psi_x.shape)
 
 for i in range(psi_x.shape[0]):
     print(i)
-    E_crit[i], A_crit[i], P_max[i], psi_r_max[i], A_max[i], E_max[i] = \
+    E_crit[i], A_crit[i], P_crit[i], E_opt[i], A_opt[i], P_opt[i], psi_r_opt[i] = \
          profit_max(psi_x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
-                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]), 0.1)
+                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]), 0.01)
 
 
 # --- for debugging and insight
-
-plt.subplot(331)
-plt.figure()
-plt.plot(res.x, lam_plot)
-#plt.xlabel("days")
-plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
-
-plt.subplot(332)
-plt.plot(res.x, soilM_plot)
+# plt.figure()
+# plt.subplot(331)
+# plt.plot(res.x, lam_plot)
+# #plt.xlabel("days")
+# plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
+#
+# plt.subplot(332)
+# plt.plot(res.x, soilM_plot)
+# # plt.xlabel("time, days")
+# plt.ylabel("$x(t)$")
+#
+# plt.subplot(333)
+# plt.plot(res.x, gl / unit0)
 # plt.xlabel("time, days")
-plt.ylabel("$x(t)$")
-
-plt.subplot(333)
-plt.plot(res.x, gl / unit0)
-plt.xlabel("time, days")
-plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
-
-
-plt.subplot(334)
-plt.plot(res.x, A_val * 1e6 / unit0)
+# plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+#
+#
+# plt.subplot(334)
+# plt.plot(res.x, A_val * 1e6 / unit0)
+# # plt.xlabel("time, days")
+# plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
+#
+# plt.subplot(335)
+# plt.plot(res.x, E * 1e3 / unit0)  # mmol m-2 s-1
+# # plt.xlabel("time, days")
+# plt.ylabel("$E, mmol m^{-2} s^{-1}$")
+#
+# plt.subplot(336)
+# plt.plot(res.x, psi_x)
+# # plt.xlabel("time, days")
+# plt.ylabel("$\psi_x, MPa$")
+#
+# plt.subplot(337)
+# plt.plot(res.x, psi_l)
 # plt.xlabel("time, days")
-plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
-
-plt.subplot(335)
-plt.plot(res.x, E * 1e3 / unit0)  # mmol m-2 s-1
+# plt.ylabel("$\psi_l, MPa$")
+#
+# plt.subplot(338)
+# plt.plot(res.x, psi_p)
 # plt.xlabel("time, days")
-plt.ylabel("$E, mmol m^{-2} s^{-1}$")
-
-plt.subplot(336)
-plt.plot(res.x, psi_x)
+# plt.ylabel("$\psi_p, MPa$")
+#
+# plt.subplot(339)
+# plt.plot(PLC_time, PLC)
 # plt.xlabel("time, days")
-plt.ylabel("$\psi_x, MPa$")
-
-plt.subplot(337)
-plt.plot(res.x, psi_l)
-plt.xlabel("time, days")
-plt.ylabel("$\psi_l, MPa$")
-
-plt.subplot(338)
-plt.plot(res.x, psi_p)
-plt.xlabel("time, days")
-plt.ylabel("$\psi_p, MPa$")
-
-plt.subplot(339)
-plt.plot(PLC_time, PLC)
-plt.xlabel("time, days")
-plt.ylabel("PLC, %")
+# plt.ylabel("PLC, %")
 
 # --- Fig1b
 
@@ -244,16 +244,16 @@ env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
 
 
 lam_low = lam_from_trans(trans_max_interp(psi_x), ca,
-                         env_data[0], env_data[1], env_data[2], env_data[3]) * 1e3
+                         env_data[0], env_data[1], env_data[2], env_data[3])
 
 env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
-lam_up = np.ones(lam_low.shape) * 1e3 * (ca - env_data[0]) / env_data[1] / 1.6  # mmol mol-1
-
-fig, ax = plt.subplots()
-lam_line = ax.plot(res.x, lam_plot, 'r')
-lam_low_line = ax.plot(res.x, lam_low, 'r:')
-lam_high_line = ax.plot(res.x, lam_up, 'r:')
+lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / 1.6  # mol mol-1
+#
+# fig, ax = plt.subplots()
+# lam_line = ax.plot(res.x, lam_plot, 'r')
+# lam_low_line = ax.plot(res.x, lam_low * 1e3, 'r:')
+# lam_high_line = ax.plot(res.x, lam_up * 1e3, 'r:')
 
 
 # --- Fig 2
@@ -270,16 +270,18 @@ psix_mid_day = psix_sim_interp(mid_day)
 # -----save----
 
 H = np.zeros(A_val.shape)
-oklam = np.greater_equal(res.y[0], lam_low)
+oklam = np.greater_equal(res.y[0], lam_low * 1e-3)
 H[oklam] = A_val[oklam] + res.y[0][oklam]*f[oklam]  # mol/m2/d
-H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]  # mol/m2/d
+H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]*1e-3  # mol/m2/d
 
 inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
-        'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E}
+        'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E,
+        'E_crit': E_crit, 'A_crit': A_crit, 'P_crit': P_crit, 'A_opt': A_opt, 'E_opt': E_opt,
+        'P_opt': P_opt, 'psi_r_opt': psi_r_opt}
 
-# import pickle
-#
-# pickle_out = open("../Fig3/Fig3.vulnerable", "wb")
-# pickle.dump(inst, pickle_out)
-# pickle_out.close()
+import pickle
+
+pickle_out = open("../Fig3/Fig3.resistant", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()

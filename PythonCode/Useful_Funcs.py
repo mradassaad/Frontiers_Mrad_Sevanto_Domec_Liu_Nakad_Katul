@@ -515,5 +515,5 @@ def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai
     A_opt = AA[opt_ind]
     E_opt = EE[opt_ind]
 
-    return E_crit, A_crit, P_opt, psi_r_opt, A_opt, E_opt
+    return E_crit, A_crit, P_crit, E_opt, A_opt, P_opt, psi_r_opt
 
