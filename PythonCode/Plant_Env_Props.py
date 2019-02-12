@@ -82,17 +82,22 @@ Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity,
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.1, 0.6, 0.005)
+xvals = np.arange(0.1, 0.3, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
 i = 0
-for x in xvals:
-    # OptRes = minimize(trans_opt, psi_x_vals[i], args=(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible))
-    # psi_l_vals[i] = OptRes.x
-    # trans_res = transpiration(OptRes.x, xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
-    trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
+trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
+trans_vals[i] = trans_res[0]
+psi_r_vals[i] = trans_res[1]
+psi_l_vals[i] = trans_res[2]
+i = 1
+for xx in xvals[1:]:
+    # OptRes = minimize(trans_opt, psi_x[i], args=(x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
+    # psi_l[i] = OptRes.x
+    # trans_res = transpiration(OptRes.x, x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
+    trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, psi_l_vals[i-1])
     trans_vals[i] = trans_res[0]
     psi_r_vals[i] = trans_res[1]
     psi_l_vals[i] = trans_res[2]
@@ -101,9 +106,6 @@ for x in xvals:
 trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')  # per unit LEAF area
 psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
 psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
-
-# dtrans_max_dx = np.gradient(trans_vals, psi_x_vals)  # mol/m2/d
-# dtrans_max_dx_interp = interp1d(psi_x_vals, dtrans_max_dx, kind='cubic')
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -158,17 +160,17 @@ cp_interp = interp1d(t, cp, kind='cubic')
 k1_interp = interp1d(t, k1, kind='cubic')
 k2_interp = interp1d(t, k2, kind='cubic')
 
-env = {'VPDavg': VPDavg, 'TEMPavg': TEMPavg, 'PARavg': PARavg, 'VPDinterp': VPDinterp,
-       'cp_interp': cp_interp, 'k1_interp': k1_interp, 'k2_interp': k2_interp, 'AvgNbDay': AvgNbDay,
-       'days': days}
-
-soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, 'd_r': d_r, 'RAI': RAI,
-        'beta': beta, 'psi_sat': psi_sat, 'b': b}
-
-plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
-         'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
-         'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
-         'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp}
+# env = {'VPDavg': VPDavg, 'TEMPavg': TEMPavg, 'PARavg': PARavg, 'VPDinterp': VPDinterp,
+#        'cp_interp': cp_interp, 'k1_interp': k1_interp, 'k2_interp': k2_interp, 'AvgNbDay': AvgNbDay,
+#        'days': days}
+#
+# soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, 'd_r': d_r, 'RAI': RAI,
+#         'beta': beta, 'psi_sat': psi_sat, 'b': b}
+#
+# plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
+#          'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
+#          'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
+#          'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp}
 
 # import pickle
 #

@@ -276,11 +276,11 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     return (psi_r - psi_x) * gSR, psi_r
 
 
-def trans_crit(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
+def trans_crit(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, endP=10):
     #  per unit LEAF area
-    psi_x = psi_sat * x **(-b)
+    psi_x = psi_sat * x ** (-b)
 
-    PP = np.arange(psi_x, 7, 0.1)
+    PP = np.arange(psi_x, endP, 0.01)
     EE, psi_r = transpiration(PP, x, psi_sat, gamma, b,
                           psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
     kk = np.gradient(EE, PP)
