@@ -2,7 +2,7 @@ import numpy as np
 import pickle
 import matplotlib.pyplot as plt
 from Useful_Funcs import lam_from_trans
-from Plant_Env_Props import ca
+# from Plant_Env_Props import ca
 
 pickle_in = open("../no_WUS/no_WUS.resistant", "rb")
 resistant = pickle.load(pickle_in)
@@ -45,24 +45,25 @@ legend1 = ax.legend((res_gl, res_gl_day),
                    ('Half-hourly', 'Midday'), fontsize='large', loc=1)
 
 # fig.savefig('../Fig3/gs_time.pdf', bbox_inches='tight')
-# ------------psi_x----------------
+# ------------ g_s ----------------
 pickle_in = open("../no_WUS/environment", "rb")
 env = pickle.load(pickle_in)
 
-division = sun
-xax = "t"
+xax = "psi_x"
+division = noon
+flip_sign = -1
 
 fig2, ax2 = plt.subplots()
-res_gl_day2, = ax2.plot(-resistant[xax][division], resistant["gl"][division] * unit, 'k')
-mid_gl_day2, = ax2.plot(-exponential[xax][division], exponential["gl"][division] * unit, 'k--')
-vul_gl_day2, = ax2.plot(-vulnerable[xax][division], vulnerable["gl"][division] * unit, 'k:')
+res_gl_day2, = ax2.plot(flip_sign * resistant[xax][division], resistant["gl"][division] * unit, 'k')
+mid_gl_day2, = ax2.plot(flip_sign * exponential[xax][division], exponential["gl"][division] * unit, 'k--')
+vul_gl_day2, = ax2.plot(flip_sign * vulnerable[xax][division], vulnerable["gl"][division] * unit, 'k:')
 
-res_gl_profit, = ax2.plot(-resistant[xax][division],
-                          resistant["E_opt"][division] / 1.6 / env["VPDinterp"](resistant["psi_x"][division]) * unit, 'r')
-mid_gl_profit, = ax2.plot(-exponential[xax][division],
-                          exponential["E_opt"][division] / 1.6 / env["VPDinterp"](exponential["psi_x"][division]) * unit, 'r--')
-vul_gl_profit, = ax2.plot(-vulnerable[xax][division],
-                          vulnerable["E_opt"][division] / 1.6 / env["VPDinterp"](vulnerable["psi_x"][division]) * unit, 'r:')
+# res_gl_profit, = ax2.plot(flip_sign * resistant[xax][division],
+#                           resistant["E_opt"][division] / 1.6 / env["VPDinterp"](resistant["t"][division]) * unit, 'r')
+# mid_gl_profit, = ax2.plot(flip_sign * exponential[xax][division],
+#                           exponential["E_opt"][division] / 1.6 / env["VPDinterp"](exponential["t"][division]) * unit, 'r--')
+# vul_gl_profit, = ax2.plot(flip_sign * vulnerable[xax][division],
+#                           vulnerable["E_opt"][division] / 1.6 / env["VPDinterp"](vulnerable["t"][division]) * unit, 'r:')
 
 
 plt.setp(ax2.get_xticklabels(), FontSize=12)
@@ -85,7 +86,9 @@ soil = pickle.load(pickle_in)
 pickle_in = open("../no_WUS/plant_resistant", "rb")
 plant = pickle.load(pickle_in)
 
-t = resistant['t']
+xax = "t"
+division = full_interval
+flip_sign = 1
 
 lam_res = np.amax(np.array((resistant["lam"], resistant["lam_low"])), axis=0) * 1e3
 lam_exp = np.amax(np.array((exponential["lam"], exponential["lam_low"])), axis=0) * 1e3
@@ -95,11 +98,11 @@ lam_vul = np.amax(np.array((vulnerable["lam"], vulnerable["lam_low"])), axis=0) 
 # lam_up_resistant = np.ones(lam_low_resistant.shape) * (ca - env['cp_interp'](t)) / \
 #                    env['VPDinterp'](t) / plant['alpha']
 
-
+xax = "t"
 fig3, ax3 = plt.subplots()
-res_lam, = ax3.plot(resistant["t"], lam_res, 'k')
-mid_lam, = ax3.plot(exponential["t"], lam_exp, 'k--')
-vul_lam, = ax3.plot(vulnerable["t"], lam_vul, 'k:')
+res_lam, = ax3.plot(resistant[xax], lam_res, 'k')
+mid_lam, = ax3.plot(exponential[xax], lam_exp, 'k--')
+vul_lam, = ax3.plot(vulnerable[xax], lam_vul, 'k:')
 
 # res_lam_low, = ax3.plot(resistant["t"], resistant["lam_low"], 'r')
 # res_lam_mid, = ax3.plot(midrange["t"], midrange["lam_low"], 'r--')
@@ -123,42 +126,84 @@ legend1 = ax3.legend((res_lam, mid_lam, vul_lam),
 # ----------------------- A -----------------------
 
 unit0 = 24 * 3600   # 1/s -> 1/d
-division = sun
+xax = "t"
+division = full_interval
+flip_sign = 1
 
 fig4, ax4 = plt.subplots()
-# res_A, = ax4.plot(- resistant["psi_x"][division], resistant["A_val"][division], 'k')
-exp_A, = ax4.plot(- exponential["psi_x"][division], exponential["A_val"][division], 'k--')
-vul_A, = ax4.plot(- vulnerable["psi_x"][division], vulnerable["A_val"][division], 'k:')
+# res_A, = ax4.plot(flip_sign * resistant[xax][division],
+#                   resistant["A_val"][division] * 1e6 / unit0, 'k')
+# exp_A, = ax4.plot(flip_sign * exponential[xax][division],
+#                   exponential["A_val"][division] * 1e6 / unit0, 'k--')
+vul_A, = ax4.plot(flip_sign * vulnerable[xax][division],
+                  vulnerable["A_val"][division] * 1e6 / unit0, 'k:')
 
-# res_A_opt, = ax4.plot(- resistant["psi_x"][division], resistant["A_opt"][division], 'r')
-exp_A_opt, = ax4.plot(- exponential["psi_x"][division], exponential["A_opt"][division], 'r--')
-vul_A_opt, = ax4.plot(- vulnerable["psi_x"][division], vulnerable["A_opt"][division], 'r:')
+# res_A_opt, = ax4.plot(flip_sign * resistant[xax][division],
+#                       resistant["A_opt"][division] * 1e6 / unit0, 'r')
+# exp_A_opt, = ax4.plot(flip_sign * exponential[xax][division],
+#                       exponential["A_opt"][division] * 1e6 / unit0, 'r--')
+vul_A_opt, = ax4.plot(flip_sign * vulnerable[xax][division],
+                      vulnerable["A_opt"][division] * 1e6 / unit0, 'r:')
+
+plt.setp(ax4.get_xticklabels(), FontSize=12)
+plt.setp(ax4.get_yticklabels(), FontSize=12)
+
+ax4.set_xlabel("Time, $t$, days", FontSize=14)
+ax4.set_ylabel("Carbon assimilation rate, $A$, $\mu$mol m$^{-2}$ s$^{-1}$", FontSize=12)
+# ax3.set_ylim(0, np.max(ax.yaxis.get_data_interval()))
 
 # -----------------------  E -----------------------
 
-unit0 = 24 * 3600   # 1/s -> 1/d
+xax = "t"
 division = sun
+flip_sign = 1
 
 fig5, ax5 = plt.subplots()
-res_A, = ax5.plot(- resistant["psi_x"][division], resistant["E"][division], 'k')
-exp_A, = ax5.plot(- exponential["psi_x"][division], exponential["E"][division], 'k--')
-vul_A, = ax5.plot(- vulnerable["psi_x"][division], vulnerable["E"][division], 'k:')
+# res_A, = ax5.plot(flip_sign * resistant[xax][division],
+#                   resistant["E"][division] * 1e3 / unit0, 'k')
+# exp_A, = ax5.plot(flip_sign * exponential[xax][division],
+#                   exponential["E"][division] * 1e3 / unit0, 'k--')
+vul_A, = ax5.plot(flip_sign * vulnerable[xax][division],
+                  vulnerable["E"][division] * 1e3 / unit0, 'k.')
 
-res_A_opt, = ax5.plot(- resistant["psi_x"][division], resistant["E_opt"][division], 'r')
-exp_A_opt, = ax5.plot(- exponential["psi_x"][division], exponential["E_opt"][division], 'r--')
-vul_A_opt, = ax5.plot(- vulnerable["psi_x"][division], vulnerable["E_opt"][division], 'r:')
+# res_A_opt, = ax5.plot(flip_sign * resistant[xax][division],
+#                       resistant["E_opt"][division] * 1e3 / unit0, 'r')
+# exp_A_opt, = ax5.plot(flip_sign * exponential[xax][division],
+#                       exponential["E_opt"][division] * 1e3 / unit0, 'r--')
+vul_A_opt, = ax5.plot(flip_sign * vulnerable[xax][division],
+                      vulnerable["E_opt"][division] * 1e3 / unit0, 'r.')
+
+plt.setp(ax5.get_xticklabels(), FontSize=12)
+plt.setp(ax5.get_yticklabels(), FontSize=12)
+
+ax5.set_xlabel("Time, $t$, days", FontSize=14)
+ax5.set_ylabel("Transpiration rate, $E$, mmol m$^{-2}$ s$^{-1}$", FontSize=12)
 
 # ----------------------- psi_l -----------------------
+xax = "psi_x"
 division = sun
+flip_sign = -1
 
 fig6, ax6 = plt.subplots()
-res_psil, = ax6.plot(- resistant["psi_x"][division], -resistant["psi_l"][division], 'k')
-exp_psil, = ax6.plot(- exponential["psi_x"][division], -exponential["psi_l"][division], 'k--')
-vul_psil, = ax6.plot(- vulnerable["psi_x"][division], -vulnerable["psi_l"][division], 'k:')
+# res_psil, = ax6.plot(flip_sign * resistant[xax][division],
+#                      -resistant["psi_l"][division], 'k')
+# exp_psil, = ax6.plot(flip_sign * exponential[xax][division],
+#                      -exponential["psi_l"][division], 'k--')
+vul_psil, = ax6.plot(flip_sign * vulnerable[xax][division],
+                     -vulnerable["psi_l"][division], 'k*')
+#
+# res_psil_opt, = ax6.plot(flip_sign * resistant[xax][division],
+#                          -resistant["P_opt"][division], 'r')
+# exp_psil_opt, = ax6.plot(flip_sign * exponential[xax][division],
+#                          -exponential["P_opt"][division], 'r--')
+vul_psil_opt, = ax6.plot(flip_sign * vulnerable[xax][division],
+                         -vulnerable["P_opt"][division], 'r*')
 
-res_psil_opt, = ax6.plot(- resistant["psi_x"][division], -resistant["P_opt"][division], 'r')
-exp_psil_opt, = ax6.plot(- exponential["psi_x"][division], -exponential["P_opt"][division], 'r--')
-vul_psil_opt, = ax6.plot(- vulnerable["psi_x"][division], -vulnerable["P_opt"][division], 'r:')
+plt.setp(ax6.get_xticklabels(), FontSize=12)
+plt.setp(ax6.get_yticklabels(), FontSize=12)
+
+ax6.set_xlabel("Time, $t$, days", FontSize=14)
+ax6.set_ylabel("Leaf water potential, $\psi_l$, MPa", FontSize=12)
 
 # # --------------------- PLC ---------------------
 #
