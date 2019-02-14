@@ -76,7 +76,7 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 1.5  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 4  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
@@ -87,11 +87,15 @@ psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
 trans_vals = np.zeros(xvals.shape)
+k_crit_vals = np.zeros(xvals.shape)
+k_max_vals = np.zeros(xvals.shape)
 i = 0
 trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
 trans_vals[i] = trans_res[0]
 psi_r_vals[i] = trans_res[1]
 psi_l_vals[i] = trans_res[2]
+k_crit_vals[i] = trans_res[3]
+k_max_vals[i] = trans_res[4]
 i = 1
 for xx in xvals[1:]:
     # OptRes = minimize(trans_opt, psi_x[i], args=(x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
@@ -101,11 +105,15 @@ for xx in xvals[1:]:
     trans_vals[i] = trans_res[0]
     psi_r_vals[i] = trans_res[1]
     psi_l_vals[i] = trans_res[2]
+    k_crit_vals[i] = trans_res[3]
+    k_max_vals[i] = trans_res[4]
     i += 1
 
 trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')  # per unit LEAF area
 psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
 psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
+k_crit_interp = interp1d(psi_x_vals, k_crit_vals, kind='cubic')
+k_max_interp = interp1d(psi_x_vals, k_max_vals, kind='cubic')
 
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
@@ -160,29 +168,30 @@ cp_interp = interp1d(t, cp, kind='cubic')
 k1_interp = interp1d(t, k1, kind='cubic')
 k2_interp = interp1d(t, k2, kind='cubic')
 
-# env = {'VPDavg': VPDavg, 'TEMPavg': TEMPavg, 'PARavg': PARavg, 'VPDinterp': VPDinterp,
-#        'cp_interp': cp_interp, 'k1_interp': k1_interp, 'k2_interp': k2_interp, 'AvgNbDay': AvgNbDay,
-#        'days': days}
-#
-# soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, 'd_r': d_r, 'RAI': RAI,
-#         'beta': beta, 'psi_sat': psi_sat, 'b': b}
-#
-# plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
-#          'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
-#          'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
-#          'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp}
+env = {'VPDavg': VPDavg, 'TEMPavg': TEMPavg, 'PARavg': PARavg, 'VPDinterp': VPDinterp,
+       'cp_interp': cp_interp, 'k1_interp': k1_interp, 'k2_interp': k2_interp, 'AvgNbDay': AvgNbDay,
+       'days': days}
 
-# import pickle
+soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, 'd_r': d_r, 'RAI': RAI,
+        'beta': beta, 'psi_sat': psi_sat, 'b': b}
+
+plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
+         'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
+         'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
+         'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
+         'k_crit_interp': k_crit_interp, 'k_max_interp': k_max_interp}
 #
-# pickle_out = open("../Fig5/Fig5.environment", "wb")
-# pickle.dump(env, pickle_out)
-# pickle_out.close()
-#
-# pickle_out = open("../Fig5/Fig5.soil", "wb")
-# pickle.dump(soil, pickle_out)
-# pickle_out.close()
-#
-# pickle_out = open("../Fig5/Fig5.plant", "wb")
-# pickle.dump(plant, pickle_out)
-# pickle_out.close()
+import pickle
+
+pickle_out = open("../no_WUS/environment", "wb")
+pickle.dump(env, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../no_WUS/soil", "wb")
+pickle.dump(soil, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../no_WUS/plant_vulnerable", "wb")
+pickle.dump(plant, pickle_out)
+pickle_out.close()
 

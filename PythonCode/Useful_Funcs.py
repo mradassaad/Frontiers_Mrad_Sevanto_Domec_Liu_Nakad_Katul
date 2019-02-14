@@ -296,7 +296,7 @@ def trans_crit(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, en
     # _, Pcrit, k_crit = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
     # trans_res, psi_r = transpiration(Pcrit, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible)
 
-    return E_crit, psi_r[crit_ind], P_crit
+    return E_crit, psi_r[crit_ind], P_crit, k_crit, k_max
 
 
 def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, reversible=0):
@@ -467,27 +467,35 @@ def A_here(gl, ca, k1, k2, cp):
     return AAA
 
 
-def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca, k1, k2, cp, VPD, step=0.02):
+def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
+               k1, k2, cp, VPD, step=0.02, crits=np.array((0, 0, 0))):
 
-    if np.less(k1, np.finfo(float).eps):
-        return 0, 0, psi_x, psi_x, 0, 0
+    if np.less(k1, 100 * np.finfo(float).eps):
+        return 0, 0, psi_x, 0, 0, psi_x, psi_x
     x = (psi_x / psi_sat) ** (-1 / b)
     # _, Pcrit, _ = rel_loss(psi_x, psi_x + 0.1, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
 
     gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)  # per unit LEAF area
 
-    PP = np.arange(psi_x, 7, 0.1)
-    EE, _ = transpiration(PP, x, psi_sat, gamma, b,
-                  psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
-    kk = np.gradient(EE, PP)
-    k_max = kk[0]
+    if crits[0] == 0:
+        PP = np.arange(psi_x, 7, 0.1)
+        EE, _ = transpiration(PP, x, psi_sat, gamma, b,
+                    psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
+        kk = np.gradient(EE, PP)
+        k_max = kk[0]
     # Find critical point
 
-    crit_ind = np.argmin(np.abs(kk / k_max - 0.05))
+        crit_ind = np.argmin(np.abs(kk / k_max - 0.05))
 
-    E_crit = EE[crit_ind]  # mol m-2 d-1; per unit leaf area
-    k_crit = kk[crit_ind]
-    P_crit = PP[crit_ind]
+        E_crit = EE[crit_ind]  # mol m-2 d-1; per unit leaf area
+        k_crit = kk[crit_ind]
+        P_crit = PP[crit_ind]
+    else:
+        E_crit = crits[1]  # mol m-2 d-1; per unit leaf area
+        k_crit = crits[2]
+        k_max = crits[3]
+        P_crit = crits[0]
+
     # Finer Mesh
 
     PP = np.arange(psi_x, P_crit, step)

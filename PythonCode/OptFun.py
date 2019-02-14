@@ -1,11 +1,12 @@
 import numpy as np
-import numpy.ma as ma
 from scipy.integrate import solve_bvp
 import matplotlib.pyplot as plt
 import warnings
-from Plant_Env_Props import*
 from Useful_Funcs import*
 from scipy.interpolate import interp1d
+
+# from Plant_Env_Props import*
+from pickle_extract import*
 
 np.seterr(divide='raise')
 np.seterr(divide='raise')
@@ -93,7 +94,7 @@ def dydt(t, y):
 # ------------------------OPT Boundary Conditions----------------
 
 def bc(ya, yb):  # boundary imposed on x at t=T
-    x0 = 0.26
+    x0 = 0.22
     return np.array([ya[1] - x0, yb[1] - 0.16])
 
 
@@ -106,8 +107,8 @@ def bc_wus(ya, yb):  # Water use strategy
 # maxLam = 763e-6*unit0
 Lambda = 5 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 5 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.19*np.ones((1, t.size))
+lam_guess = 2 * 1e-3 * np.ones((1, t.size))  # mol/mol
+x_guess = 0.22*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -179,61 +180,63 @@ P_opt = np.zeros(psi_x.shape)
 psi_r_opt = np.zeros(psi_x.shape)
 A_opt = np.zeros(psi_x.shape)
 E_opt = np.zeros(psi_x.shape)
+crits = np.array((psi_l_interp(psi_x), trans_max_interp(psi_x), k_crit_interp(psi_x), k_max_interp(psi_x)))
 
 for i in range(psi_x.shape[0]):
     print(i)
     E_crit[i], A_crit[i], P_crit[i], E_opt[i], A_opt[i], P_opt[i], psi_r_opt[i] = \
          profit_max(psi_x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
-                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]), 0.01)
+                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]),
+                    0.01, crits[:, i])
 
 
 # --- for debugging and insight
-# plt.figure()
-# plt.subplot(331)
-# plt.plot(res.x, lam_plot)
-# #plt.xlabel("days")
-# plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
-#
-# plt.subplot(332)
-# plt.plot(res.x, soilM_plot)
-# # plt.xlabel("time, days")
-# plt.ylabel("$x(t)$")
-#
-# plt.subplot(333)
-# plt.plot(res.x, gl / unit0)
+plt.figure()
+plt.subplot(331)
+plt.plot(res.x, lam_plot)
+#plt.xlabel("days")
+plt.ylabel("$\lambda (t), mmol.mol^{-1}$")
+
+plt.subplot(332)
+plt.plot(res.x, soilM_plot)
 # plt.xlabel("time, days")
-# plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
-#
-#
-# plt.subplot(334)
-# plt.plot(res.x, A_val * 1e6 / unit0)
-# # plt.xlabel("time, days")
-# plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
-#
-# plt.subplot(335)
-# plt.plot(res.x, E * 1e3 / unit0)  # mmol m-2 s-1
-# # plt.xlabel("time, days")
-# plt.ylabel("$E, mmol m^{-2} s^{-1}$")
-#
-# plt.subplot(336)
-# plt.plot(res.x, psi_x)
-# # plt.xlabel("time, days")
-# plt.ylabel("$\psi_x, MPa$")
-#
-# plt.subplot(337)
-# plt.plot(res.x, psi_l)
+plt.ylabel("$x(t)$")
+
+plt.subplot(333)
+plt.plot(res.x, gl / unit0)
+plt.xlabel("time, days")
+plt.ylabel("$g(t), mol.m^{-2}.s^{-1}$")
+
+
+plt.subplot(334)
+plt.plot(res.x, A_val * 1e6 / unit0)
 # plt.xlabel("time, days")
-# plt.ylabel("$\psi_l, MPa$")
-#
-# plt.subplot(338)
-# plt.plot(res.x, psi_p)
+plt.ylabel("$A, \mu mol.m^{-2}.s^{-1}$")
+
+plt.subplot(335)
+plt.plot(res.x, E * 1e3 / unit0)  # mmol m-2 s-1
 # plt.xlabel("time, days")
-# plt.ylabel("$\psi_p, MPa$")
-#
-# plt.subplot(339)
-# plt.plot(PLC_time, PLC)
+plt.ylabel("$E, mmol m^{-2} s^{-1}$")
+
+plt.subplot(336)
+plt.plot(res.x, psi_x)
 # plt.xlabel("time, days")
-# plt.ylabel("PLC, %")
+plt.ylabel("$\psi_x, MPa$")
+
+plt.subplot(337)
+plt.plot(res.x, psi_l)
+plt.xlabel("time, days")
+plt.ylabel("$\psi_l, MPa$")
+
+plt.subplot(338)
+plt.plot(res.x, psi_p)
+plt.xlabel("time, days")
+plt.ylabel("$\psi_p, MPa$")
+
+plt.subplot(339)
+plt.plot(PLC_time, PLC)
+plt.xlabel("time, days")
+plt.ylabel("PLC, %")
 
 # --- Fig1b
 
@@ -250,10 +253,10 @@ env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
 lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / 1.6  # mol mol-1
 #
-# fig, ax = plt.subplots()
-# lam_line = ax.plot(res.x, lam_plot, 'r')
-# lam_low_line = ax.plot(res.x, lam_low * 1e3, 'r:')
-# lam_high_line = ax.plot(res.x, lam_up * 1e3, 'r:')
+fig, ax = plt.subplots()
+lam_line = ax.plot(res.x, lam_plot, 'r')
+lam_low_line = ax.plot(res.x, lam_low * 1e3, 'r:')
+lam_high_line = ax.plot(res.x, lam_up * 1e3, 'r:')
 
 
 # --- Fig 2
@@ -282,6 +285,6 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
 
 import pickle
 
-pickle_out = open("../Fig3/Fig3.resistant", "wb")
+pickle_out = open("../no_WUS/no_WUS.vulnerable", "wb")
 pickle.dump(inst, pickle_out)
 pickle_out.close()
