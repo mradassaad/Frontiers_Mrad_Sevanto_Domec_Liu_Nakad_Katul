@@ -92,14 +92,14 @@ The goal here is not to develop a stomatal prediction package but to explore whe
 
 \subsection{Theory}
 
-The principle adopted here is that plants maximize their carbon gain ($A$) over the period of a drydown. This principle assumes that plants freely control the stomatal conductance $g_s$. Previous work constrained control of $g_s$ by enforcing instantaneous water balance at the soil level \citep{Manzoni2013}. To mathematically express this constraint an augmented Lagrangian is defined $L$:
+The principle adopted here is that plants maximize their carbon gain ($A$) over a drydown period. This principle assumes that plants freely control the stomatal conductance $g_s$ under constraints. Previous work constrained control of $g_s$ by enforcing instantaneous water balance at the soil level \citep{Manzoni2013}. To mathematically express this principle and constraint, an augmented Lagrangian is defined $L$:
 \begin{equation}
     \label{eqn:Lagrangian}
-    L\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = A(g_s, t) - \lambda \Bigg[ \frac{dx}{dt} - f_e\Big(g_s, x, \frac{dx}{dt}, t\Big)\Bigg].
+    L\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = A(g_s, t) - \lambda \Bigg[ \frac{dx}{dt} - f_e\Big(g_s, x, \frac{dx}{dt}, t\Big)\Bigg],
 \end{equation}
-$\lambda$ is the Lagrange multiplier, $x$ is the soil moisture, $t$ is time, and $f_e$ is the soil water balance.
+where $\lambda$ is the Lagrange multiplier in mol mol$^{-1}$, $x$ is the soil moisture, $t$ is time, and $f_e$ sums water inputs to the soil and subtracts outputs.
 
-Because the principle states that $A$ is maximized over a drydown, the objective function $J$ is the integral of $L$ from $t=0$ at the beginning of drydown to $t=T$ at the end of it:
+Because this principle states that $A$ is maximized over a drydown and not instantaneously, the objective function $J$ is the integral of $L$ from $t=0$ at the beginning of drydown to $t=T$ at the end of it:
 \begin{equation}
     \label{eqn:Objective}
     J\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big) = \int_0^T L\Big(g_s, x, \frac{dx}{dt}, \lambda, t\Big).
@@ -110,7 +110,7 @@ The goal then consists of finding the function of $g_s$ in terms of $t$ that max
 \subsection{Carbon gain}
 
 The seminal work by \citet{Farquhar1980} expresses carbon assimilation, or biochemical demand of carbon $A_{demand}$, for a C3 leaf as either limited by the Rubisco enzyme activity under saturated incoming photosynthetically active radiation (PAR) or by ribulose-1,5-biphosphate (RuBP) activity under limiting incoming PAR. 
-To avoid the use of non-linear functions such as the minimum between two number as well as ad-hoc parameters that might remedy this non-linearity, we adopt an accurate approximation to $A_{demand}$ \citep{Vico2013}. $A_{demand}$ is approximated using a hyperbolic function:
+To avoid the use of non-differentiable functions and ad-hoc parameters, we adopt an accurate approximation of $A_{demand}$ developed elsewhere \citep{Vico2013}. $A_{demand}$ is approximated using a hyperbolic function:
 \begin{equation}
     \label{eqn:vico_model}
     A_{demand} = k_1 \frac{c_i - \Gamma^*}{c_i + k_2},
@@ -146,9 +146,11 @@ To sum up, if changes of $T_a$ and PAR with time are given, as well as $c_a$ and
 At the soil, we model the water budget as follows \citep{Rodriguez-Iturbe2007}:
 \begin{equation}
     \label{eqn:soil_water}
-    \frac{dx(t)}{dt} = f_e\Big(g_s, x, \frac{dx}{dt}, t\Big) = \frac{1}{n Z_r}[- E(g_s, t) - U(x, t)],
+    \frac{dx(t)}{dt} = f_e\Big(g_s, x, \frac{dx}{dt}, t\Big) = \frac{\nu}{ n Z_r}[- E(g_s, t) - U(x, t)],
 \end{equation}
-where $x(t)$ is the soil moisture in m$^3$ m$^{-3}$, $U$ are uncontrolled losses (independent of the leaf), and E is the evapotranspiration rate from the leaf in $m^2d^{-1}$. $n$ is the soil porosity in m$^3$ m$^{-3}$ and $Z_r$ is the effective plant rooting depth in $m$. $U$ may account for both soil leakage away from the rooting zone and competition from other plant roots. $f_e$ was previously introduced in equation \ref{eqn:Lagrangian}. Missing in equation \ref{eqn:soil_water} is the rainfall input and this is because we are only considering drydown periods in this work. Soil leakage is modeled as free drainage such that water losses from leakage per unit soil area and per unit depth is equal to the soil conductivity $g_x$ \citep{campbell1974}:
+where $x(t)$ is the relative soil moisture in m$^3$ m$^{-3}$, $U$ are uncontrolled losses (independent of the plant) in mmol m$^{-2}$ s$^{-1}$, and E is the evapotranspiration rate from the plant in mmol m$^{-2}$ s$^{-1}$. Water fluxes are expressed per unit leaf area. $n$ is the soil porosity in m$^3$ m$^{-3}$ and $Z_r$ is the effective plant rooting depth in $m$. To ensure dimensional equivalence we multiply the right hand side by $\nu = \text{LAI} \, M_w/ \rho_w$. LAI is the leaf area index in m$^3$ m$^{-3}$, $M_w = 18 * 10^{-6}$ kg mmol$^{-1}$ is the molar weight of water, and $\rho_w = 1000$ kg m$^{-3}$ is its density. $U$ may account for both soil leakage away from the rooting zone and competition from other plant roots. $f_e$ was previously introduced in equation \ref{eqn:Lagrangian}. Missing in equation \ref{eqn:soil_water} is the rainfall input and this is because we are only considering drydown periods in this work. 
+
+Soil leakage is modeled as free drainage such that water losses from leakage per unit soil area and per unit depth is equal to the soil conductivity $g_x$: \citep{campbell1974}:
 \begin{equation}
     \label{eqn:soil_cond}
     g_x = g_{x,sat}x^{2b+3}.
@@ -160,41 +162,38 @@ $g_{x,sat}$ is the soil conductivity at saturation and $b$ is the non-linearity 
 \end{equation}
 where $\psi_{x,sat}$ is the soil water potential at saturation.
 
-\subsection{Leaf-level water balance}
-
-As a point of departure from previous analyses based on the carbon gain maximization principle, it is recognized that plant transpiration is limited by the the plant hydraulic architecture. This limitation imposes an upper bound on $g_s$. 
-
-% Recent debates on the hydraulic architecture of trees have elicited support for the segmentation hypothesis first proposed by Zimmerman (ref). The basis of this hypothesis is that the anatomy of the water conducting elements known as conduits differs considerably from one plant organ to the other. Specifically, as one progresses against the direction of the gravitational field, one encounters organs that are more and more resistant to loss of conductivity as a result of cavitation. 
-
-The loss of conductivity function of the whole plant with respect to plant water potential $\psi_p$ is known as a vulnerability curve. We approximate the vulnerability curve of the whole hydraulic pathway (roots, trunk, and branches) with a Weibull exceedance function such that:
-\begin{equation}
-    \label{eqn:root_leaf}
-    g_{rl} = g_{rl,max}exp\Big[-\Big(\frac{\psi_{p}}{\psi_{63}}\Big)^c\Big],
-\end{equation}
-where $g_{rl}$ is the root to leaf hydraulic conductivity (the whole plant), and $g_{rl,max}$ is its maximum value at saturation. $\psi_{63}$ is the water potential at which the plant loses about 63\% of its conductivity. Finally, $c$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. To find $\psi_{p}$, we invoke the hydrostatic approximation between leaves and roots which leads to $\psi_{p}=\frac{\psi{r}+\psi_l}{2}$ where $\psi_r$ is the root water potential.
-
-To find $\psi_r$, we define the soil to root conductivity $g_{sr}$. $g_{sr}$ is assumed to be the conductivity of the soil $g_x$ but over the distance between soil and root $l_{sr}$. $l_{sr} = \sqrt{d_r Z_r \text{RAI}}$ where $d_r$ is the fine root diamter in m and RAI is the root area index \citep{Manzoni2013}. If $g_x$ is given in m d$^{-1}$, then
+The soil to root conductance $g_{sr}$ is assumed to be the conductivity of the soil $g_x$ divided by the distance between soil and root $l_{sr}$. $l_{sr} = \sqrt{d_r Z_r \text{RAI}}$ where $d_r$ is the fine root diameter in m and RAI is the root area index \citep{Manzoni2013}. If $g_x$ is given in kg s m$^{-3}$, then
 \begin{equation}
     \label{eqn:soil_root}
-    g_{sr} = \frac{g_x}{\text{grav} l_{sr}}. 
+    g_{sr} = \frac{10^9}{M_w \, \rho_w \, l_{sr} \, \text{LAI}} g_x, 
 \end{equation}
-Because the soil to root distance is taken into account in $g_{sr}$, one only needs to multiply $g_{sr}$ by the water potential different between root and soil to get the volume flux of water.
+where $g_{sr}$ has units of mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$ and is expressed per unit leaf area. Because the soil to root distance is taken into account in $g_{sr}$, one only needs to multiply $g_{sr}$ by the water potential difference between root and soil to get the volume flux of water.
+\subsection{Leaf-level water balance}
 
-Therefore, we can express $E$ at multiple levels as follows
+As a point of departure from previous analyses based on the carbon gain maximization principle, it is recognized that plant transpiration is limited by the the plant hydraulic architecture when atmospheric water demand exceeds potential supply. This limitation imposes an upper bound on $g_s$. 
+
+The loss of conductivity function of the whole plant with respect to water potential is known as a vulnerability curve (VC). We approximate the VC of the whole hydraulic pathway (roots, trunk, and branches) with a Weibull exceedance function such that:
+\begin{equation}
+    \label{eqn:root_leaf}
+    g_{rl} = g_{rl,max}exp\Big[-\Big(\frac{\psi}{\psi_{63}}\Big)^s\Big],
+\end{equation}
+where $g_{rl}$ is the root to leaf hydraulic conductance in mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$ expressed per unit leaf area, and $g_{rl,max}$ is its maximum value at saturation. $\psi_{63}$ is the water potential at which the plant loses about 63\% of its conductance. Finally, $s$ controls the slope of the Weibull function at $\psi_{63}$ and therefore its curvature. 
+% To find $\psi_{p}$, we invoke the hydrostatic approximation between leaves and roots which leads to $\psi_{p}=\frac{\psi{r}+\psi_l}{2}$ where $\psi_r$ is the root water potential.
+
+We can now express $E$ at the soil, plant, and leaf levels as follows:
 \begin{equation}
     \label{eqn: mass_cons}
         \begin{split}
         E & = E_{demand} = 1.6\: \text{LAI }\, g_s\, \text{VPD} \\
-        & = E_{sr} = g_{sr}(\psi_s)*(\psi_s - \psi_r)\\
-        & = E_{rl} = g_{rl}(\psi_r,\psi_l)*(\psi_r - \psi_l) \\
-        & = E_{sl} = \Bigg(\frac{1}{g_{sr}(\psi_s)} + \frac{1}{g_{rl}(\psi_r,\psi_l)}\Bigg)^{-1}*(\psi_s - \psi_l).
+        & = E_{sr} = g_{sr}(\psi_x)*(\psi_x - \psi_r)\\
+        & = E_{rl} = \int_{\psi_r}^{\psi_l} g_{rl}(\psi) d\psi \\
         \end{split}
 \end{equation}
-$E_{demand}$ is the atmospheric demand of water, $E_{sr}$ is the soil to root water supply, $E_{rl}$ is the root to leaf supply, and $E_{sl}$ is to soil to leaf supply.
+$E_{demand}$ is the atmospheric demand of water, $E_{sr}$ is the soil to root water supply, $E_{rl}$ is the root to leaf supply. All expressions of $E$ are given in units of mmol m$^{-2}$ s$^{-1}$ expressed per unit leaf area. The $E_{rl}$ expression is analogous to porous media methods where it is recognized that water potential is not distributed uniformly along the medium. This expression was also introduced elsewhere in plant science \citep{Sperry2017} and will allow for easier model comparison.
 
-From equation \ref{eqn: mass_cons}, as $g_s$ varies with time, $\psi_l$ also varies to match supply and demand. The hydraulic constraint from plant water supply is apparent when one realizes that while $E_{demand}$ is monotonous and increasing with $g_s$, water supply is not monotonous with respect to $\psi_l$ (equations \ref{eqn:root_leaf}, \ref{eqn: mass_cons}). The presence of a maximum water supply imposes an additional constraint on the stomatal conductance $g_s$. 
+It is noted that as $g_s$ varies with time, $\psi_l$ also varies to match supply and demand. The hydraulic constraint from plant water supply is apparent when one realizes that while $E_{demand}$ is always increasing with $g_s$ for constant VPD, water supply through $E_{sr}$ and $E_{rl}$ have maxima that cannot be exceeded due to the decrease of hydraulic conductance functions $g_{sr}$ and $g_{rl}$ with increasing $\psi_x$, $\psi_r$, and $\psi_l$ (equations \ref{eqn:soil_root}, \ref{eqn:root_leaf}, and \ref{eqn: mass_cons}). The presence of a maximum possible water supply imposes an additional constraint on the stomatal conductance $g_s$. 
 
-This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently here. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E_{sl}$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E_{sl}}{\partial \psi_l} = 0$\Big). This rests on the assumption that plants take full advantage of their transpiration capacity.
+This additional constraint could be imposed with the help of another Lagrange multiplier. However, to maintain familiarity with the traditional definition of the marginal water use efficiency \citep{cowan1977}, this additional constraint is imposed differently here. Specifically, if maximizing $J$ (equation \ref{eqn:Objective}) leads to a $g_s$ that exceeds the maximum achievable $E$ at current $x$, then this $g_s$ is replaced artificially by finding the maximum transpiration rate \Big(at $\frac{\partial E}{\partial \psi_l} = 0$\Big). This rests on the assumption that plants take full advantage of their transpiration capacity.
 
 \subsection{Maximizing the objective}
 
@@ -205,7 +204,7 @@ The control equation,
     \label{eqn:control}
     \frac{\partial L}{\partial g_s} = \frac{\partial A}{\partial g_s} + \lambda \frac{\partial f_e}{\partial g_s} = 0,
 \end{equation}
-gives a monotonic inverse relation between $\lambda$ and $g_s$ (Appendix A).
+gives a monotonic inverse relation between $\lambda$ and $g_s$ (see Results).
 
 The co-state equation is $\frac{\partial L}{\partial x} - \frac{d}{dt} \Big(\frac{\partial L}{\partial x'} \Big) = 0$, where $x'= \frac{dx}{dt}$. The co-state equation yields the time variation of $\lambda$,
 \begin{equation}
@@ -215,27 +214,38 @@ The co-state equation is $\frac{\partial L}{\partial x} - \frac{d}{dt} \Big(\fra
 
 Finally, the sate equation, $\frac{\partial L}{\partial \lambda} = 0$ gives the soil water balance (equation \ref{eqn:soil_water}). 
 
-Of equal importance are the boundary conditions: equations \ref{eqn:control}, \ref{eqn:co_state}, and \ref{eqn:soil_water} are to be solved with preset $x(t=0)$ and $x(t=T)$. In reality, it is impossible to set the terminal soil moisture a priori. However, this can be mended by introducing the water use strategy (WUS).
+Of equal importance are the boundary conditions: equations \ref{eqn:control}, \ref{eqn:co_state}, and \ref{eqn:soil_water} are to be solved with preset initial and terminal soil moisture:
+\begin{equation}
+    \label{eqn: BC_no_WUS}
+    \begin{split}
+        BC_1 &:x(0)\\
+        BC_2 &:x(T)\\
+    \end{split}
+\end{equation}
+In reality, it is impossible to set the terminal soil moisture a priori. However, this can be mended by introducing the water use strategy (WUS).
 
-\subsection{Water use strategy}
+\subsection{Water use strategy (WUS)}
 
-To avoid having to set $x(T)$ a priori, we adda terminal gain term to $J$. The objective function $J$ in this situation is the following:
+To avoid having to set $x(T)$ a priori, we add a terminal gain term to $J$. The objective function $J$ in this situation is the following:
 \begin{equation}
     \label{eqn:objective}
-    J = \int_0^{T_f} L\Big(g_s, x, \frac{dx}{dt},\lambda,t \Big) dt + J_{T},
+    J_{WUS} = \int_0^{T_f} L\Big(g_s, x, \frac{dx}{dt},\lambda,t \Big) dt + J_{T},
 \end{equation}
 where $J_{T}$ is the carbon value of the terminal soil water moisture $x(T)$ prescribed as:
 \begin{equation}
     \label{eqn:terminal_gain}
     J_{T} = \Lambda x(T),
 \end{equation}
-where $\Lambda$ is a user-defined parameter, in mol m$^{-2}$. Deriving the Euler-Lagrange equations once more to maximize $J$ gives rise to the same differential equations (equations \ref{eqn:soil_water}, \ref{eqn:control}, \ref{eqn:co_state}) but with the main difference that the boundary condition at time $T$ is now set on $\lambda$: 
+where $\Lambda$ is a user-defined parameter, in mol mol$^{-1}$. Deriving the Euler-Lagrange equations once more to maximize $J_{WUS}$ gives the same differential equations (equations \ref{eqn:soil_water}, \ref{eqn:control}, \ref{eqn:co_state}) but with the main difference that the boundary condition at time $T$ is now set on $\lambda$: 
 \begin{equation}
-\label{eqn:WUS_BC}
-\lambda(T) = \Lambda.
+\label{eqn: BC_WUS}
+    \begin{split}
+        BC_1 &:x(0)\\
+        BC_2 &:\lambda(T) = \Lambda.\\
+    \end{split}
 \end{equation}
 
-Prescribing large $\Lambda$ corresponds to a conservative WUS and an aggressive WUS when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants because residual soil moisture at the end of dry-down now has carbon value. The presence of $J_{T}$ in equation \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water on the short term.
+Prescribing large $\Lambda$ corresponds to a conservative WUS and an aggressive WUS when it is small. This approach departs from the assumption that carbon gain trends are instantaneously optimal for all plants because residual soil moisture at the end of dry-down now has carbon value. The presence of $J_{T}$ in equation \ref{eqn:objective} represents in opportunity cost, measured in carbon gain units, of depleting the soil of water and increasing cavitation on the short term.
 
 By tweaking the prescribed vulnerability curve for the same long-term strategy ($\Lambda$), and vice versa, it is possible to discern their effect on optimal stomatal behavior. 
 
@@ -247,7 +257,7 @@ The work here neglects high-frequency (sub-minute time scale) changes in environ
 
 \section{Results}
 
-\subsection{Two drivers of the midday stomatal closure}
+\subsection{Demand driven transpiration}
 
 Equation \ref{eqn:control} provides a complex functional dependence between $g_s$, $\lambda$, and environmental variables \citep{Katul2009a}:
 \begin{equation}
@@ -257,13 +267,21 @@ Equation \ref{eqn:control} provides a complex functional dependence between $g_s
         & +\frac{\sqrt{a\, \text{VPD}\, \lambda\, k_1^2 (c_a-c_p)(k_2+c_p)(k_2+c_a-2 a\, \text{VPD}\, \lambda)^2(k_2+c_a-a\, \text{VPD}\, \lambda)}}{a\, \text{VPD}\, \lambda (k_2+c_a)^2(k_2+c_a-a\, \text{VPD}\, \lambda)} ,
     \end{split}
 \end{equation}
-where $g_s$ is per leaf area.
+where $g_s$ is per leaf area. By far, the most influential atmospheric variable is VPD. The $g_s$ vs $\lambda$ phase space is therefore plotted for multiple VPD values (figure \ref{fig:gs_E_lam}a). $T_a$ and PAR and therefore $k_1$, $k_2$, and $c_p$, are set to their noon values (figure \ref{fig:environment}).
 
-Figure \ref{fig:gs_lam} shows the phase-space plot of $g_s$ with $\lambda$ for different VPD and certain environmentally determined variables detailed in the caption. While this phase-space is static in terms of the environment which is always changing in reality, the dynamics shown are still the same. In the case where water supply is not limited through the rhizosphere or the plant water pathway (equations \ref{eqn:soil_root}, \ref{eqn:root_leaf}), $g_s$ decreases as the air dries (as VPD increases) following the long-dashed two-sided arrow. The arrow is two-sided because $g_s$ goes the opposite way as the air humidifies. This constant $\lambda$ variation in $g_s$ in response to VPD is subject to the absence of competitive sinks of water (other plants and the soil leakage, etc.) ]. If these do exist, then a slight diurnal increase in $\lambda$ does occur tilting this arrow sideways (equation \ref{eqn:co_state}).
+While this phase space is static in terms of $T_a$ and PAR, the dynamics of $g_s$ in response $\lambda$ and VPD shown stay the same. In the case where water supply is not limited through the rhizosphere or the plant water pathway (equations \ref{eqn:soil_root}, \ref{eqn:root_leaf}), $g_s$ decreases as the air dries (as VPD increases) and vice versa for constant $\lambda$. This vertical trajectory of $g_s$ closely resembles what would happen on a sub-daily timescale when $\lambda$ doesn't change appreciably due to lack of time. This is one driver of the midday stomatal closure when VPD is higher.
 
-The solid one-sided arrow in figure \ref{fig:gs_lam} corresponds to the day to day increase in $\lambda$ and decrease in $g_s$ when compared at the same time and for same environmental conditions. This $\lambda$ increase is also associated with competitive soil water sinks but the magnitude of the increase is large because of the larger time scale involved (24 hours vs $\leq$ 1 hour). Another cause for an increase in $\lambda$ following this solid arrow is an increasingly supply-limited transpiration stream through the rhizosphere and the plant (an increase in PLC; equation \ref{eqn:supply}). This is seen by noticing that the solid arrow has a strong component normal to the lines of constant transpiration represented by red dashed lines in figure \ref{fig:gs_lam}. If however the changes in VPD are faster that changes in PLC then $g_s$ and $\lambda$ dynamics follow the short-dashed two-sided arrow that follows transpiration isolines. 
+Another reason for a constant $\lambda$ could be the absence of uncontrolled losses $U$ (equation \ref{eqn:co_state}). If competitive water sinks such as other plants or leakage exist, and the day to day change in VPD is absent, then $g_s$ also decreases due to an increase in $\lambda$. This $g_s$ decrease is more noticeable at larger time scales of around 24 hours to allow $\lambda$ to change significantly. Realistically, droughts are accompanied with progressively drier air such that the combination of an increase of day to day VPD and an increase in $\lambda$ lead to a steeper decline in $g_s$ compared to the isolated action of these two effects.
 
-Figure \ref{fig:gs_lam} elucidates how transpiration demand through VPD and supply through the PLC can drive the midday stomatal closure. For a demand-driven tranpiration stream and a constant $\lambda=12$ mmol mol$^{-1}$, a VPD$=8$ mmol mol$^{-1}$ corresponds to a $g_s\approx 17$ mol m$^{-2}$ s$^{-1}$ for the environmental conditions depicted in the caption of the mentioned figure. If it midday the VPD doubles, $g_s\approx 0$, a sharp decrease. if however, $\lambda=5$ mmol mol$^{-1}$, then for the same VPD change $g_s$ goes from $\approx 31$ mol m$^{-2}$ s$^{-1}$ to $\approx 23$ mol m$^{-2}$ s$^{-1}$, a noticeable but less aggressive decrease in $g_s$ ($\approx 26\%$). However, a larger PAR and $T_a$ could buffer that decrease by accelerating the chemical reactions visible through increases in $k_1$ and $k_2$.
+ Another cause for an increase in $\lambda$ following this solid arrow is an increasingly supply-limited transpiration stream through the rhizosphere and the plant (an increase in PLC; equation \ref{eqn:supply}). This is seen by noticing that the solid arrow has a strong component normal to the lines of constant transpiration represented by red dashed lines in figure \ref{fig:gs_lam}. If however the changes in VPD are faster that changes in PLC then $g_s$ and $\lambda$ dynamics follow the short-dashed two-sided arrow that follows transpiration isolines. 
+
+Figure \ref{fig:gs_lam} elucidates how transpiration demand through VPD and supply through the PLC can drive the midday stomatal closure. For a demand-driven transpiration stream and a constant $\lambda=12$ mmol mol$^{-1}$, a VPD$=8$ mmol mol$^{-1}$ corresponds to a $g_s\approx 40$ mol m$^{-2}$ s$^{-1}$ for the environmental conditions depicted in the caption of the mentioned figure. If at midday the VPD doubles, $g_s$ becomes 0 indicating a full stomatal closure. If however, $\lambda=5$ mmol mol$^{-1}$, then for the same VPD change $g_s$ goes from $\approx 81$ mol m$^{-2}$ s$^{-1}$ to $\approx 43$ mol m$^{-2}$ s$^{-1}$, a noticeable but less aggressive decrease in $g_s$ ($\approx 48\%$). However, a larger PAR and $T_a$ could buffer that decrease by accelerating the chemical reactions visible through increases in $k_1$ and $k_2$.
+
+\subsection{Supply limited transpiration}
+
+Supply limited transpiration occurs when the plant water pathway is inhibited enough by cavitation to set upper limits on $E$. This upper limit is called $E_{max}$ and defines the maximizing $g_s$, $\psi_r$, and $\psi_l$ at different $\psi_x$ (figure \ref{fig:gmax_Emax_psix}b,c). Figure \ref{fig:gmax_Emax_psix}a shows the partitioning of the total soil-root-leaf conductance into its soil-root and root-leaf components. Three VCs are compared in figure \ref{fig:gmax_Emax_psix} and they represent a resistant plant when $\psi_{63} = -3$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$, a vulnerable plant when $\psi_{63} = -1.5$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$, and an exponential plant when $\psi_{63} = -1$ MPa, $s=1$, and $g_{rl,max} = 8$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$. These three plant will be the same used in future comparisons throughout this work.
+
+
 
 Supply limited midday stomatal closures are more nuances because they also lead to variations in $\lambda$ that could be positive or negative as seen by following transpiration isolines (red dashed lines in figure \ref{fig:gs_lam}). These isolines are considered a liberal path for the decrease in $g_s$ as the air dries in supply-limited conditions because PLC is also likely to increase as water is being used up by the plant. One can therefore expect a steeper decrease in $g_s$ as the air dries.
 
@@ -297,6 +315,8 @@ Figures \ref{fig:resistant_vulnerable_gs} and \ref{fig:resistant_vulnerable_gs_c
 
 \section{Discussion}
 
+Supply limited transpiration could be included with additional lagrange multiplier.
+
 The purpose of this work is to elucidate the connection between diurnal trends of stomatal conductance ($g_s$), plant hydraulics as prescribed by a root-leaf vulnerability curve (VC) and water-use strategy (WUS). The present approach builds on previous work on the economics of leaf gas exchange at the daily timescale first developed in 1977 \citep{cowan1977, cowan1978stomatal}. Similar studies adopting the leaf economics approach described $g_s$ under invariant 'carbon cost of water'. Future work developed this framework further to recover trends of $g_s$ at timescales similar to that of the response times of $g_s$ to environmental variables \citep{Katul2009, Katul2009a}. These were successful at predicting $g_s$ responses to vapor pressure deficit (VPD) and increased level of atmespheric carbon dioxide ($c_a$) without resorting to empirical or semi-empirical approaches \citep{jarvis1976interpretation, collatz1991physiological, leuning1995critical}. The potential of optimization based techniques was further tapped by introducing a terminal gain term to the objective such as in  equation \ref{eqn:terminal_gain} although only at the daily timescale \citep{Manzoni2013}. By rendering this approach suitable for sub-daily timescales and including hydraulic constraints through a VC, a spectrum of isohydric to anisohydric behaviors have emerged by manipulating the VC, WUS, and competitive agents among others.
 
 In this work, isohydry and anisohydry were related to the sensitivity of stomatal conductance $g_s$ to more negative soil water potential $\psi_x$. This is only one of the many ways to interpret these two classical descriptors of plant water use \citep{Hochberg2017}. The modeling effort here predicts a higher sensitivity of $g_s$ to $\psi_x$ with stronger competition (figures \ref{fig:resistant_vulnerable_gs_competition_WUS}, \ref{fig:resistant_vulnerable_lam_competition_WUS}) and with more limiting plant hydraulics (figures \ref{fig:resistant_vulnerable_gs}, \ref{fig:resistant_vulnerable_lambda}). Plant hydraulics was shown to set a lower limit on $\lambda$ ($\lambda_{lower}$) whereas an upper limit was set by a ratio of atmospheric supply of carbon to atmospheric demand of water that corresponds to $g_s=0$ as a higher value for $\lambda$ would render $g_s<0$, an impossibility. (figure \ref{fig:lam_lower}).
@@ -324,18 +344,17 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.75]{g_E_lam_noon.pdf}   
+         \includegraphics[scale=0.5]{g_E_lam_noon.pdf}   
     \end{center}
-    \caption{}
-    % \caption{Black solid lines are the phase-space curves of stomatal conductance ($g_s$) vs the marginal water use efficiency ($\lambda$) for four values of water vapor deficit (VPD). Other pertinent variables for these curves are the two parameter of equation \ref{eqn:supply} where $k_1 = 1$ mol m$^{-2}$ d$^{-1}$ and $k_2 = 1.8 * 10^{-4}$ mol mol$^{-1}$, the carbon compensation point $\Gamma^* = 25*10^{-6}$ mol mol$^{-1}$, and an atmospheric carbon concentration of $c_a = 350*10^{-6}$ mol mol$^{-1}$. The red dashed lines are lines of equal transpiration (isolines) for four values shown. The solid one-sided arrow shows a typical trend in $g_s$ and $\lambda$ for the same environmental conditions as the soil dries. The short-dashed two-sided arrow is the diurnal change in $\lambda$ and $g_s$ as the air dries for supply limited transpiration (constant percent loss of conductivity PLC). The long-dashed two-sided arrow is the diurnal change in $g_s$ as the air dries for demand-driven transpiration (constant $\lambda$). That $k_1$ and $k_2$ are constant means that the air temperature and the incoming shortwave radiation are not changing. In reality, shifts in the shape and slope of the phase-space curves occur as the environment changes diurnally and day to day.}
-    \label{fig:gs_lam}
+    \caption{a) Phase space of stomatal conductance $g_s$ vs the marginal water use efficiency $\lambda$ as a result of equation \ref{eqn:control} for different vapor pressure deficits (VPD). Other environmental conditions correspond to those shown in figure \ref{fig:environment} at noon and in table \ref{tab:props}. An increase in VPD or $\lambda$ both decrease $g_s$ with the other kept at constant. b) Transpiration $E$ corresponding to the curves in the phase space in panel a. An increase in $\lambda$ always leads to a decrease in $E$ when VPD is kept constant however the change in $E$ with changing VPD is more nuanced and depends on the value of $\lambda$. The solid blue arrows show how the value of $\lambda$ determines $E$ when transpiration is demand driven. When transpiration is supply limited, the maximum $E$ possible determines $\lambda$ as illustrated by the dashed blue arrows. Red horizontal arrows show the trends in $\lambda$ with changing VPD for supply limited transpiration of a plant with vulnerability curve (VC) parameters $\psi_{63}=-3$ MPa and $s=4$. The upper red arrow, showing constant $E$ at soil water potential $\psi_x = -0.42$ MPa, shows how $\lambda$ increases as the air dries from VPD$=4$ mmol mol$^{-1}$ to VPD$=16$ mmol mol$^{-1}$. The trend reverses as VPD continues increasing to $32$ mmol mol$^{-1}$. At $\psi_x = -0.64$ MPa, the trend in $\lambda$ reverses as shown by the lower red line. One can then trace these $\lambda$ trends to $g_s$ in panel a and infer magnitudes of midday stomatal closure and day to day $g_s$ sensitivity to drought.}
+    \label{fig:gs_E_lam}
 \end{figure}
 
 \begin{figure}[h]
     \begin{center}
         \includegraphics[scale=0.5]{g_psi_E_psix.pdf}
     \end{center}
-    \caption{Hydraulic limits on $\lambda$. Vulnerability Curve (VC) alterations affect the lower limit ($\lambda_{lower}$). These alterations consist of changing the normalizing pressure $\psi_{63}$ and the slope $s$ of the VC (see equation \ref{eqn:root_leaf}). All of the shown curves are subject to environmental conditions at 12:00 on 5-29-2004 in Blodgett Forest (combination of vapor pressure deficit, temperature, and photosynthetically active radiation). The upper limit ($\lambda_{upper}$) is set at the point where $g_s=0$ because $g_s$ can never be negative.}
+    \caption{a) Soil to root conductance of the rhizosphere ($g_{sr}$) and root to leaf conductance of the plant ($g_{rl}$) that maximize transpiration $E$ for difference soil water potentials $\psi_x$. Soil is sandy loam and particular hydraulic parameters are shown in table \ref{tab:props}. Three vulnerability curve (VC) examples give different $g_{rl}$ trends. b) Maximizing root and leaf water potential ($\psi_r$ and $\psi_l$, respectively) for the three VCs and for the particular soil type. The exponential VC ($s=1$) can maintain a gap between $\psi_r$ and $\psi_l$ as $\psi_x$ decreases unlike the other two VCs. c) This leads to the exponential VC maintaining a higher $E$ at dry soil and even an order of magnitude larger $E$ compared to the VC with $\psi_{63}=-1.5$ MPa and $s=4$.}
     \label{fig:gmax_Emax_psix}
 \end{figure}
 
@@ -386,16 +405,54 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{table}[h]
     \centering
-    \begin{tabular}{c|c|c|c}
-        Symbol & Property & Value & Unit \\
+    \begin{tabular}{l l l l}
+        Symbol & Description & Value & Unit \\
         \hline
-        $g_{rl,max}$ & Maximum leaf area specific root-leaf hydraulic conductance & 10$^{-3}$ & mol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
-        $g_{rl}$ & Leaf area specific root-leaf hydraulic conductance & varies & mol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
-        $\psi_{63}$ & water potential at which $g_{rl} \approx 0.34 g_{rl,max}$ & varies & MPa \\
-        $s$ & Shape parameter of the vulnerability curve & 2 &  \\
+        \multicolumn{4}{l}{}\\
+        \multicolumn{4}{l}{\textit{Soil and root properties}}\\
+        \hline
+        % \multicolumn{4}{l}{}\\
+        $\psi_{sat}$ & Saturation water potential & -1.5 & kPa\\
+        $\psi_x$ & Soil water potential & & MPa\\
+        $x$ & relative soil moisture & & m$^{3}$ m$^{-3}$\\
+        $g_{sr,max}$ & Maximum ground area specific soil-root conductance & $0.72 * 10^{-3}$ & kg s m$^{-3}$ \\
+        $g_{sr}$ & Ground area specific soil-root conductance & & kg s m$^{-3}$\\
+        $b$ & Power law dependence parameter with $\psi_x$ & 3.1 & \\
+        $RAI$ & Root area index & $5 \rightarrow 10$ & m$^{2}$ m$^{-2}$\\
+        $D_r$ & Average fine root diameter & 1 & mm \\
+        $Z_r$ & Average rooting depth & 0.3 & m\\ 
+        $U$ & Uncontrolled losses of soil water & & mmol m$^{-2}$ s$^{-1}$\\
+        \hline
+        \multicolumn{4}{l}{}\\
+        \multicolumn{4}{l}{\textit{Above-ground plant properties}}\\
+        \hline
+        $g_{rl,max}$ & Maximum leaf area specific root-leaf conductance & 2 & mmol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
+        $g_{rl}$ & Leaf area specific root-leaf conductance & & mmol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
+        $\psi_{63}$ & water potential at which $g_{rl} \approx 0.34 g_{rl,max}$ & $-3 \rightarrow -1$ & MPa \\
+        $s$ & Shape parameter of the vulnerability curve & $1 \rightarrow 4$ &  \\
+        $g_s$ & Leaf area specific stomatal conductance & & mmol m$^{-2}$ s$^{-1}$ \\
+        LAI & Leaf area index & 1.5 & m$^{2}$ m$^{-2}$\\
+        \hline
+        \multicolumn{4}{l}{}\\
+        \multicolumn{4}{l}{\textit{Environmental properties}}\\
+        \hline
+        VPD & Vapor Pressure Deficit & $4 \rightarrow 32$ & mmol mol$^{-1}$\\
+        $T_a$ & Atmospheric temperature & $284 \rightarrow 294$ & K \\
+        PAR & Incoming photosynthetically active radiation & $0 \rightarrow 4000$ & $\mu$mol m$^{-2}$ s$^{-1}$ \\
+        \hline
+        \multicolumn{4}{l}{}\\
+        \multicolumn{4}{l}{\textit{Optimization results}}\\
+        \hline
+        $E$ & Leaf area specific transpiration rate & & mmol m$^{-2}$ s$^{-1}$\\
+        $A$ & Leaf area specific carbon assimilation rate & & mmol m$^{-2}$ s$^{-1}$\\
+        $\lambda$ & Lagrange multiplier of the soil water balance constraint & & mmol mol$^{-1}$\\
+        $L$ & Augmented lagrangian & & mmol m$^{-2}$ s$^{-1}$\\
+        $J$ & Objective function to be maximized & & mmol m$^{-2}$\\
+        $T$ & Drydown period & 10 & days\\
+        $H$ & Hamiltonian & & mmol m$^{-2}$ s$^{-1}$\\
     \end{tabular}
-    \caption{Plant properties used in the model unless stated in the particular simulation description, figure or table caption.}
-    \label{tab:plant_props}
+    \caption{Symbols of soil, plant, and environmental properties along with their description, typical values, and units. Values for specific simulations will be mentioned in the simulation description and in the corresponding figure caption.}
+    \label{tab:props}
 \end{table}
 
 
