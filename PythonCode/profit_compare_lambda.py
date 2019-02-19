@@ -4,16 +4,16 @@ import matplotlib.pyplot as plt
 from Useful_Funcs import lam_from_trans
 # from Plant_Env_Props import ca
 
-pickle_in = open("../profit_compare/profit_compare.10percent_105lambda", "rb")
+pickle_in = open("../profit_compare/profit_compare.16percent_9lambda", "rb")
 vulnerable = pickle.load(pickle_in)
 
-pickle_in = open("../profit_compare/profit_compare.15percent_105lambda", "rb")
+pickle_in = open("../profit_compare/profit_compare.16percent_10lambda", "rb")
 vulnerable2 = pickle.load(pickle_in)
 
-pickle_in = open("../profit_compare/profit_compare.17percent_105lambda", "rb")
+pickle_in = open("../profit_compare/profit_compare.16percent_105lambda", "rb")
 vulnerable3 = pickle.load(pickle_in)
 
-pickle_in = open("../profit_compare/profit_compare.20percent_105lambda", "rb")
+pickle_in = open("../profit_compare/profit_compare.16percent_11lambda", "rb")
 vulnerable4 = pickle.load(pickle_in)
 
 unit = 1e3 / (3600*24)
