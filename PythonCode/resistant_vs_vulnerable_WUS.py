@@ -113,7 +113,7 @@ plt.setp(ax3.get_xticklabels(), FontSize=12)
 plt.setp(ax3.get_yticklabels(), FontSize=12)
 
 ax3.set_xlabel("Time, $t$, days", FontSize=14)
-ax3.set_ylabel("Marginal water use efficiency, $\lambda$, mol mol$^{-1}$", FontSize=10)
+ax3.set_ylabel("Marginal water use efficiency, $\lambda$, mmol mol$^{-1}$", FontSize=10)
 # ax3.set_ylim(0, np.max(ax.yaxis.get_data_interval()))
 
 legend1 = ax3.legend((res_lam, mid_lam, vul_lam),
