@@ -23,7 +23,9 @@ class ConvergenceError(Error):
     def __init__(self, message):
         self.message = message
 
-
+xvals = np.arange(0.1, 0.3, 0.005)
+dgSR_dx = np.gradient(gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai), xvals)
+dgSR_dx_interp = interp1d(xvals, dgSR_dx, kind='cubic')
 
 def dydt(t, y):
     """
@@ -80,13 +82,16 @@ def dydt(t, y):
     losses = 0
     dlossesdx = 0
 
+    dEdx = gSR_val(y[1], gamma, b, d_r, z_r, RAI, lai) * psi_sat * b * y[1] ** (-b-1) +\
+           dgSR_dx_interp(y[1]) * (psi_r - psi_x)
+
     # Comment out following 2 lines if only plant hydraulic effects are sought
-    # losses = beta * y[1] ** c + 0.1 * y[1] ** 2  # 1/d
-    # dlossesdx = beta * c * y[1] ** (c - 1) + 0.2 * y[1]  # 1/d
+    losses = gamma * y[1] ** c / nu + 0.2 * evap_trans  # mol m-2 d-1
+    dlossesdx = (gamma * c * y[1] ** (c - 1)) / nu + 0.2 * dEdx  # mol m-2 d-1
 
     f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
-    dfdx = - (dlossesdx + dEdx)  # mol m-2 d-1
-    dlamdt = - y[0] * dfdx  # mol/m2/d
+    dfdx = - (dlossesdx)  # mol m-2 d-1
+    dlamdt = - y[0] * dfdx * nu / n / z_r  # 1/d
     dxdt = f * nu / n / z_r  # 1/d
     return np.vstack((dlamdt, dxdt))
 
@@ -99,7 +104,7 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.2
+    x0 = 0.22
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
@@ -108,7 +113,7 @@ def bc_wus(ya, yb):  # Water use strategy
 Lambda = 8 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
 lam_guess = 8 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.18*np.ones((1, t.size))
+x_guess = 0.22*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -254,37 +259,37 @@ psix_mid_day = psix_sim_interp(mid_day)
 
 
 # ------------ profit ---------
-# E_crit = np.zeros(psi_x.shape)
-# A_crit = np.zeros(psi_x.shape)
-# P_crit = np.zeros(psi_x.shape)
-# P_opt = np.zeros(psi_x.shape)
-# psi_r_opt = np.zeros(psi_x.shape)
-# A_opt = np.zeros(psi_x.shape)
-# E_opt = np.zeros(psi_x.shape)
-# crits = np.array((psi_l_interp(psi_x), trans_max_interp(psi_x), k_crit_interp(psi_x), k_max_interp(psi_x)))
-#
-# for i in range(psi_x.shape[0]):
-#     print(i)
-#     E_crit[i], A_crit[i], P_crit[i], E_opt[i], A_opt[i], P_opt[i], psi_r_opt[i] = \
-#          profit_max(psi_x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
-#                     k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]),
-#                     0.01, crits[:, i])
-#
+E_crit = np.zeros(psi_x.shape)
+A_crit = np.zeros(psi_x.shape)
+P_crit = np.zeros(psi_x.shape)
+P_opt = np.zeros(psi_x.shape)
+psi_r_opt = np.zeros(psi_x.shape)
+A_opt = np.zeros(psi_x.shape)
+E_opt = np.zeros(psi_x.shape)
+crits = np.array((psi_l_interp(psi_x), trans_max_interp(psi_x), k_crit_interp(psi_x), k_max_interp(psi_x)))
+
+for i in range(psi_x.shape[0]):
+    print(i)
+    E_crit[i], A_crit[i], P_crit[i], E_opt[i], A_opt[i], P_opt[i], psi_r_opt[i] = \
+         profit_max(psi_x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, ca,
+                    k1_interp(res.x[i]), k2_interp(res.x[i]), cp_interp(res.x[i]), VPDinterp(res.x[i]),
+                    0.01, crits[:, i])
+
 # # -----save----
-#
-# H = np.zeros(A_val.shape)
-# oklam = np.greater_equal(res.y[0], lam_low * 1e-3)
-# H[oklam] = A_val[oklam] + res.y[0][oklam]*f[oklam]  # mol/m2/d
-# H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]*1e-3  # mol/m2/d
-#
-# inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
-#         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
-#         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E,
-#         'E_crit': E_crit, 'A_crit': A_crit, 'P_crit': P_crit, 'A_opt': A_opt, 'E_opt': E_opt,
-#         'P_opt': P_opt, 'psi_r_opt': psi_r_opt}
-#
-# import pickle
-#
-# pickle_out = open("../WUS_no_comp/WUS_no_comp.vulnerable", "wb")
-# pickle.dump(inst, pickle_out)
-# pickle_out.close()
+
+H = np.zeros(A_val.shape)
+oklam = np.greater_equal(res.y[0], lam_low * 1e-3)
+H[oklam] = A_val[oklam] + res.y[0][oklam]*f[oklam]  # mol/m2/d
+H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]*1e-3  # mol/m2/d
+
+inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
+        'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
+        'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E,
+        'E_crit': E_crit, 'A_crit': A_crit, 'P_crit': P_crit, 'A_opt': A_opt, 'E_opt': E_opt,
+        'P_opt': P_opt, 'psi_r_opt': psi_r_opt}
+
+import pickle
+
+pickle_out = open("../WUS_comp/WUS_comp.exponential", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()

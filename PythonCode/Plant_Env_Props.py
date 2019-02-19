@@ -115,6 +115,9 @@ psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
 k_crit_interp = interp1d(psi_x_vals, k_crit_vals, kind='cubic')
 k_max_interp = interp1d(psi_x_vals, k_max_vals, kind='cubic')
 
+dgSR_dx = np.gradient(gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai), xvals)
+dgSR_dx_interp = interp1d(xvals, dgSR_dx, kind='cubic')
+
 #%% --------------------- CARBON ASSIMILATION -----------------------
 # gc = 0.1 # mol CO2 /m2/s
 TEMPfull = np.array(drydown['TEMP'])  # K
@@ -178,7 +181,7 @@ soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, '
 plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
          'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
          'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
-         'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
+         'trans_max_ interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
          'k_crit_interp': k_crit_interp, 'k_max_interp': k_max_interp}
 #
 import pickle
