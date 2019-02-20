@@ -360,39 +360,18 @@ Fact that $psi_l$ only increases indicates irreversability in PLC.
 
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.75]{gs_resistant_vulnerable.pdf} 
+         \includegraphics[scale=0.65]{WUS_no_comp.pdf} 
     \end{center}
-    \caption{Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with a) time ($t$) and b) soil water potential ($\psi_x$). Trends are shown for a resistant plant ($\psi_{63} = 3$ MPa), a vulnerable plant ($\psi_{63} = 1.9$ MPa), and a midrange plant ($\psi_{63} = 2.2$ MPa). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam.}
-    \label{fig:resistant_vulnerable_gs}
+    \caption{Results of a simulation where at time $t=0$, soil moisture $x(0) =0.22$. There is no competitive soil water users and the terminal marginal water use efficiency is set at $\lambda(10) = 6$ mol mol$^{-1}$. a) Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with $t$ and b) $\lambda$ with $t$. Trends are shown for a resistant plant ($\psi_{63} = -3$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), a vulnerable plant ($\psi_{63} = -1.5$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), and an exponential vulnerability curve (VC; $\psi_{63} = -1$ MPa, $s=1$, and $g_{rl,max} = 8$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. c) Carbon assimilation rate ($A$) and d) transpiration rate ($E$) with $t$. e) Midday $g_s$ and f) Midday leaf water potential $\psi_l$ with soil water potential $\psi_x$.}
+    \label{fig:WUS_no_comp}
 \end{figure}
 
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.75]{lam_resistant_vulnerable.pdf}   
+         \includegraphics[scale=0.65]{WUS_comp.pdf}   
     \end{center}
-    \caption{Half-hourly trends of the marginal water use efficiency ($\lambda$; in black) and the lower limit ($\lambda_{lower}$; in red) set by the vulnerability curve of the root-leaf water pathway. The independent variable is time ($t$). Trends are shown for a resistant plant ($\psi_{63} = 3$ MPa), a vulnerable plant ($\psi_{63} = 1.9$ MPa), and a midrange plant ($\psi_{63} = 2.2$ MPa). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. This figure and figure \ref{fig:resistant_vulnerable_gs} correspond to the same simulation.}
-    \label{fig:resistant_vulnerable_lambda}
-\end{figure}
-
-% \begin{figure}[h]
-%     \centering
-%     \includegraphics[scale=0.75]{Fig5.pdf}
-%     \caption{Simulation with terminal gain and water use strategy (WUS) as part of the objective to be maximized (equation \ref{eqn:terminal_gain}). No competition to plant water use exists. All three plants with difference vulnerability curves (VCs) have similar WUS for ease of comparison. a) Temporal trends in stomatal conductance $g_s$ for the three plants at the half-hourly scale (in black) and using midday values (in red). b) Midday $g_s$ trends with soil water potential $\psi_x$.}
-%     \label{fig:resistant_vulnerable_gs_WUS}
-% \end{figure}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[scale=0.75]{gs_resistant_vulnerable_competition_WUS.pdf}
-    \caption{Simulation with terminal gain and water use strategy (WUS) as part of the objective to be maximized (equation \ref{eqn:terminal_gain}). A competitive process exists that uses water proportionally to the square of the relative soil moisture $x(t)$ ($= 0.1 x(t)^2$). All three plants with difference vulnerability curves (VCs) have similar WUS for ease of comparison. a) Temporal trends in stomatal conductance $g_s$ for the three plants at the half-hourly scale (in black) and using midday values (in red). b) Midday $g_s$ trends with soil water potential $\psi_x$.}
-    \label{fig:resistant_vulnerable_gs_competition_WUS}
-\end{figure}
-
-\begin{figure}[h]
-    \centering
-    \includegraphics[scale=0.75]{lam_resistant_vulnerable_competition_WUS.pdf}
-    \caption{The temporal trends in marginal water use efficiency $\lambda$ (in black) corresponding to the simulation shown in figure \ref{fig:resistant_vulnerable_gs_competition_WUS} for the three plants (aggressive, midrange, and vulnerable). All three trends are the same since the water use strategy (WUS) of the three plants was set to an equal value a priori and since the three plants were subject to the same competition for soil water use ($= 0.1 x(t)^2$ where $x(t)$ is the relative soil moisture). In red is the lower bound on $\lambda$ ($\lambda_{lower}$) set by the hydraulic limitation of the plant water pathway as prescribed by the vulnerability curves (VCs).}
-    \label{fig:resistant_vulnerable_lam_competition_WUS}
+    \caption{Results of a simulation where at time $t=0$, soil moisture $x(0) =0.22$. The terminal marginal water use efficiency is set at $\lambda(10) = 8$ mol mol$^{-1}$. The competitive water sinks are soil free drainage and competing plants with similar vulnerability curves (VCs) to those modeled. The competing plants have access to only 20\% of the root zone water of each modeled plant. a) Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with $t$ and b) $\lambda$ with $t$. Trends are shown for a resistant plant ($\psi_{63} = -3$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), a vulnerable plant ($\psi_{63} = -1.5$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), and an exponential VC ($\psi_{63} = -1$ MPa, $s=1$, and $g_{rl,max} = 8$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. c) Carbon assimilation rate ($A$) and d) transpiration rate ($E$) with $t$. e) Midday $g_s$ and f) Midday leaf water potential $\psi_l$ with soil water potential $\psi_x$.}
+    \label{fig:WUS_comp}
 \end{figure}
 
 \clearpage
