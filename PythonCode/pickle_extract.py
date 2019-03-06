@@ -4,7 +4,7 @@ import numpy as np
 env_in = open("../no_WUS/environment", "rb")
 environment = pickle.load(env_in)
 
-plant_in = open("../no_WUS/plant_vulnerable", "rb")
+plant_in = open("../no_WUS/plant_resistant", "rb")
 plant = pickle.load(plant_in)
 
 soil_in = open("../no_WUS/soil", "rb")

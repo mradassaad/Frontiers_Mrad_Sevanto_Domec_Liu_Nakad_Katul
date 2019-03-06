@@ -246,3 +246,12 @@ ax7.set_ylabel("Soil water potential, $\psi_x$, MPa", FontSize=12)
 # ax4.set_ylim(0, 100)
 
 # fig4.savefig('../Fig3/PLC_t.pdf', bbox_inches='tight')
+
+
+# #---------------------- ci/ca ---------------------
+ca = 350e-6
+ci_res = np.ones(resistant['t'].shape) * ca
+notZero = resistant['gl'] != 0
+ci_res[notZero] = ca - resistant['A_val'][notZero] / resistant['gl'][notZero]  # internal carbon concentration, mol/mol
+
+plt.plot(resistant['t'], ci_res/ca)
