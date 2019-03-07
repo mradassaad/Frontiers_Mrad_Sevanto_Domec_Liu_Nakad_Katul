@@ -125,18 +125,18 @@ RNfull = np.array(drydown['RNET'])  # shortwave radiation on leaves, W/m2
 PARfull = RNtoPAR(RNfull) * lai # umol/m2/s per unit leaf area
 VPDfull = np.array(drydown['VPD'])  # mol/mol
 
-AvgNbDay = 20
+AvgNbDay = 100
 
 PARavg = PARfull[0:48*AvgNbDay]
-PARavg = PARavg.reshape((20, 48))
+PARavg = PARavg.reshape((AvgNbDay, 48))
 PARavg = np.average(PARavg, axis=0)
 
 TEMPavg = TEMPfull[0:48*AvgNbDay]
-TEMPavg = TEMPavg.reshape((20, 48))
+TEMPavg = TEMPavg.reshape((AvgNbDay, 48))
 TEMPavg = np.average(TEMPavg, axis=0)
 
 VPDavg = VPDfull[0:48*AvgNbDay]
-VPDavg = VPDavg.reshape((20, 48))
+VPDavg = VPDavg.reshape((AvgNbDay, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
 days = 10
@@ -184,17 +184,17 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
          'trans_max_ interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
          'k_crit_interp': k_crit_interp, 'k_max_interp': k_max_interp}
 #
-import pickle
-
-pickle_out = open("../no_WUS/environment", "wb")
-pickle.dump(env, pickle_out)
-pickle_out.close()
-
-pickle_out = open("../no_WUS/soil", "wb")
-pickle.dump(soil, pickle_out)
-pickle_out.close()
-
-pickle_out = open("../no_WUS/plant_vulnerable", "wb")
-pickle.dump(plant, pickle_out)
-pickle_out.close()
-
+# import pickle
+#
+# pickle_out = open("../no_WUS/environment", "wb")
+# pickle.dump(env, pickle_out)
+# pickle_out.close()
+#
+# pickle_out = open("../no_WUS/soil", "wb")
+# pickle.dump(soil, pickle_out)
+# pickle_out.close()
+#
+# pickle_out = open("../no_WUS/plant_vulnerable", "wb")
+# pickle.dump(plant, pickle_out)
+# pickle_out.close()
+#
