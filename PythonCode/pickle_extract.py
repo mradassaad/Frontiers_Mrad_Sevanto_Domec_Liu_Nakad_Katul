@@ -19,7 +19,7 @@ k1_interp = environment['k1_interp']
 k2_interp = environment['k2_interp']
 AvgNbDay = environment['AvgNbDay']
 days = environment['days']
-ca = 350 * 1e-6  # mol/mol
+ca = environment['ca']  # mol/mol
 a = 1.6
 
 gamma = soil['gamma']

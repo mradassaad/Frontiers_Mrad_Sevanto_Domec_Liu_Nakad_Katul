@@ -26,7 +26,7 @@ Oi = 210e-3  # mol/mol
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
-ca = 350 * 1e-6  # mol/mol
+ca = 375 * 1e-6  # mol/mol
 a = 1.6
 #%%----------------------------PLANT CONSTANTS-------------------------
 n = 0.5  # m3/m3
@@ -60,8 +60,8 @@ Topt_j = 29.01 + 273.15  # K
 
 # ------------------ Soil Properties -----------------
 
-psi_sat = 1.5 * unit6  # Soil water potential at saturation, MPa
-b = 3.1  # other parameter
+psi_sat = 1.1 * unit6  # Soil water potential at saturation, MPa
+b = 4.5  # other parameter
 
 gamma = 0.000  # m/d per unit ground area
 c = 1
@@ -76,13 +76,13 @@ alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
 
-psi_63 = 1.5  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 4  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.1, 0.3, 0.005)
+xvals = np.arange(0.18, 0.5, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
@@ -122,7 +122,7 @@ dgSR_dx_interp = interp1d(xvals, dgSR_dx, kind='cubic')
 # gc = 0.1 # mol CO2 /m2/s
 TEMPfull = np.array(drydown['TEMP'])  # K
 RNfull = np.array(drydown['RNET'])  # shortwave radiation on leaves, W/m2
-PARfull = RNtoPAR(RNfull) * lai # umol/m2/s per unit leaf area
+PARfull = RNtoPAR(RNfull) / lai # umol/m2/s per unit leaf area
 VPDfull = np.array(drydown['VPD'])  # mol/mol
 
 AvgNbDay = 100
@@ -173,7 +173,7 @@ k2_interp = interp1d(t, k2, kind='cubic')
 
 env = {'VPDavg': VPDavg, 'TEMPavg': TEMPavg, 'PARavg': PARavg, 'VPDinterp': VPDinterp,
        'cp_interp': cp_interp, 'k1_interp': k1_interp, 'k2_interp': k2_interp, 'AvgNbDay': AvgNbDay,
-       'days': days}
+       'days': days, 'ca': ca}
 
 soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, 'd_r': d_r, 'RAI': RAI,
         'beta': beta, 'psi_sat': psi_sat, 'b': b}
@@ -181,20 +181,20 @@ soil = {'Soil_type': "Sandy Loam", 'gamma': gamma, 'c': c, 'n': n, 'z_r': z_r, '
 plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_opt, 'Hav': Hav,
          'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
          'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
-         'trans_max_ interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
+         'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
          'k_crit_interp': k_crit_interp, 'k_max_interp': k_max_interp}
-#
-# import pickle
-#
-# pickle_out = open("../no_WUS/environment", "wb")
-# pickle.dump(env, pickle_out)
-# pickle_out.close()
-#
-# pickle_out = open("../no_WUS/soil", "wb")
-# pickle.dump(soil, pickle_out)
-# pickle_out.close()
-#
-# pickle_out = open("../no_WUS/plant_vulnerable", "wb")
-# pickle.dump(plant, pickle_out)
-# pickle_out.close()
-#
+
+import pickle
+
+pickle_out = open("../no_WUS/environment", "wb")
+pickle.dump(env, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../no_WUS/soil", "wb")
+pickle.dump(soil, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../no_WUS/plant_resistant", "wb")
+pickle.dump(plant, pickle_out)
+pickle_out.close()
+

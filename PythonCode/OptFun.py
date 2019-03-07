@@ -104,16 +104,16 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.22
+    x0 = 0.45
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 # t = np.linspace(0, days, 2000)
 # maxLam = 763e-6*unit0
-Lambda = 10 * 1e-3  # mol/mol
+Lambda = 2 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 10.5 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.22*np.ones((1, t.size))
+lam_guess = 2 * 1e-3 * np.ones((1, t.size))  # mol/mol
+x_guess = 0.45*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
