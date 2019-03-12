@@ -72,7 +72,7 @@ def MMcoeff(Tl):
     :param Tl: leaf temperature in K
     :return: Kc and Ko are the Michaelis-Menten coefficients for Rubisco for CO2 and O2
     """
-
+    # Bernacchi et al. 2001 (in vivo)
     R = 8.314  # J/mol/K
     Kc = 404.9 * np.exp(79430 * (Tl - 298) / (298 * R * Tl))  # umol/mol
     Ko = 278.4 * np.exp(36380 * (Tl - 298) / (298 * R * Tl))  # mmol/mol

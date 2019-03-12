@@ -26,7 +26,7 @@ Oi = 210e-3  # mol/mol
 # vpd = 0.015  # mol/mol
 # k = 0.05 * unit0  # mol/m2/day
 
-ca = 375 * 1e-6  # mol/mol
+ca = 350 * 1e-6  # mol/mol
 a = 1.6
 #%%----------------------------PLANT CONSTANTS-------------------------
 n = 0.5  # m3/m3
@@ -60,8 +60,8 @@ Topt_j = 29.01 + 273.15  # K
 
 # ------------------ Soil Properties -----------------
 
-psi_sat = 1.1 * unit6  # Soil water potential at saturation, MPa
-b = 4.5  # other parameter
+psi_sat = 1.5 * unit6  # Soil water potential at saturation, MPa
+b = 3.1  # other parameter
 
 gamma = 0.000  # m/d per unit ground area
 c = 1
