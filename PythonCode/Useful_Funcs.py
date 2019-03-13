@@ -36,6 +36,7 @@ def max_val(k_opt, H_a, H_d, Tl, T_opt):
     return k_opt * (H_d * exp_Ha_val) / (H_d - H_a * (1 - exp_Hd_val))
 
 
+
 def RNtoPAR(RN):
     """
 
@@ -91,7 +92,7 @@ def cp_val(Tl):
     return cp
 
 
-def A(t, gs, ca, k1_interp, k2_interp, cp_interp):
+def A(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
     """
 
     :param gs: stomatal conductance in umol/m2/s per unit LEAF area
@@ -104,10 +105,12 @@ def A(t, gs, ca, k1_interp, k2_interp, cp_interp):
      ca: ambient CO2 mole fraction in the air in umol/mol
     cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol'''
 
-    delta = np.sqrt(((k2_interp(t) + ca) * gs + k1_interp(t)) ** 2 -
-                    4 * k1_interp(t) * (ca - cp_interp(t)) * gs)  # mol/mol
+    B = (cp_interp(t) + k2_interp(t)) / phi  # non-stomatal limitation; mesophyll
 
-    A = 0.5 * (k1_interp(t) + gs * (ca + k2_interp(t)) - delta)  # mol/m2/d
+    delta = np.sqrt((B + ca - cp_interp(t)) ** 2 * gs ** 2 +
+                    2 * gs * k1_interp(t) * (B - ca + cp_interp(t)) + k1_interp(t) ** 2)  # mol/m2/d
+
+    A = 0.5 * ((B + ca - cp_interp(t)) * gs + k1_interp(t) - delta)  # mol/m2/d
     # A *= 1e6/unit0
 
     return A
@@ -169,28 +172,48 @@ def dailyAvg(data, windowsize):
 # plt.xlabel('Time step (half-hour)')
 # plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
 
-def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp):
+def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp, phi=1):
 
     a = 1.6
+    B = (cp_interp(t) + k2_interp(t)) / phi  # non-stomatal limitation; mesophyll
+
     # --------------- k1 is per leaf area so gs is per leaf area ----------
 
-    gpart11 = (ca + k2_interp(t) - 2 * a * lam * VPDinterp(t)) *\
-              np.sqrt(a * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-              (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/mol
+    # gpart11 = (ca + k2_interp(t) - 2 * a * lam * VPDinterp(t)) *\
+    #           np.sqrt(a * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
+    #           (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/mol
+    #
+    # gpart12 = a * lam * VPDinterp(t) * ((ca + k2_interp(t)) - a * lam * VPDinterp(t))  # mol/mol
+    #
+    # gpart21 = gpart11 / gpart12  # mol/mol
+    #
+    # gpart22 = ca - 2 * cp_interp(t) - k2_interp(t)  # mol/mol
+    #
+    # gpart3 = gpart21 + gpart22  # mol/mol
+    #
+    # gpart4 = (ca + k2_interp(t))**2  # mol2 mol-2
+    #
+    # gl = k1_interp(t) * gpart3 / gpart4  # mol/m2/d per unit LEAF area
 
-    gpart12 = a * lam * VPDinterp(t) * ((ca + k2_interp(t)) - a * lam * VPDinterp(t))  # mol/mol
+    gpart11 = (B - cp_interp(t) + ca - 2 * a * VPDinterp(t) * lam) * \
+              np.sqrt(a * VPDinterp(t) * lam * B * k1_interp(t) ** 2 * (ca - cp_interp(t)) *
+                      (B - cp_interp(t) + ca - a * VPDinterp(t) * lam))
 
-    gpart21 = gpart11 / gpart12  # mol/mol
+    gpart12 = a * VPDinterp(t) * lam * (B - cp_interp(t) + ca) ** 2 *\
+              (B - cp_interp(t) + ca - a * VPDinterp(t) * lam)
 
-    gpart22 = ca - 2 * cp_interp(t) - k2_interp(t)  # mol/mol
+    gpart21 = k1_interp(t) * (B - ca + cp_interp(t))
 
-    gpart3 = gpart21 + gpart22  # mol/mol
+    gpart22 = (B + ca - cp_interp(t)) ** 2
 
-    gpart4 = (ca + k2_interp(t))**2  # mol2 mol-2
+    gs = - gpart21 / gpart22 + gpart11 / gpart12
 
-    gl = k1_interp(t) * gpart3 / gpart4  # mol/m2/d per unit LEAF area
+    return gs
 
-    return gl
+
+def phi_val(psi_l, psi_crit):
+
+    return 1 - psi_l / psi_crit
 
 
 def create_ranges(start, stop, N, endpoint=True):

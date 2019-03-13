@@ -47,16 +47,16 @@ unit5 = 3.6 * 24 * 9.81  # kg.s.m-3 of water -> m/d
 unit6 = 1e-3  # J/Kg of water to MPa
 atmP = 0.1013  # atmospheric pressure, MPa
 
-# Medlyn 2002 pinus radiata fert.
-v_opt = 174.33  # umol/m2/s per LEAF area
-Hav = 51.32  # kJ/mol
+# Medlyn 2002 pinus pinaster but kopt is altered so that k25 matches the values for ponderosa pine in Panek 2004
+v_opt = 85.4  # umol/m2/s per LEAF area
+Hav = 74.16  # kJ/mol
 Hdv = 200  # kJ/mol
-Topt_v = 37.74 + 273.15  # K
+Topt_v = 38.34 + 273.15  # K
 
-j_opt = 189.66  # umol/m2/s per LEAF area
-Haj = 43.18  # kJ/mol
+j_opt = 114.23  # umol/m2/s per LEAF area
+Haj = 34.83  # kJ/mol
 Hdj = 200  # kJ/mol
-Topt_j = 29.01 + 273.15  # K
+Topt_j = 36.87 + 273.15  # K
 
 # ------------------ Soil Properties -----------------
 
@@ -75,14 +75,16 @@ beta = gamma / (n * z_r)  # 1/d
 alpha = nu * a / (n * z_r)  # m2/mol
 
 # ------------------ Plant Stem Properties -------------
-
-psi_63 = 3  # Pressure at which there is 64% loss of conductivity, MPa
-w_exp = 4  # Weibull exponent
+# psi_63=4.3 MPa and s=5.4 for ponderosa pine according to Hubbard et al. PCE 2001 grown in Utah nurseries
+# grown between 20 and 28 degrees C and 40-60% humidity
+# Kmax assumed that we have 20 mmol m-1 s-1 MPa-1 for a 10 m tall tree
+psi_63 = 4.3  # Pressure at which there is 64% loss of conductivity, MPa
+w_exp = 5.4  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.18, 0.5, 0.005)
+xvals = np.arange(0.1, 0.5, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
 psi_l_vals = np.zeros(xvals.shape)
 psi_r_vals = np.zeros(xvals.shape)
@@ -194,7 +196,7 @@ pickle_out = open("../no_WUS/soil", "wb")
 pickle.dump(soil, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../no_WUS/plant_resistant", "wb")
+pickle_out = open("../no_WUS/plant_ponderosa", "wb")
 pickle.dump(plant, pickle_out)
 pickle_out.close()
 

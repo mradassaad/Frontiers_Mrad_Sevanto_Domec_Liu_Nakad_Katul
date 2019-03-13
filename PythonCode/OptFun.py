@@ -43,11 +43,14 @@ def dydt(t, y):
         raise GuessError('y[0] < 0')
 
     # ----------------- stomatal conductance based on current values -------------------
+
     gl = g_val(t, y[0], ca,
                VPDinterp, k1_interp, k2_interp, cp_interp)  # mol/m2/d per unit LEAF area
 
     psi_x = psi_sat * y[1] ** -b
+
     trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
+
 
     ok = np.less_equal(1.6 * gl * VPDinterp(t), trans_max)
     Nok = ~ok
@@ -104,7 +107,7 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.45
+    x0 = 0.22
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
@@ -113,7 +116,7 @@ def bc_wus(ya, yb):  # Water use strategy
 Lambda = 2 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
 lam_guess = 2 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.45*np.ones((1, t.size))
+x_guess = 0.15*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
