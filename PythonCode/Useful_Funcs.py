@@ -121,26 +121,6 @@ def A(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
 #
 #     return psi_sat * x ** (-b)
 
-# def dAdg(J, Vc_max, Kc, Ko, Oi, ca, cp, gl):
-#     """
-#
-#     :param J: Electron transport rate in umol/m2/s
-#     :param Vc_max: maximum rate of rubisco activity in umol/m2/s
-#     :param Kc: Michaelis-Menten constant for CO2 in umol/mol
-#     :param Ko: Michaelis-Menten constant for O2 in mmol/mol
-#     :param ca: ambient CO2 mole fraction in the air in umol/mol
-#     :param cp: CO2 concentration at which assimilation is zero or compensation point in umol/mol
-#     :param gl: stomatal conductance in umol/m2/s
-#     :return: value of A at a particular value of g in umol/m2/s
-#     """
-#
-#     k1 = J / 4  # umol/m2/s
-#     a2 = Kc * (1 + Oi / Ko)  # umol/mol
-#     k2 = (J / 4) * a2 / Vc_max  # umol/mol
-#     ddeltadg = 2 * (k1 / gl**2) * (k2*1e-6 + ca * 1e-6 + k1/gl) + \
-#         (4 * k1 / gl**2) * (ca - cp) * 1e-6
-#
-#     return
 
 def Interstorm(df, drydownid):
     nobsinaday = 48  # number of observations in a day
@@ -176,45 +156,42 @@ def dailyAvg(data, windowsize):
 def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp, phi=1):
 
     a = 1.6
-    B = (cp_interp(t) + k2_interp(t)) / phi  # non-stomatal limitation; mesophyll
 
     # --------------- k1 is per leaf area so gs is per leaf area ----------
 
-    # gpart11 = (ca + k2_interp(t) - 2 * a * lam * VPDinterp(t)) *\
-    #           np.sqrt(a * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
-    #           (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/mol
-    #
-    # gpart12 = a * lam * VPDinterp(t) * ((ca + k2_interp(t)) - a * lam * VPDinterp(t))  # mol/mol
-    #
-    # gpart21 = gpart11 / gpart12  # mol/mol
-    #
-    # gpart22 = ca - 2 * cp_interp(t) - k2_interp(t)  # mol/mol
-    #
-    # gpart3 = gpart21 + gpart22  # mol/mol
-    #
-    # gpart4 = (ca + k2_interp(t))**2  # mol2 mol-2
-    #
-    # gl = k1_interp(t) * gpart3 / gpart4  # mol/m2/d per unit LEAF area
+    gpart11 = (ca + k2_interp(t) - 2 * a * lam * VPDinterp(t)) *\
+              np.sqrt(a * lam * VPDinterp(t) * (ca - cp_interp(t)) * (cp_interp(t) + k2_interp(t)) *
+              (ca + k2_interp(t) - a * lam * VPDinterp(t)))  # mol/mol
 
-    gpart11 = (B - cp_interp(t) + ca - 2 * a * VPDinterp(t) * lam) * \
-              np.sqrt(a * VPDinterp(t) * lam * B * k1_interp(t) ** 2 * (ca - cp_interp(t)) *
-                      (B - cp_interp(t) + ca - a * VPDinterp(t) * lam))
+    gpart12 = a * lam * VPDinterp(t) * ((ca + k2_interp(t)) - a * lam * VPDinterp(t))  # mol/mol
 
-    gpart12 = a * VPDinterp(t) * lam * (B - cp_interp(t) + ca) ** 2 *\
-              (B - cp_interp(t) + ca - a * VPDinterp(t) * lam)
+    gpart21 = gpart11 / gpart12  # mol/mol
 
-    gpart21 = k1_interp(t) * (B - ca + cp_interp(t))
+    gpart22 = ca - 2 * cp_interp(t) - k2_interp(t)  # mol/mol
 
-    gpart22 = (B + ca - cp_interp(t)) ** 2
+    gpart3 = gpart21 + gpart22  # mol/mol
 
-    gs = - gpart21 / gpart22 + gpart11 / gpart12
+    gpart4 = (ca + k2_interp(t))**2  # mol2 mol-2
+
+    gs = k1_interp(t) * gpart3 / gpart4  # mol/m2/d per unit LEAF area
+
+
+    # B = (cp_interp(t) + k2_interp(t)) / phi  # non-stomatal limitation; mesophyll
+    #
+    # gpart11 = (B - cp_interp(t) + ca - 2 * a * VPDinterp(t) * lam) * \
+    #           np.sqrt(a * VPDinterp(t) * lam * B * k1_interp(t) ** 2 * (ca - cp_interp(t)) *
+    #                   (B - cp_interp(t) + ca - a * VPDinterp(t) * lam))
+    #
+    # gpart12 = a * VPDinterp(t) * lam * (B - cp_interp(t) + ca) ** 2 *\
+    #           (B - cp_interp(t) + ca - a * VPDinterp(t) * lam)
+    #
+    # gpart21 = k1_interp(t) * (B - ca + cp_interp(t))
+    #
+    # gpart22 = (B + ca - cp_interp(t)) ** 2
+    #
+    # gs = - gpart21 / gpart22 + gpart11 / gpart12
 
     return gs
-
-
-def phi_val(psi_l, psi_crit):
-
-    return 1 - psi_l / psi_crit
 
 
 def create_ranges(start, stop, N, endpoint=True):
@@ -237,15 +214,15 @@ def psil_val_integral(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, rever
     return trans_res - 1.6 * gs * VPDinterp(t)  # all in unit LEAF area
 
 
-def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
-
-    trans_res = (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
-
-    if np.any(
-            np.logical_not(np.isfinite(trans_res - 1.6 * gs * VPDinterp(t)))):
-        raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
-
-    return trans_res - 1.6 * gs * VPDinterp(t)  # all in unit LEAF area
+# def psil_val(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
+#
+#     trans_res = (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible)
+#
+#     if np.any(
+#             np.logical_not(np.isfinite(trans_res - 1.6 * gs * VPDinterp(t)))):
+#         raise GuessError('Try increasing the lambda guess or there may be no solutions for the parameter choices.')
+#
+#     return trans_res - 1.6 * gs * VPDinterp(t)  # all in unit LEAF area
 
 
 def psi_r_val(x, psi_sat, gamma, b, d_r, z_r, RAI, gl, lai, VPDinterp, t):
@@ -278,7 +255,7 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     #     return 0, psi_x
 
     gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
-    plant_x = plant_cond(psi_x, psi_l, psi_63, w_exp, Kmax, 1)
+    plant_x = grl_val((psi_x + psi_l) / 2, psi_63, w_exp, Kmax)
     psi_r_guess = (psi_x * gSR + psi_l * plant_x) / (gSR + plant_x)
     # psi_r_guess = psi_x + 0.1
     #
@@ -375,7 +352,7 @@ def plant_cond_integral(psi_l, psi_r, psi_63, w_exp, Kmax, reversible=0):
 
         return cond_pot
 
-def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
+def grl_val(psi, psi_63, w_exp, Kmax):
     """
 
     :param psi_r: root water potential in MPa
@@ -385,15 +362,7 @@ def plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible=0):
     :param Kmax: Saturated plant LEAF area-average conductance in mol/m2/MPa/d
     :return: Unsaturated plant LEAF area-average conductance in mol/m2/MPa/d
     """
-    cond_pot = Kmax * np.exp(- (0.5 * (psi_r + psi_l) / psi_63) ** w_exp)
-
-    if reversible:
-        return cond_pot
-    else:
-
-        cond_pot = np.minimum.accumulate(cond_pot)
-
-        return cond_pot
+    return Kmax * np.exp(- (psi / psi_63) ** w_exp)
 
 
 def gSR_val(x, gamma, b, d_r, z_r, RAI, lai):
@@ -417,27 +386,6 @@ def gSR_val(x, gamma, b, d_r, z_r, RAI, lai):
     gSR *= unit / lai  # mol/MPa/m2/d per unit LEAF area
     return gSR
 
-# def dgSR_dx_val(x, gamma, b, d_r, z_r, RAI):
-#     """
-#
-#     :param x: Soil moisture in m3.m-3
-#     :param gamma: Saturated hydraulic conductivity of soil in m.d-1
-#     :param b: exponent of relation
-#     :param d_r: diameter of fine roots in meters
-#     :param z_r: rooting depth in meters
-#     :param RAI: Root Area Index in m/m
-#     :return: partial derivative of the soil to root hydraulic conductivity wrt x in mol/m2/MPa/d
-#     """
-#     lSR = np.sqrt(d_r * z_r / RAI)
-#     dks_dx = (2*b+3) * gamma * x ** (2*b+2)  # Partial derivative of unsaturated hydraulic conductivity of soil in m/d
-#     unit = 24 * 3600  # 1/s -> 1/d
-#     grav = 9.81  # gravitational acceleration in N/Kg
-#     M_w = 0.018  # molar mass of water in Kg/mol
-#     dgSR = dks_dx / unit / grav / lSR  # kg/N/s
-#     dgSR *= 1e6 / M_w  # mol/MPa/m2/s
-#     dgSR *= unit  # mol/MPa/m2/d
-#     return dgSR
-
 
 def lam_from_trans(trans, ca, cp, VPD, k1, k2):
     gs_vals = trans / (1.6 * VPD)  # per unit LEAF area
@@ -449,15 +397,6 @@ def lam_from_trans(trans, ca, cp, VPD, k1, k2):
 
     part3 = 2 * VPD * 1.6
     return (part2 - part1) / part3  # mol/mol
-
-#
-# def dlam_dx(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, ca, alpha, cp, VPD, k1, k2, lai, reversible=0):
-#     trans_max = trans_max_val(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
-#     dlam_dtrans = derivative(lam_from_trans, trans_max, dx = 1e-5, args=(ca, alpha, cp, VPD, k1, k2, lai))
-#     fun = lambda xx: trans_max_val(xx, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)[0]
-#     dtrans_max_dx = derivative(fun, x, dx=1e-5)
-#
-#     return dlam_dtrans * dtrans_max_dx
 
 
 # def rel_loss(psi_x, psi_l, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai):
@@ -547,3 +486,180 @@ def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai
 
     return E_crit, A_crit, P_crit, E_opt, A_opt, P_opt, psi_r_opt
 
+# ------------------------- Methods for mesophyll -------------------------
+
+
+def phi_val(psi_l, psi_crit):
+
+    return 1 - psi_l / psi_crit
+
+
+def dphi_dgs(psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai):
+    x = (psi_x / psi_sat) ** - (1 / b)
+    a = 1.6
+    part1 = a * VPD / grl_val(psi_l, psi_63, w_exp, Kmax)
+    part2 = 1 + grl_val(psi_r, psi_63, w_exp, Kmax) / gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
+    return - part1 * part2 / psi_crit
+
+
+def dpsix_dx(x, psi_sat, b):
+
+    return - psi_sat * b * x ** (-b - 1)
+
+
+def dgSR_dx(x, gamma, b, d_r, z_r, RAI, lai):
+    """
+
+    :param x: Soil moisture in m3.m-3
+    :param gamma: Saturated hydraulic conductivity of soil in m.d-1
+    :param b: exponent of relation
+    :param d_r: diameter of fine roots in meters
+    :param z_r: rooting depth in meters
+    :param RAI: Root Area Index in m/m
+    :return: partial derivative of the soil to root hydraulic conductivity wrt x in mol/m2/MPa/d
+    """
+    lSR = np.sqrt(d_r * z_r / RAI)
+    dgx_dx = (2*b+3) * gamma * x ** (2*b+2)  # Partial derivative of unsaturated hydraulic conductivity of soil in m/d
+    unit = 24 * 3600  # 1/s -> 1/d
+    grav = 9.81  # gravitational acceleration in N/Kg
+    M_w = 0.018  # molar mass of water in Kg/mol
+    dgSR = dgx_dx / unit / grav / lSR  # kg/N/s
+    dgSR *= 1e6 / M_w  # mol/MPa/m2/s
+    dgSR *= unit / lai # mol/MPa/m2/d
+    return dgSR
+
+
+def dphi_dx(psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai):
+    x = (psi_x / psi_sat) ** - (1 / b)
+    part1 = grl_val(psi_r, psi_63, w_exp, Kmax) / grl_val(psi_l, psi_63, w_exp, Kmax)
+    part2 = dpsix_dx(x, psi_sat, b)
+    part3 = 1 + dgSR_dx(x, gamma, b, d_r, z_r, RAI, lai) * (psi_x - psi_r) /\
+            gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
+    return - part1 * part2 * part3 / psi_crit
+
+
+def dB_dgs(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai):
+    phi = 1 - psi_l / psi_crit
+    part1 = - (cp + k2) / phi ** 2
+    part2 = dphi_dgs(psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai)
+    return part1 * part2
+
+
+def dB_dx(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai):
+    phi = 1 - psi_l / psi_crit
+    part1 = - (cp + k2) / phi ** 2
+    part2 = dphi_dx(psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai)
+    return part1 * part2
+
+
+def dAdgs(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
+    """
+
+    :param t: time in days
+    :param gs: stomatal conductance in mol m-2 d-1
+    :param ca: atmospheric carbon concentration
+    :param k1_interp: parameter k1 as a function of time in days mol m-2 d-1
+    :param k2_interp: parameter k2 in mol mol-1
+    :param cp_interp: carbon compensation point in mol mol-1
+    :param phi: degree of divorce between ci and cc
+    :return: dA_dgs
+    """
+
+    k1 = k1_interp(t)
+    k2 = k2_interp(t)
+    cp = cp_interp(t)
+    B = (cp + k2) / phi
+
+    part11 = np.zeros(k1.shape)
+    part12 = np.zeros(k1.shape)
+
+    # Nok = np.equal(k1, 0)
+    # ok = ~Nok
+    # part11[ok] = 2 * (B[ok] + ca - cp[ok]) ** 2 * gs[ok] + 2 * (B[ok] - ca + cp[ok]) * k1[ok]
+    # part12[ok] = 2 * np.sqrt((B[ok] + ca - cp[ok]) ** 2 * gs[ok] ** 2 +
+    #                          2 * (B[ok] - ca + cp[ok]) * gs[ok] * k1[ok] + k1[ok] ** 2)
+    #
+    # part11[Nok] = B[Nok] + ca - cp[Nok]
+    # part12[Nok] = 1
+
+    part11 = 2 * (B + ca - cp) ** 2 * gs + 2 * (B - ca + cp) * k1
+    part12 = 2 * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+                             2 * (B - ca + cp) * gs * k1 + k1 ** 2)
+    part2 = B + ca - cp
+
+    return (1/2) * (part2 * part12 - part11)
+
+
+def dAdB(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
+    """
+
+    :param t: time in days
+    :param gs: stomatal conductance in mol m-2 d-1
+    :param ca: atmospheric carbon concentration
+    :param k1_interp: parameter k1 as a function of time in days mol m-2 d-1
+    :param k2_interp: parameter k2 in mol mol-1
+    :param cp_interp: carbon compensation point in mol mol-1
+    :param phi: degree of divorce between ci and cc
+    :return: dA_dgs
+    """
+
+    k1 = k1_interp(t)
+    k2 = k2_interp(t)
+    cp = cp_interp(t)
+    B = (cp + k2) / phi
+
+    part11 = np.zeros(k1.shape)
+    part12 = np.zeros(k1.shape)
+
+    # Nok = np.equal(k1, 0)
+    # ok = ~Nok
+    #
+    # part11[ok] = 2 * (B[ok] + ca - cp[ok]) * gs[ok] ** 2 + 2 * gs[ok] * k1[ok]
+    # part12[ok] = 2 * np.sqrt((B[ok] + ca - cp[ok]) ** 2 * gs[ok] ** 2 +
+    #                          2 * (B[ok] - ca + cp[ok]) * gs[ok] * k1[ok] + k1[ok] ** 2)
+    #
+    # part11[Nok] = 0
+    # part12[Nok] = 1
+
+    part11 = 2 * (B + ca - cp) * gs ** 2 + 2 * gs * k1
+    part12 = 2 * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+                             2 * (B - ca + cp) * gs * k1 + k1 ** 2)
+
+    part2 = gs
+
+    return (1/2) * (part2 * part12 - part11)
+
+
+def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, psi_x,
+                 VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai, lam):
+
+    psi_crit = psi_lcrit_interp(psi_x)
+    VPD = VPDinterp(t)
+    k1 = k1_interp(t)
+    k2 = k2_interp(t)
+    cp = cp_interp(t)
+    x = (psi_x / psi_sat) ** - (1 / b)
+
+    psi_r = 1.6 * gs * VPD / gSR_val(x, gamma, b, d_r, z_r, RAI, lai) + psi_x
+    res = root(lambda psi_l: 1.6 * gs * VPD - Kmax * (psi_63 / w_exp) *
+                       (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) - gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp)),
+         psi_r + 0.1, method='hybr')
+    psi_l = res.get('x')
+
+    phi = 1 - psi_l / psi_crit
+
+    part1 = dAdgs(t, gs, ca, k1_interp, k2_interp, cp_interp, phi)
+    part2 = dAdB(t, gs, ca, k1_interp, k2_interp, cp_interp, phi) *\
+            dB_dgs(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+             gamma, b, d_r, z_r, RAI, lai)
+
+    B = (cp + k2) / phi
+
+    return part1 + part2 - 1.6 * lam * VPD * 2 * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+                             2 * (B - ca + cp) * gs * k1 + k1 ** 2)
