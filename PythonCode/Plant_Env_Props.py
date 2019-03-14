@@ -188,15 +188,15 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
 
 import pickle
 
-pickle_out = open("../no_WUS/environment", "wb")
-pickle.dump(env, pickle_out)
-pickle_out.close()
-
-pickle_out = open("../no_WUS/soil", "wb")
-pickle.dump(soil, pickle_out)
-pickle_out.close()
-
-pickle_out = open("../no_WUS/plant_ponderosa", "wb")
-pickle.dump(plant, pickle_out)
-pickle_out.close()
+# pickle_out = open("../no_WUS/environment", "wb")
+# pickle.dump(env, pickle_out)
+# pickle_out.close()
+#
+# pickle_out = open("../no_WUS/soil", "wb")
+# pickle.dump(soil, pickle_out)
+# pickle_out.close()
+#
+# pickle_out = open("../no_WUS/plant_ponderosa", "wb")
+# pickle.dump(plant, pickle_out)
+# pickle_out.close()
 

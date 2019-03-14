@@ -26,6 +26,7 @@ class ConvergenceError(Error):
 xvals = np.arange(0.1, 0.3, 0.005)
 dgSR_dx = np.gradient(gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai), xvals)
 dgSR_dx_interp = interp1d(xvals, dgSR_dx, kind='cubic')
+reversible = 1
 
 def dydt(t, y):
     """
@@ -116,7 +117,7 @@ def bc_wus(ya, yb):  # Water use strategy
 Lambda = 2 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
 lam_guess = 2 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.15*np.ones((1, t.size))
+x_guess = 0.22*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 

@@ -3,6 +3,7 @@ from scipy.optimize import root
 from scipy.optimize import minimize
 from scipy.integrate import quad
 from scipy.misc import derivative
+from scipy.special import gammaincc
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -227,8 +228,7 @@ def create_ranges(start, stop, N, endpoint=True):
 
 def psil_val_integral(psi_l, psi_r, psi_63, w_exp, Kmax, gs, VPDinterp, t, reversible=0):
 
-    PP = create_ranges(psi_r, psi_l, 100)
-    trans_res = np.trapz(plant_cond_integral(PP, psi_63, w_exp, Kmax, reversible), x=PP)
+    trans_res = plant_cond_integral(psi_l, psi_r, psi_63, w_exp, Kmax, reversible)
 
     if np.any(
             np.logical_not(np.isfinite(trans_res - 1.6 * gs * VPDinterp(t)))):
@@ -286,12 +286,8 @@ def transpiration(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RA
     #                         (psi_l - psi_r) * plant_cond(psi_r, psi_l, psi_63, w_exp, Kmax, reversible),
     #            psi_r_guess, method='hybr')
 
-
-    res = root(lambda psi_r: (psi_r - psi_x) * gSR -
-                             np.trapz(plant_cond_integral(create_ranges(psi_r, psi_l, 100), psi_63, w_exp, Kmax, 1),
-                                      x=create_ranges(psi_r, psi_l, 100)),
+    res = root(lambda psi_r: (psi_r - psi_x) * gSR - plant_cond_integral(psi_l, psi_r, psi_63, w_exp, Kmax, 1),
                psi_r_guess, method='hybr')
-
 
     psi_r = res.get('x')
 
@@ -306,7 +302,7 @@ def trans_crit(x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, en
     PP = np.arange(psi_x, endP, 0.01)
     EE, psi_r = transpiration(PP, x, psi_sat, gamma, b,
                           psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
-    kk = np.gradient(EE, PP)
+    kk = np.gradient(EE, PP, edge_order=2)
     k_max = kk[0]
     # Find critical point
 
@@ -356,7 +352,7 @@ def trans_opt(psi_l, x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, l
 #
 #     return dEdx  # mol/m2/d
 
-def plant_cond_integral(psi_p, psi_63, w_exp, Kmax, reversible=0):
+def plant_cond_integral(psi_l, psi_r, psi_63, w_exp, Kmax, reversible=0):
     """
 
     :param psi_r: root water potential in MPa
@@ -366,7 +362,10 @@ def plant_cond_integral(psi_p, psi_63, w_exp, Kmax, reversible=0):
     :param Kmax: Saturated plant LEAF area-average conductance in mol/m2/MPa/d
     :return: Unsaturated plant LEAF area-average conductance in mol/m2/MPa/d
     """
-    cond_pot = Kmax * np.exp(- (psi_p / psi_63) ** w_exp)
+    cond_pot = Kmax * psi_63 / w_exp *\
+               (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) -
+                gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp))
+
 
     if reversible:
         return cond_pot
