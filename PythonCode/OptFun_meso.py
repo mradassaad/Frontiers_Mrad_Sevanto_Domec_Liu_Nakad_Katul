@@ -49,35 +49,29 @@ def dydt(t, y):
     res_gs = root(gs_val_meso, trans_max * (k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
          args=(t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
                  VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai, y[0]),
-         method='lm')
+         method='hybr')
     gl = res_gs.get('x')  # mol/m2/d per unit LEAF area
 
     psi_r = 1.6 * gl * VPDinterp(t) / gSR_val(y[1], gamma, b, d_r, z_r, RAI, lai) + psi_x
     trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
 
-    ok = np.ones(t.shape)
+    ok = np.ones(t.shape, dtype=bool)
     # ok = np.less_equal(1.6 * gl * VPDinterp(t), trans_max)
     Nok = ~ok
 
-    dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape)
+    psi_l = np.zeros(t.shape); dEdx = np.zeros(t.shape); evap_trans = np.zeros(t.shape)
 
     evap_trans[ok] = 1.6 * gl[ok] * VPDinterp(t[ok])  # mol m-2 d-1 per unit leaf area per rooting depth
     dEdx[ok] = 0
     # ----------------------------------- Find psi_l ------------------------
-    with warnings.catch_warnings():
-        warnings.filterwarnings('error', category=RuntimeWarning)
-        try:
-            res = root(lambda psi_l: 1.6 * gl * VPDinterp(t) - (psi_63 / w_exp) *
-                                     (gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp) - gammaincc(1 / w_exp, (
-                                                 psi_r / psi_63) ** w_exp)),
-                       psi_r + 0.1, method='hybr')
-            psi_l = res.get('x')
-        except RuntimeWarning:
-            print('stomatal conductance exceeds transpiration capacity: increase lam guess or no sols')
-            import sys
-            sys.exit()
 
-    psi_l[ok] = res.x
+    psi_l_temp = gammainccinv(1 / w_exp,
+                                - 1.6 * gl[ok] * VPDinterp(t[ok]) * w_exp / (gammafunc(1 / w_exp) * Kmax * psi_63) +
+                                gammaincc(1 / w_exp, (psi_r[ok] / psi_63) ** w_exp))
+
+    psi_l[ok] = psi_63 * psi_l_temp ** (1 / w_exp)
+
+
 
     # ----------------------------- When  transpiration limit is reached --------------
     if np.any(np.equal(Nok, True)):
@@ -98,11 +92,10 @@ def dydt(t, y):
     phi = 1 - psi_l / psi_l_interp(psi_x)
     f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
     dfdx = - (dlossesdx)  # mol m-2 d-1
-    dlamdt = - y[0] * (dAdB(t, gl, ca, k1_interp, k2_interp, cp_interp) *
-                       dB_dx(cp_interp(t), k2_interp(t), psi_l, psi_l_interp(psi_x),
+    dlamdt = (-dAdB(t, gl, ca, k1_interp, k2_interp, cp_interp) *\
+             dB_dx(cp_interp(t), k2_interp(t), psi_l, psi_l_interp(psi_x),
                              psi_x, psi_r, VPDinterp(t), psi_63, w_exp, Kmax, psi_sat,
-             gamma, b, d_r, z_r, RAI, lai) +
-                       dfdx * nu / n / z_r)  # 1/d
+             gamma, b, d_r, z_r, RAI, lai) - y[0] * dfdx) * nu / n / z_r  # 1/d
     dxdt = f * nu / n / z_r  # 1/d
     return np.vstack((dlamdt, dxdt))
 
@@ -115,16 +108,16 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.22
+    x0 = 0.25
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 # t = np.linspace(0, days, 2000)
 # maxLam = 763e-6*unit0
-Lambda = 8 * 1e-3  # mol/mol
+Lambda = 3 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 8 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.22*np.ones((1, t.size))
+lam_guess = 3 * 1e-3 * np.ones((1, t.size))  # mol/mol
+x_guess = 0.25*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 

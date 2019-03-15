@@ -4,6 +4,8 @@ from scipy.optimize import minimize
 from scipy.integrate import quad
 from scipy.misc import derivative
 from scipy.special import gammaincc
+from scipy.special import gamma as gammafunc
+from scipy.special import gammainccinv
 
 class Error(Exception):
     """Base class for exceptions in this module."""
@@ -339,7 +341,7 @@ def plant_cond_integral(psi_l, psi_r, psi_63, w_exp, Kmax, reversible=0):
     :param Kmax: Saturated plant LEAF area-average conductance in mol/m2/MPa/d
     :return: Unsaturated plant LEAF area-average conductance in mol/m2/MPa/d
     """
-    cond_pot = Kmax * psi_63 / w_exp *\
+    cond_pot = gammafunc(1 / w_exp) * Kmax * psi_63 / w_exp *\
                (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) -
                 gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp))
 
@@ -576,9 +578,9 @@ def dAdgs(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
     cp = cp_interp(t)
     B = (cp + k2) / phi
 
-    part11 = np.zeros(k1.shape)
-    part12 = np.zeros(k1.shape)
-
+    # part11 = np.zeros(k1.shape)
+    # part12 = np.zeros(k1.shape)
+    #
     # Nok = np.equal(k1, 0)
     # ok = ~Nok
     # part11[ok] = 2 * (B[ok] + ca - cp[ok]) ** 2 * gs[ok] + 2 * (B[ok] - ca + cp[ok]) * k1[ok]
@@ -588,8 +590,8 @@ def dAdgs(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
     # part11[Nok] = B[Nok] + ca - cp[Nok]
     # part12[Nok] = 1
 
-    part11 = 2 * (B + ca - cp) ** 2 * gs + 2 * (B - ca + cp) * k1
-    part12 = 2 * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+    part11 = (B + ca - cp) ** 2 * gs + (B - ca + cp) * k1
+    part12 = np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
     part2 = B + ca - cp
 
@@ -614,9 +616,9 @@ def dAdB(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
     cp = cp_interp(t)
     B = (cp + k2) / phi
 
-    part11 = np.zeros(k1.shape)
-    part12 = np.zeros(k1.shape)
-
+    # part11 = np.zeros(k1.shape)
+    # part12 = np.zeros(k1.shape)
+    #
     # Nok = np.equal(k1, 0)
     # ok = ~Nok
     #
@@ -627,8 +629,8 @@ def dAdB(t, gs, ca, k1_interp, k2_interp, cp_interp, phi=1):
     # part11[Nok] = 0
     # part12[Nok] = 1
 
-    part11 = 2 * (B + ca - cp) * gs ** 2 + 2 * gs * k1
-    part12 = 2 * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+    part11 = (B + ca - cp) * gs ** 2 + gs * k1
+    part12 = np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
 
     part2 = gs
@@ -647,10 +649,15 @@ def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, ps
     x = (psi_x / psi_sat) ** - (1 / b)
 
     psi_r = 1.6 * gs * VPD / gSR_val(x, gamma, b, d_r, z_r, RAI, lai) + psi_x
-    res = root(lambda psi_l: 1.6 * gs * VPD - Kmax * (psi_63 / w_exp) *
-                       (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) - gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp)),
-         psi_r + 0.1, method='hybr')
-    psi_l = res.get('x')
+    # res = root(lambda psi_l: 1.6 * gs * VPD - Kmax * (psi_63 / w_exp) *
+    #                    (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) - gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp)),
+    #      psi_r + 0.1, method='hybr')
+    # psi_l = res.get('x')
+    psi_l_temp = gammainccinv(1 / w_exp,
+                         - 1.6 * gs * VPD * w_exp / (gammafunc(1 / w_exp) * Kmax * psi_63) +
+                         gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp))
+
+    psi_l = psi_63 * psi_l_temp ** (1 / w_exp)
 
     phi = 1 - psi_l / psi_crit
 
@@ -661,5 +668,5 @@ def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, ps
 
     B = (cp + k2) / phi
 
-    return part1 + part2 - 1.6 * lam * VPD * 2 * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+    return part1 + part2 - 1.6 * lam * VPD * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
