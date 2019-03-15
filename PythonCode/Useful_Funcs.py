@@ -670,3 +670,25 @@ def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, ps
 
     return part1 + part2 - 1.6 * lam * VPD * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
+
+
+def psir_crit_val(psi_r, psi_x, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp, frac=0.05):
+    x = (psi_x / psi_sat) ** (-1 / b)
+    # RHS_part1 = gSR_val(x, gamma, b, d_r, z_r, RAI, lai) * (psi_r - psi_x) * w_exp
+    # RHS_part2 = Kmax * psi_63 * gammafunc(1/w_exp)
+    # RHS_part3 = gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp)
+    # psi_l_temp = gammainccinv(1 / w_exp, - RHS_part1 / RHS_part2 + RHS_part3)
+
+    psi_l_temp = gammainccinv(1 / w_exp,
+                              - 1.6 * gSR_val(x, gamma, b, d_r, z_r, RAI, lai) * (psi_r - psi_x) * w_exp /
+                              (gammafunc(1 / w_exp) * Kmax * psi_63) +
+                              gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp))
+
+    psi_l = psi_63 * psi_l_temp ** (1 / w_exp)
+
+    val = grl_val(psi_r, psi_63, w_exp, Kmax) - \
+          grl_val(psi_l, psi_63, w_exp, Kmax) / Kmax *\
+          (grl_val(psi_x, psi_63, w_exp, Kmax) + gSR_val(x, gamma, b, d_r, z_r, RAI, lai)) /\
+          (frac * grl_val(psi_x, psi_63, w_exp, Kmax) / Kmax) +\
+          gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
+    return val

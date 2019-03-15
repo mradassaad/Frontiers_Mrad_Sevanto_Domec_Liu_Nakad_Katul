@@ -92,6 +92,9 @@ trans_vals = np.zeros(xvals.shape)
 k_crit_vals = np.zeros(xvals.shape)
 k_max_vals = np.zeros(xvals.shape)
 i = 0
+res = root(psir_crit_val, 0.1 / gSR_val(xvals, gamma, b ,d_r, z_r, RAI, lai) + psi_x_vals,
+                                args=(psi_x_vals, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp),
+                                method='hybr')
 trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
 trans_vals[i] = trans_res[0]
 psi_r_vals[i] = trans_res[1]
@@ -188,15 +191,15 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
 
 import pickle
 
-pickle_out = open("../no_WUS/environment", "wb")
-pickle.dump(env, pickle_out)
-pickle_out.close()
-
-pickle_out = open("../no_WUS/soil", "wb")
-pickle.dump(soil, pickle_out)
-pickle_out.close()
-
-pickle_out = open("../no_WUS/plant_ponderosa", "wb")
-pickle.dump(plant, pickle_out)
-pickle_out.close()
-
+# pickle_out = open("../no_WUS/environment", "wb")
+# pickle.dump(env, pickle_out)
+# pickle_out.close()
+#
+# pickle_out = open("../no_WUS/soil", "wb")
+# pickle.dump(soil, pickle_out)
+# pickle_out.close()
+#
+# pickle_out = open("../no_WUS/plant_ponderosa", "wb")
+# pickle.dump(plant, pickle_out)
+# pickle_out.close()
+#

@@ -46,7 +46,7 @@ def dydt(t, y):
     # ----------------- stomatal conductance based on current values -------------------
     psi_x = psi_sat * y[1] ** -b
     trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
-    res_gs = root(gs_val_meso, trans_max * (k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
+    res_gs = root(gs_val_meso, trans_max * (1 + k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
          args=(t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
                  VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai, y[0]),
          method='hybr')
