@@ -53,6 +53,8 @@ psi_r_interp = plant['psi_r_interp']
 psi_l_interp = plant['psi_l_interp']
 k_crit_interp = plant['k_crit_interp']
 k_max_interp = plant['k_max_interp']
+dpsil_dx_interp = plant['dpsil_dx_interp']
+dpsir_dx_interp = plant['dpsir_dx_interp']
 
 
 unit0 = 24 * 3600   # 1/s -> 1/d

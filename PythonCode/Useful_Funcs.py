@@ -155,7 +155,7 @@ def dailyAvg(data, windowsize):
 # plt.xlabel('Time step (half-hour)')
 # plt.ylabel(r'An ($\mu$mol CO$_2$ /m$^2$/s)')
 
-def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp, phi=1):
+def g_val(t, lam, ca, VPDinterp, k1_interp, k2_interp, cp_interp):
 
     a = 1.6
 
@@ -528,18 +528,17 @@ def dgSR_dx(x, gamma, b, d_r, z_r, RAI, lai):
     M_w = 0.018  # molar mass of water in Kg/mol
     dgSR = dgx_dx / unit / grav / lSR  # kg/N/s
     dgSR *= 1e6 / M_w  # mol/MPa/m2/s
-    dgSR *= unit / lai # mol/MPa/m2/d
+    dgSR *= unit / lai  # mol/MPa/m2/d
     return dgSR
 
 
-def dphi_dx(psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
-             gamma, b, d_r, z_r, RAI, lai):
+def dphi_dx(psi_l, psi_crit, psi_x, psi_r, dpsicrit_dx, psi_63, w_exp, Kmax, psi_sat, b):
     x = (psi_x / psi_sat) ** - (1 / b)
     part1 = grl_val(psi_r, psi_63, w_exp, Kmax) / grl_val(psi_l, psi_63, w_exp, Kmax)
     part2 = dpsix_dx(x, psi_sat, b)
-    part3 = 1 + dgSR_dx(x, gamma, b, d_r, z_r, RAI, lai) * (psi_x - psi_r) /\
-            gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
-    return - part1 * part2 * part3 / psi_crit
+    part3 = 1 + (2 * b + 3) * (psi_x - psi_r) / x
+    part4 = psi_l / psi_crit ** 2 * dpsicrit_dx
+    return - part1 * part2 * part3 / psi_crit + part4
 
 
 def dB_dgs(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
@@ -551,12 +550,10 @@ def dB_dgs(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_
     return part1 * part2
 
 
-def dB_dx(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
-             gamma, b, d_r, z_r, RAI, lai):
+def dB_dx(cp, k2, psi_l, psi_crit, psi_x, psi_r, dpsicrit_dx, psi_63, w_exp, Kmax, psi_sat, b):
     phi = 1 - psi_l / psi_crit
     part1 = - (cp + k2) / phi ** 2
-    part2 = dphi_dx(psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
-             gamma, b, d_r, z_r, RAI, lai)
+    part2 = dphi_dx(psi_l, psi_crit, psi_x, psi_r, dpsicrit_dx, psi_63, w_exp, Kmax, psi_sat, b)
     return part1 * part2
 
 
@@ -672,23 +669,23 @@ def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, ps
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
 
 
-def psir_crit_val(psi_r, psi_x, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp, frac=0.05):
+
+def psil_crit_val(psi_l, psi_x, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp, frac=0.05):
     x = (psi_x / psi_sat) ** (-1 / b)
-    # RHS_part1 = gSR_val(x, gamma, b, d_r, z_r, RAI, lai) * (psi_r - psi_x) * w_exp
-    # RHS_part2 = Kmax * psi_63 * gammafunc(1/w_exp)
-    # RHS_part3 = gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp)
-    # psi_l_temp = gammainccinv(1 / w_exp, - RHS_part1 / RHS_part2 + RHS_part3)
+    soil_root = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
 
-    psi_l_temp = gammainccinv(1 / w_exp,
-                              - 1.6 * gSR_val(x, gamma, b, d_r, z_r, RAI, lai) * (psi_r - psi_x) * w_exp /
-                              (gammafunc(1 / w_exp) * Kmax * psi_63) +
-                              gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp))
+    res_psir = root(lambda psi_r: Kmax * psi_63 * gammafunc(1 / w_exp) / w_exp *
+                                  (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) -
+                                   gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp)) -
+                                  soil_root * (psi_r - psi_x),
+                    (psi_l + psi_x) / 2,
+               method='hybr')
+    psi_r = res_psir.get('x')
 
-    psi_l = psi_63 * psi_l_temp ** (1 / w_exp)
+    X_part1 = grl_val(psi_r, psi_63, w_exp, Kmax) + soil_root
+    X_part2 = grl_val(psi_x, psi_63, w_exp, Kmax) + soil_root
 
-    val = grl_val(psi_r, psi_63, w_exp, Kmax) - \
-          grl_val(psi_l, psi_63, w_exp, Kmax) / Kmax *\
-          (grl_val(psi_x, psi_63, w_exp, Kmax) + gSR_val(x, gamma, b, d_r, z_r, RAI, lai)) /\
-          (frac * grl_val(psi_x, psi_63, w_exp, Kmax) / Kmax) +\
-          gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
-    return val
+    X = frac * grl_val(psi_x, psi_63, w_exp, Kmax) / Kmax * X_part1 / X_part2
+
+
+    return psi_l - psi_63 * (- np.log(X)) ** (1 / w_exp)

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import warnings
 from Useful_Funcs import*
 from scipy.interpolate import interp1d
+from jac_defs import jac_nocomp_nomeso
 
 # from Plant_Env_Props import*
 from pickle_extract import*
@@ -122,8 +123,15 @@ x_guess = 0.22*np.ones((1, t.size))
 y_guess = np.vstack((lam_guess, x_guess))
 
 # ---------------- SOLVER - SOLVER - SOLVER - SOLVER - SOLVER --------------------
+
+
+# def jac(t, y): return jac_nocomp_nomeso(t, y, ca, cp_interp, k1_interp, k2_interp, VPDinterp)
+
+
 try:
-    res = solve_bvp(dydt, bc_wus, t, y_guess, tol=1e-3, verbose=2, max_nodes=10000)
+    res = solve_bvp(dydt, bc_wus, t, y_guess,
+                    tol=1e-3, verbose=2, max_nodes=10000)
+    # fun_jac = jac,
 except OverflowError:
     print('Try reducing initial guess for lambda')
     import sys

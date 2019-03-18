@@ -36,16 +36,25 @@ def dydt(t, y):
     :return:
     """
 
-    if np.any(y[0] > (ca - cp_interp(t))/(VPDinterp(t) * 1.6)):
-        raise GuessError('y[0] too large')
+    # if np.any(y[0] > (ca - cp_interp(t))/(VPDinterp(t) * 1.6)):
+    #     raise GuessError('y[0] too large')
+    #
+    # elif np.any(y[0] < 0):
+    #
+    #     raise GuessError('y[0] < 0')
 
-    elif np.any(y[0] < 0):
-
-        raise GuessError('y[0] < 0')
+    # if np.any(y[0] < 0):
+    #
+    #     raise GuessError('y[0] < 0')
 
     # ----------------- stomatal conductance based on current values -------------------
+    y[1][y[1] < 0.056] = 0.056
     psi_x = psi_sat * y[1] ** -b
-    trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
+    try:
+        trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
+    except:
+        print("NOO!!")
+
     res_gs = root(gs_val_meso, trans_max * (1 + k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
          args=(t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
                  VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai, y[0]),
@@ -80,6 +89,8 @@ def dydt(t, y):
         psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
     # -------------- uncontrolled losses and evapo-trans ------------------------
+    phi = 1 - psi_l / psi_l_interp(psi_x)
+    B = (cp_interp(t) + k2_interp(t)) / phi
     losses = 0
     dlossesdx = 0
 
@@ -92,10 +103,12 @@ def dydt(t, y):
     phi = 1 - psi_l / psi_l_interp(psi_x)
     f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
     dfdx = - (dlossesdx)  # mol m-2 d-1
-    dlamdt = (-dAdB(t, gl, ca, k1_interp, k2_interp, cp_interp) *\
+    dlamdt = (-dAdB(t, gl, ca, k1_interp, k2_interp, cp_interp) /
+              np.sqrt((B + ca - cp_interp(t)) ** 2 * gl ** 2 +
+                             2 * (B - ca + cp_interp(t)) * gl * k1_interp(t) + k1_interp(t) ** 2) *\
              dB_dx(cp_interp(t), k2_interp(t), psi_l, psi_l_interp(psi_x),
-                             psi_x, psi_r, VPDinterp(t), psi_63, w_exp, Kmax, psi_sat,
-             gamma, b, d_r, z_r, RAI, lai) - y[0] * dfdx) * nu / n / z_r  # 1/d
+                             psi_x, psi_r, dpsil_dx_interp(psi_x), psi_63, w_exp, Kmax, psi_sat, b) -
+              y[0] * dfdx) * nu / n / z_r  # 1/d
     dxdt = f * nu / n / z_r  # 1/d
     return np.vstack((dlamdt, dxdt))
 
@@ -108,16 +121,16 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.25
+    x0 = 0.18
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
-# t = np.linspace(0, days, 2000)
+t = np.linspace(0, days, 48 * days)
 # maxLam = 763e-6*unit0
-Lambda = 3 * 1e-3  # mol/mol
+Lambda = 7.2 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 3 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.25*np.ones((1, t.size))
+lam_guess = 7.2 * 1e-3 * np.ones((1, t.size))  # mol/mol
+x_guess = 0.18*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -134,40 +147,39 @@ except OverflowError:
 lam_plot = res.y[0] * 1e3
 soilM_plot = res.y[1]
 
-gl = g_val(res.x, res.y[0], ca, VPDinterp, k1_interp, k2_interp, cp_interp)  # stomatal conductance, mol/m2/d
-# per unit LEAF area
-gl[gl < 0] = 0
-
-A_val = A(res.x, gl, ca, k1_interp, k2_interp, cp_interp)  # mol/m2/d
-
 psi_x = psi_sat * soilM_plot ** (-b)  # Soil water potential, MPa
+trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
+res_gs = root(gs_val_meso, trans_max * (1 + k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
+         args=(t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
+                 VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai, res.y[0]),
+         method='hybr')
+gl = res_gs.get('x')  # mol/m2/d per unit LEAF area
+
+psi_r = 1.6 * gl * VPDinterp(t) / gSR_val(soilM_plot, gamma, b, d_r, z_r, RAI, lai) + psi_x
+
+psi_l_temp = gammainccinv(1 / w_exp,
+                             - 1.6 * gl * VPDinterp(t) * w_exp / (gammafunc(1 / w_exp) * Kmax * psi_63) +
+                            gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp))
+
+psi_l = psi_63 * psi_l_temp ** (1 / w_exp)
+
+phi = 1 - psi_l / psi_l_interp(psi_x)
+B = (cp_interp(res.x) + k2_interp(res.x)) / phi
+
+A_val = A(res.x, gl, ca, k1_interp, k2_interp, cp_interp, phi)  # mol/m2/d
 
 ci = np.ones(res.x.shape) * ca
 notZero = gl != 0
 ci[notZero] = ca - A_val[notZero] / gl[notZero]  # internal carbon concentration, mol/mol
 
+cc = phi * (ci - cp_interp(res.x)) + cp_interp(res.x)
+
 trans_max = trans_max_interp(psi_x)  # mol m-2 d-1 per unit LEAF area
 ok = np.less_equal(1.6 * gl * VPDinterp(res.x), trans_max)
 Nok = ~ok
 
-psi_r = np.zeros(res.x.shape)
-psi_l = np.zeros(res.x.shape)
-E = np.zeros(res.x.shape)
 
-psi_r[ok] = psi_r_val(res.y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, res.x[ok])
-# psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
-#                  method='hybr')
-psi_l_res = root(psil_val_integral, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
-                 method='hybr')
-psi_l[ok] = psi_l_res.x
-E[ok] = a * gl[ok] * VPDinterp(res.x[ok])  # mol m-2 d-1 per unit leaf area
-
-E[Nok] = trans_max_interp(psi_x[Nok])
-gl[Nok] = E[Nok] / a / VPDinterp(res.x[Nok])  # mol m-2 d-1 per unit leaf area
-A_val[Nok] = A(res.x[Nok], gl[Nok], ca, k1_interp, k2_interp, cp_interp)
-ci[Nok] = ca - A_val[Nok] / gl[Nok]
-psi_r[Nok] = psi_r_interp(psi_x[Nok])
-psi_l[Nok] = psi_l_interp(psi_x[Nok])
+E = a * gl * VPDinterp(res.x)  # mol m-2 d-1 per unit leaf area
 
 psi_p = (psi_l + psi_r) / 2
 # PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))

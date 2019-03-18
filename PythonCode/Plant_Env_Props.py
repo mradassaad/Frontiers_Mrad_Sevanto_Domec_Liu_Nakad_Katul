@@ -84,41 +84,39 @@ Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity,
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.1, 0.5, 0.005)
+xvals = np.arange(0.055, 0.8, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
-psi_l_vals = np.zeros(xvals.shape)
-psi_r_vals = np.zeros(xvals.shape)
-trans_vals = np.zeros(xvals.shape)
-k_crit_vals = np.zeros(xvals.shape)
-k_max_vals = np.zeros(xvals.shape)
-i = 0
-res = root(psir_crit_val, 0.1 / gSR_val(xvals, gamma, b ,d_r, z_r, RAI, lai) + psi_x_vals,
+soil_root = gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai)
+
+res = root(psil_crit_val, psi_x_vals + 0.000001,
                                 args=(psi_x_vals, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp),
                                 method='hybr')
-trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai)
-trans_vals[i] = trans_res[0]
-psi_r_vals[i] = trans_res[1]
-psi_l_vals[i] = trans_res[2]
-k_crit_vals[i] = trans_res[3]
-k_max_vals[i] = trans_res[4]
-i = 1
-for xx in xvals[1:]:
-    # OptRes = minimize(trans_opt, psi_x[i], args=(x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible))
-    # psi_l[i] = OptRes.x
-    # trans_res = transpiration(OptRes.x, x[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, reversible)
-    trans_res = trans_crit(xvals[i], psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, psi_l_vals[i-1])
-    trans_vals[i] = trans_res[0]
-    psi_r_vals[i] = trans_res[1]
-    psi_l_vals[i] = trans_res[2]
-    k_crit_vals[i] = trans_res[3]
-    k_max_vals[i] = trans_res[4]
-    i += 1
+psi_l_vals = res.get('x')
+
+res_psir = root(lambda psi_r: Kmax * psi_63 * gammafunc(1 / w_exp) / w_exp *
+                                  (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) -
+                                   gammaincc(1 / w_exp, (psi_l_vals / psi_63) ** w_exp)) -
+                                  soil_root * (psi_r - psi_x_vals),
+                    (psi_l_vals + psi_x_vals) / 2,
+               method='hybr')
+psi_r_vals = res_psir.get('x')
+
+trans_vals = soil_root * (psi_r_vals - psi_x_vals)
+k_max_vals = grl_val(psi_x_vals, psi_63, w_exp, Kmax) * soil_root /\
+             (grl_val(psi_x_vals, psi_63, w_exp, Kmax) + soil_root)
+k_crit_vals = 0.05 * k_max_vals
+
+dpsil_dx_vals = np.gradient(psi_l_vals, xvals)
+dpsir_dx_vals = np.gradient(psi_r_vals, xvals)
 
 trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')  # per unit LEAF area
 psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
 psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
 k_crit_interp = interp1d(psi_x_vals, k_crit_vals, kind='cubic')
 k_max_interp = interp1d(psi_x_vals, k_max_vals, kind='cubic')
+
+dpsil_dx_interp = interp1d(psi_x_vals, dpsil_dx_vals, kind='cubic')
+dpsir_dx_interp = interp1d(psi_x_vals, dpsir_dx_vals, kind='cubic')
 
 dgSR_dx = np.gradient(gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai), xvals)
 dgSR_dx_interp = interp1d(xvals, dgSR_dx, kind='cubic')
@@ -187,19 +185,20 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
          'Hdv': Hdv, 'Topt_v': Topt_v, 'j_opt': j_opt, 'Haj': Haj, 'Hdj': Hdj, 'Topt_j': Topt_j,
          'alpha': alpha, 'psi_63': psi_63, 'w_exp': w_exp, 'Kmax': Kmax, 'reversible': reversible,
          'trans_max_interp': trans_max_interp, 'psi_r_interp': psi_r_interp, 'psi_l_interp': psi_l_interp,
-         'k_crit_interp': k_crit_interp, 'k_max_interp': k_max_interp}
+         'k_crit_interp': k_crit_interp, 'k_max_interp': k_max_interp, 'dpsil_dx_interp': dpsil_dx_interp,
+         'dpsir_dx_interp': dpsir_dx_interp}
 
 import pickle
 
-# pickle_out = open("../no_WUS/environment", "wb")
-# pickle.dump(env, pickle_out)
-# pickle_out.close()
-#
-# pickle_out = open("../no_WUS/soil", "wb")
-# pickle.dump(soil, pickle_out)
-# pickle_out.close()
-#
-# pickle_out = open("../no_WUS/plant_ponderosa", "wb")
-# pickle.dump(plant, pickle_out)
-# pickle_out.close()
-#
+pickle_out = open("../no_WUS/environment", "wb")
+pickle.dump(env, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../no_WUS/soil", "wb")
+pickle.dump(soil, pickle_out)
+pickle_out.close()
+
+pickle_out = open("../no_WUS/plant_ponderosa", "wb")
+pickle.dump(plant, pickle_out)
+pickle_out.close()
+
