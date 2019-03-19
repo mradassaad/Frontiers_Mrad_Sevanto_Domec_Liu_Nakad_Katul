@@ -47,7 +47,7 @@ unit5 = 3.6 * 24 * 9.81  # kg.s.m-3 of water -> m/d
 unit6 = 1e-3  # J/Kg of water to MPa
 atmP = 0.1013  # atmospheric pressure, MPa
 
-# Medlyn 2002 pinus pinaster but kopt is altered so that k25 matches the values for ponderosa pine in Panek 2004
+# Medlyn 2002 Pinus pinaster but kopt is altered so that k25 matches the values for ponderosa pine in Panek 2004
 v_opt = 85.4  # umol/m2/s per LEAF area
 Hav = 74.16  # kJ/mol
 Hdv = 200  # kJ/mol
@@ -78,8 +78,8 @@ alpha = nu * a / (n * z_r)  # m2/mol
 # psi_63=4.3 MPa and s=5.4 for ponderosa pine according to Hubbard et al. PCE 2001 grown in Utah nurseries
 # grown between 20 and 28 degrees C and 40-60% humidity
 # Kmax assumed that we have 20 mmol m-1 s-1 MPa-1 for a 10 m tall tree
-psi_63 = 4.3  # Pressure at which there is 64% loss of conductivity, MPa
-w_exp = 5.4  # Weibull exponent
+psi_63 = 5.4  # Pressure at which there is 64% loss of conductivity, MPa
+w_exp = 2  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
@@ -142,7 +142,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((AvgNbDay, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 20
+days = 10
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -190,15 +190,15 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
 
 import pickle
 
-pickle_out = open("../Mesophyll/environment", "wb")
+pickle_out = open("../WUS_no_comp/environment", "wb")
 pickle.dump(env, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../Mesophyll/soil", "wb")
+pickle_out = open("../WUS_no_comp/soil", "wb")
 pickle.dump(soil, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../Mesophyll/plant_ponderosa", "wb")
+pickle_out = open("../WUS_no_comp/low_s", "wb")
 pickle.dump(plant, pickle_out)
 pickle_out.close()
 

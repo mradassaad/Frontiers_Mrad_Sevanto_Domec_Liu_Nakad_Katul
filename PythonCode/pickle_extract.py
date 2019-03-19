@@ -1,13 +1,13 @@
 import pickle
 import numpy as np
 
-env_in = open("../Mesophyll/environment", "rb")
+env_in = open("../WUS_comp/environment", "rb")
 environment = pickle.load(env_in)
 
-plant_in = open("../Mesophyll/plant_ponderosa", "rb")
+plant_in = open("../WUS_comp/vulnerable", "rb")
 plant = pickle.load(plant_in)
 
-soil_in = open("../Mesophyll/soil", "rb")
+soil_in = open("../WUS_comp/soil", "rb")
 soil = pickle.load(soil_in)
 
 VPDavg = environment['VPDavg']

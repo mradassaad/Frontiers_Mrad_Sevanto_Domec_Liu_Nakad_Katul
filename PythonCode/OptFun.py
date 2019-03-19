@@ -24,9 +24,6 @@ class ConvergenceError(Error):
     def __init__(self, message):
         self.message = message
 
-xvals = np.arange(0.1, 0.3, 0.005)
-dgSR_dx = np.gradient(gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai), xvals)
-dgSR_dx_interp = interp1d(xvals, dgSR_dx, kind='cubic')
 reversible = 1
 
 def dydt(t, y):
@@ -67,7 +64,7 @@ def dydt(t, y):
     with warnings.catch_warnings():
         warnings.filterwarnings('error', category=RuntimeWarning)
         try:
-            res_fsolve = root(psil_val_integral, psi_r[ok] + 0.1,
+            res_fsolve = root(psil_val_integral, psi_r[ok] + 0.001,
                                 args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, t[ok], reversible),
                                 method='hybr')
         except RuntimeWarning:
@@ -87,12 +84,12 @@ def dydt(t, y):
     losses = 0
     dlossesdx = 0
 
-    # dEdx = gSR_val(y[1], gamma, b, d_r, z_r, RAI, lai) * psi_sat * b * y[1] ** (-b-1) +\
-    #        dgSR_dx_interp(y[1]) * (psi_r - psi_x)
+    dEdx = gSR_val(y[1], gamma, b, d_r, z_r, RAI, lai) * psi_sat * b * y[1] ** (-b-1) +\
+           dgSR_dx(y[1], gamma, b, d_r, z_r, RAI, lai) * (psi_r - psi_x)
 
     # Comment out following 2 lines if only plant hydraulic effects are sought
-    # losses = gamma * y[1] ** c / nu + 0.16 * evap_trans  # mol m-2 d-1
-    # dlossesdx = (gamma * c * y[1] ** (c - 1)) / nu + 0.16 * dEdx  # mol m-2 d-1
+    losses = gamma * y[1] ** c / nu + 0.2 * evap_trans  # mol m-2 d-1
+    dlossesdx = (gamma * c * y[1] ** (c - 1)) / nu + 0.2 * dEdx  # mol m-2 d-1
 
     f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
     dfdx = - (dlossesdx)  # mol m-2 d-1
@@ -109,16 +106,16 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.22
+    x0 = 0.25
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
 # t = np.linspace(0, days, 2000)
 # maxLam = 763e-6*unit0
-Lambda = 2 * 1e-3  # mol/mol
+Lambda = 2.5 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 2 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.22*np.ones((1, t.size))
+lam_guess = 2.5 * 1e-3 * np.ones((1, t.size))  # mol/mol
+x_guess = 0.25*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -165,7 +162,7 @@ E = np.zeros(res.x.shape)
 psi_r[ok] = psi_r_val(res.y[1][ok], psi_sat, gamma, b, d_r, z_r, RAI, gl[ok], lai, VPDinterp, res.x[ok])
 # psi_l_res = root(psil_val, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
 #                  method='hybr')
-psi_l_res = root(psil_val_integral, psi_r[ok]+0.1, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
+psi_l_res = root(psil_val_integral, psi_r[ok]+0.001, args=(psi_r[ok], psi_63, w_exp, Kmax, gl[ok], VPDinterp, res.x[ok], reversible),
                  method='hybr')
 psi_l[ok] = psi_l_res.x
 E[ok] = a * gl[ok] * VPDinterp(res.x[ok])  # mol m-2 d-1 per unit leaf area
@@ -179,9 +176,15 @@ psi_l[Nok] = psi_l_interp(psi_x[Nok])
 
 psi_p = (psi_l + psi_r) / 2
 # PLC = 100*(1 - plant_cond(psi_r, psi_l, psi_63, w_exp, 1, reversible))
-PLC_time = res.x[E > 0.01]
-PLC = 100 * \
-      np.maximum.accumulate(1 - E[E > 0.01] / (psi_l[E > 0.01] - psi_r[E > 0.01]) / Kmax)
+# PLC_time = res.x[E > 0.01]
+grl_psil = grl_val(psi_l, psi_63, w_exp, Kmax)
+grl_psir = grl_val(psi_r, psi_63, w_exp, Kmax)
+gSR = gSR_val(res.y[1], gamma, b, d_r, z_r, RAI, lai)
+
+gSL = grl_psil * gSR / (gSR + grl_psir)
+gSL_max = Kmax  # Take limit as psi goes to zero -> gSR goes to infinity , what's left is Kmax
+
+PLC = 100 * (1 - gSL / gSL_max)
 
 # f = - (gamma / lai * soilM_plot ** c + 1.6 * E / lai + 0.1 * soilM_plot ** 2)  # mol m-2 day-1 per unit LEAF area
 f = - (E)  # mol m-2 day-1 per unit LEAF area
@@ -234,7 +237,7 @@ plt.xlabel("time, days")
 plt.ylabel("$\psi_p, MPa$")
 
 plt.subplot(339)
-plt.plot(PLC_time, PLC)
+plt.plot(res.x, PLC)
 plt.xlabel("time, days")
 plt.ylabel("PLC, %")
 
@@ -298,10 +301,10 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E,
         'E_crit': E_crit, 'A_crit': A_crit, 'P_crit': P_crit, 'A_opt': A_opt, 'E_opt': E_opt,
-        'P_opt': P_opt, 'psi_r_opt': psi_r_opt}
+        'P_opt': P_opt, 'psi_r_opt': psi_r_opt, 'ci': ci}
 
-# import pickle
-#
-# pickle_out = open("../profit_compare/profit_compare.16percent_105lambda", "wb")
-# pickle.dump(inst, pickle_out)
-# pickle_out.close()
+import pickle
+
+pickle_out = open("../WUS_comp/result.vulnerable", "wb")
+pickle.dump(inst, pickle_out)
+pickle_out.close()

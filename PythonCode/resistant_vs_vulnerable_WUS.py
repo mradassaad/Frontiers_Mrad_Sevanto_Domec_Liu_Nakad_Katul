@@ -4,13 +4,13 @@ import matplotlib.pyplot as plt
 from Useful_Funcs import lam_from_trans
 # from Plant_Env_Props import ca
 
-pickle_in = open("../WUS_no_comp/WUS_no_comp.resistant", "rb")
+pickle_in = open("../WUS_no_comp/result.resistant", "rb")
 resistant = pickle.load(pickle_in)
 
-pickle_in = open("../WUS_no_comp/WUS_no_comp.exponential", "rb")
+pickle_in = open("../WUS_no_comp/result.low_s", "rb")
 exponential = pickle.load(pickle_in)
 
-pickle_in = open("../WUS_no_comp/WUS_no_comp.vulnerable", "rb")
+pickle_in = open("../WUS_no_comp/result.vulnerable", "rb")
 vulnerable = pickle.load(pickle_in)
 
 unit = 1e3 / (3600*24)
@@ -55,9 +55,9 @@ division = noon
 flip_sign = -1
 
 fig2, ax2 = plt.subplots()
-res_gl_day2, = ax2.plot(flip_sign * resistant[xax][division], resistant["gl"][division] * unit, 'k')
-mid_gl_day2, = ax2.plot(flip_sign * exponential[xax][division], exponential["gl"][division] * unit, 'k--')
-vul_gl_day2, = ax2.plot(flip_sign * vulnerable[xax][division], vulnerable["gl"][division] * unit, 'k:')
+res_gl_day2, = ax2.plot(flip_sign * resistant[xax][division], resistant["gl"][division] * unit, 'r')
+mid_gl_day2, = ax2.plot(flip_sign * exponential[xax][division], exponential["gl"][division] * unit, 'r--')
+vul_gl_day2, = ax2.plot(flip_sign * vulnerable[xax][division], vulnerable["gl"][division] * unit, 'r:')
 
 # res_gl_profit, = ax2.plot(flip_sign * resistant[xax][division],
 #                           resistant["E_opt"][division] / 1.6 / env["VPDinterp"](resistant["t"][division]) * unit, 'r')
@@ -73,9 +73,9 @@ plt.setp(ax2.get_yticklabels(), FontSize=12)
 ax2.set_xlabel("Soil water potential, $\psi_x$, MPa", FontSize=14)
 ax2.set_ylabel("Midday stomatal conductance, $g_s$, mmol m$^{-2}$ s$^{-1}$", FontSize=11)
 # ax2.set_ylim(0, np.max(ax.yaxis.get_data_interval()))
-
-legend1 = ax2.legend((res_gl, mid_gl, vul_gl),
-                   ('resistant', 'exponential', 'vulnerable'), fontsize='large', loc=2)
+#
+# legend1 = ax2.legend((res_gl, mid_gl, vul_gl),
+#                    ('resistant', 'exponential', 'vulnerable'), fontsize='large', loc=4)
 
 # fig2.savefig('../WUS_no_comp/gs_psix.pdf', bbox_inches='tight')
 
@@ -117,7 +117,8 @@ ax3.set_ylabel("Marginal water use efficiency, $\lambda$, mmol mol$^{-1}$", Font
 # ax3.set_ylim(0, np.max(ax.yaxis.get_data_interval()))
 
 legend1 = ax3.legend((res_lam, mid_lam, vul_lam),
-                   ('resistant', 'exponential', 'vulnerable'), fontsize='large', loc=2)
+                   ('Steep and resistant', 'Gradual and resistant', 'Steep and vulnerable'),
+                     fontsize='large', loc=2, title="Vulnerability curve description")
 # ax3.add_artist(legend1)
 # legend2 = ax3.legend((res_lam, res_lam_low),
 #                    ('$\lambda (t)$', '$\lambda_{lower}$'), fontsize='large', loc=9)
@@ -189,11 +190,11 @@ flip_sign = -1
 
 fig6, ax6 = plt.subplots()
 res_psil, = ax6.plot(flip_sign * resistant[xax][division],
-                     -resistant["psi_l"][division], 'k')
+                     -resistant["psi_l"][division], 'r')
 exp_psil, = ax6.plot(flip_sign * exponential[xax][division],
-                     -exponential["psi_l"][division], 'k--')
+                     -exponential["psi_l"][division], 'r--')
 vul_psil, = ax6.plot(flip_sign * vulnerable[xax][division],
-                     -vulnerable["psi_l"][division], 'k:')
+                     -vulnerable["psi_l"][division], 'r:')
 #
 # res_psil_opt, = ax6.plot(flip_sign * resistant[xax][division],
 #                          -resistant["P_opt"][division], 'r')
@@ -230,28 +231,49 @@ ax7.set_ylabel("Soil water potential, $\psi_x$, MPa", FontSize=12)
 
 # # --------------------- PLC ---------------------
 #
-# fig4, ax4 = plt.subplots()
-# res_PLC, = ax4.plot(resistant["t"], resistant["PLC"], 'k')
-# mid_PLC, = ax4.plot(midrange["t"], midrange["PLC"], 'k--')
-# vul_PLC, = ax4.plot(vulnerable["t"], vulnerable["PLC"], 'k:')
-#
-# plt.setp(ax4.get_xticklabels(), FontSize=12)
-# plt.setp(ax4.get_yticklabels(), FontSize=12)
-#
-# ax4.set_xlabel("Time, $t$, days", FontSize=14)
-# ax4.set_ylabel("Percent loss of conductivity, PLC, $\%$", FontSize=14)
-#
-# legend1 = ax4.legend((res_PLC, mid_PLC, vul_PLC),
-#                    ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
-# ax4.set_ylim(0, 100)
+fig8, ax8 = plt.subplots()
+res_PLC, = ax8.plot(resistant["t"], np.maximum.accumulate(resistant["PLC"]), 'k')
+mid_PLC, = ax8.plot(exponential["t"], np.maximum.accumulate(exponential["PLC"]), 'k--')
+vul_PLC, = ax8.plot(vulnerable["t"], np.maximum.accumulate(vulnerable["PLC"]), 'k:')
 
-# fig4.savefig('../Fig3/PLC_t.pdf', bbox_inches='tight')
+plt.setp(ax8.get_xticklabels(), FontSize=12)
+plt.setp(ax8.get_yticklabels(), FontSize=12)
+
+ax8.set_xlabel("Time, $t$, days", FontSize=14)
+ax8.set_ylabel("Percent loss of conductivity, PLC, $\%$", FontSize=14)
+
+# legend1 = ax8.legend((res_PLC, mid_PLC, vul_PLC),
+#                    ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
+ax8.set_ylim(0, 100)
+
+# fig8.savefig('../WUS_no_comp/PLC_t.pdf', bbox_inches='tight')
 
 
 # #---------------------- ci/ca ---------------------
-ca = 350e-6
-ci_res = np.ones(resistant['t'].shape) * ca
-notZero = resistant['gl'] != 0
-ci_res[notZero] = ca - resistant['A_val'][notZero] / resistant['gl'][notZero]  # internal carbon concentration, mol/mol
+gl_pos_res = resistant['gl'] > 0
+gl_pos_exp = exponential['gl'] > 0
+gl_pos_vul = vulnerable['gl'] > 0
+ca = 350e-6  # mol mol-1
 
-plt.plot(resistant['t'], ci_res/ca)
+ci_res = resistant["ci"]
+ci_res[~gl_pos_res] = ca
+ci_exp = exponential["ci"]
+ci_exp[~gl_pos_exp] = ca
+ci_vul = vulnerable["ci"]
+ci_vul[~gl_pos_vul] = ca
+
+fig9, ax9 = plt.subplots()
+res_PLC, = ax9.plot(resistant["t"][gl_pos_res], resistant["ci"][gl_pos_res] / ca, 'k')
+mid_PLC, = ax9.plot(exponential["t"][gl_pos_exp], exponential["ci"][gl_pos_exp] / ca, 'k--')
+vul_PLC, = ax9.plot(vulnerable["t"][gl_pos_vul], vulnerable["ci"][gl_pos_vul] / ca, 'k:')
+
+plt.setp(ax9.get_xticklabels(), FontSize=12)
+plt.setp(ax9.get_yticklabels(), FontSize=12)
+
+ax9.set_xlabel("Time, $t$, days", FontSize=14)
+ax9.set_ylabel("Ratio of internal to external CO2 concentration, $c_i/c_a$", FontSize=10)
+
+# legend1 = ax9.legend((res_PLC, mid_PLC, vul_PLC),
+#                    ('$\psi_{63}=3$', '$\psi_{63}=2.2$', '$\psi_{63}=1.9$'), fontsize='large', loc=2)
+
+# fig9.savefig('../WUS_no_comp/cica_t.pdf', bbox_inches='tight')
