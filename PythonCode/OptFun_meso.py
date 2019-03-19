@@ -48,12 +48,8 @@ def dydt(t, y):
     #     raise GuessError('y[0] < 0')
 
     # ----------------- stomatal conductance based on current values -------------------
-    y[1][y[1] < 0.056] = 0.056
     psi_x = psi_sat * y[1] ** -b
-    try:
-        trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
-    except:
-        print("NOO!!")
+    trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
 
     res_gs = root(gs_val_meso, trans_max * (1 + k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
          args=(t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
@@ -121,16 +117,17 @@ def bc(ya, yb):  # boundary imposed on x at t=T
 
 
 def bc_wus(ya, yb):  # Water use strategy
-    x0 = 0.18
+    x0 = 0.2
     wus_coeff = Lambda  # mol/m2
     return np.array([ya[1] - x0, yb[0] - wus_coeff])
 
-t = np.linspace(0, days, 48 * days)
+# days = 20
+# t = np.linspace(0, days, 48 * days)
 # maxLam = 763e-6*unit0
-Lambda = 7.2 * 1e-3  # mol/mol
+Lambda = 7.5 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
-lam_guess = 7.2 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.18*np.ones((1, t.size))
+lam_guess = 7.5 * 1e-3 * np.ones((1, t.size))  # mol/mol
+x_guess = 0.2*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -149,16 +146,16 @@ soilM_plot = res.y[1]
 
 psi_x = psi_sat * soilM_plot ** (-b)  # Soil water potential, MPa
 trans_max = trans_max_interp(psi_x)  # mol/m2/d per unit LEAF area
-res_gs = root(gs_val_meso, trans_max * (1 + k1_interp(t) / k1_interp(t).max()) / 10 /(1.6 * VPDinterp(t)),
-         args=(t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
+res_gs = root(gs_val_meso, trans_max * (1 + k1_interp(res.x) / k1_interp(res.x).max()) / 10 /(1.6 * VPDinterp(res.x)),
+         args=(res.x, ca, k1_interp, k2_interp, cp_interp, psi_l_interp, psi_x,
                  VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai, res.y[0]),
          method='hybr')
 gl = res_gs.get('x')  # mol/m2/d per unit LEAF area
 
-psi_r = 1.6 * gl * VPDinterp(t) / gSR_val(soilM_plot, gamma, b, d_r, z_r, RAI, lai) + psi_x
+psi_r = 1.6 * gl * VPDinterp(res.x) / gSR_val(soilM_plot, gamma, b, d_r, z_r, RAI, lai) + psi_x
 
 psi_l_temp = gammainccinv(1 / w_exp,
-                             - 1.6 * gl * VPDinterp(t) * w_exp / (gammafunc(1 / w_exp) * Kmax * psi_63) +
+                             - 1.6 * gl * VPDinterp(res.x) * w_exp / (gammafunc(1 / w_exp) * Kmax * psi_63) +
                             gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp))
 
 psi_l = psi_63 * psi_l_temp ** (1 / w_exp)
@@ -245,22 +242,29 @@ plt.ylabel("PLC, %")
 # --- Fig1b
 
 timeOfDay = res.x
-
-env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
-                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
-
-
-lam_low = lam_from_trans(trans_max_interp(psi_x), ca,
-                         env_data[0], env_data[1], env_data[2], env_data[3])
-
-env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
-                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
-lam_up = np.ones(lam_low.shape) * (ca - env_data[0]) / env_data[1] / 1.6  # mol mol-1
 #
-fig, ax = plt.subplots()
-lam_line = ax.plot(res.x, lam_plot, 'r')
-lam_low_line = ax.plot(res.x, lam_low * 1e3, 'r:')
-lam_high_line = ax.plot(res.x, lam_up * 1e3, 'r:')
+# env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
+#                      k1_interp(timeOfDay), k2_interp(timeOfDay)])
+
+
+# lam_low = lam_from_trans(trans_max_interp(psi_x), ca,
+#                          env_data[0], env_data[1], env_data[2], env_data[3])
+# def lam_val_meso(lam): return lam_min_val_meso(lam, trans_max_interp, t, ca, k1_interp, k2_interp, cp_interp, psi_l_interp,
+#                      psi_r_interp, psi_x, VPDinterp, psi_63, w_exp, Kmax, psi_sat,
+#                      gamma, b, d_r, z_r, RAI, lai)
+#
+#
+# lam_low_res = root(lam_val_meso, 0.00001 * np.ones(t.shape), method='hybr')
+# lam_low = lam_low_res.get('x')
+
+env_data = np.array([cp_interp(timeOfDay), VPDinterp(timeOfDay),
+                     k1_interp(timeOfDay), k2_interp(timeOfDay)])
+lam_up = np.ones(res.x.shape) * (ca - env_data[0]) / env_data[1] / 1.6  # mol mol-1
+# #
+# fig, ax = plt.subplots()
+# lam_line = ax.plot(res.x, lam_plot, 'r')
+# lam_low_line = ax.plot(res.x, lam_low * 1e3, 'k:')
+# lam_high_line = ax.plot(res.x, lam_up * 1e3, 'k:')
 
 
 # --- Fig 2
@@ -293,16 +297,16 @@ crits = np.array((psi_l_interp(psi_x), trans_max_interp(psi_x), k_crit_interp(ps
 
 # # -----save----
 
-H = np.zeros(A_val.shape)
-oklam = np.greater_equal(res.y[0], lam_low * 1e-3)
-H[oklam] = A_val[oklam] + res.y[0][oklam]*f[oklam]  # mol/m2/d
-H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]*1e-3  # mol/m2/d
+# H = np.zeros(A_val.shape)
+# oklam = np.greater_equal(res.y[0], lam_low * 1e-3)
+# H[oklam] = A_val[oklam] + res.y[0][oklam]*f[oklam]  # mol/m2/d
+# H[~oklam] = A_val[~oklam] + lam_low[~oklam]*f[~oklam]*1e-3  # mol/m2/d
 
-inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
-        'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
-        'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E,
-        'E_crit': E_crit, 'A_crit': A_crit, 'P_crit': P_crit, 'A_opt': A_opt, 'E_opt': E_opt,
-        'P_opt': P_opt, 'psi_r_opt': psi_r_opt}
+# inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'psi_x': psi_x, 'psi_r': psi_r, 'psi_l': psi_l,
+#         'psi_p': psi_p, 'f': f, 'objective_term_1': objective_term_1, 'objective_term_2': objective_term_2,
+#         'theta': theta, 'PLC': PLC, 'H': H, 'lam_low': lam_low, 'lam_up': lam_up, 'E': E,
+#         'E_crit': E_crit, 'A_crit': A_crit, 'P_crit': P_crit, 'A_opt': A_opt, 'E_opt': E_opt,
+#         'P_opt': P_opt, 'psi_r_opt': psi_r_opt}
 
 # import pickle
 #

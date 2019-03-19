@@ -84,7 +84,7 @@ Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity,
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.055, 0.8, 0.005)
+xvals = np.arange(0.09, 0.8, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
 soil_root = gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai)
 
@@ -142,7 +142,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((AvgNbDay, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 10
+days = 20
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -190,15 +190,15 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
 
 import pickle
 
-pickle_out = open("../no_WUS/environment", "wb")
+pickle_out = open("../Mesophyll/environment", "wb")
 pickle.dump(env, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../no_WUS/soil", "wb")
+pickle_out = open("../Mesophyll/soil", "wb")
 pickle.dump(soil, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../no_WUS/plant_ponderosa", "wb")
+pickle_out = open("../Mesophyll/plant_ponderosa", "wb")
 pickle.dump(plant, pickle_out)
 pickle_out.close()
 

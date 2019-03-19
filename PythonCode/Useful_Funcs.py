@@ -669,6 +669,35 @@ def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, ps
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
 
 
+# def lam_min_val_meso(lam, trans_max_interp, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp,
+#                      psi_rcrit_interp, psi_x, VPDinterp, psi_63, w_exp, Kmax, psi_sat,
+#                      gamma, b, d_r, z_r, RAI, lai):
+#
+#     psi_crit = psi_lcrit_interp(psi_x)
+#     VPD = VPDinterp(t)
+#     k1 = k1_interp(t)
+#     k2 = k2_interp(t)
+#     cp = cp_interp(t)
+#
+#     psi_r = psi_rcrit_interp(psi_x)
+#
+#     psi_l = psi_lcrit_interp(psi_x)
+#
+#     phi = 1 - psi_l / psi_crit
+#
+#     gs = trans_max_interp(psi_x) / (1.6 * VPD)
+#
+#     part1 = dAdgs(t, gs, ca, k1_interp, k2_interp, cp_interp, phi)
+#     part2 = dAdB(t, gs, ca, k1_interp, k2_interp, cp_interp, phi) *\
+#             dB_dgs(cp, k2, psi_l, psi_crit, psi_x, psi_r, VPD, psi_63, w_exp, Kmax, psi_sat,
+#              gamma, b, d_r, z_r, RAI, lai)
+#
+#     B = (cp + k2) / phi
+#
+#     return part1 + part2 - 1.6 * lam * VPD * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
+#                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
+
+
 
 def psil_crit_val(psi_l, psi_x, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp, frac=0.05):
     x = (psi_x / psi_sat) ** (-1 / b)
