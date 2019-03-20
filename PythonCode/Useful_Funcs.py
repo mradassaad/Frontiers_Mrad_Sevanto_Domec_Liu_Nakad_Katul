@@ -462,9 +462,10 @@ def profit_max(psi_x, psi_sat, gamma, b, psi_63, w_exp, Kmax, d_r, z_r, RAI, lai
     # Finer Mesh
 
     PP = np.arange(psi_x, P_crit, step)
-    EE, _ = transpiration(PP, x, psi_sat, gamma, b,
+    EE, psirr = transpiration(PP, x, psi_sat, gamma, b,
                           psi_63, w_exp, Kmax, d_r, z_r, RAI, lai, 1)
-    kk = np.gradient(EE, PP)
+    kk = grl_val(PP, psi_63, w_exp, Kmax) * gSR_val(x, gamma, b, d_r, z_r, RAI, lai) / \
+         (grl_val(psirr, psi_63, w_exp, Kmax) + gSR_val(x, gamma, b, d_r, z_r, RAI, lai))
 
     ggss = EE / 1.6 / VPD  # mol/m2/d
 
@@ -667,6 +668,45 @@ def gs_val_meso(gs, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp, ps
 
     return part1 + part2 - 1.6 * lam * VPD * np.sqrt((B + ca - cp) ** 2 * gs ** 2 +
                              2 * (B - ca + cp) * gs * k1 + k1 ** 2)
+
+
+def gs_val_profit(gs, t, ca, k1_interp, k2_interp, cp_interp,
+                  trans_max_interp, k_max_interp, k_crit_interp, psi_x,
+                 VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai):
+
+    trans_max = trans_max_interp(psi_x)
+    k_max = k_max_interp(psi_x)
+    k_crit = k_crit_interp(psi_x)
+    VPD = VPDinterp(t)
+    k1 = k1_interp(t)
+    k2 = k2_interp(t)
+    cp = cp_interp(t)
+    a = 1.6
+    x = (psi_x / psi_sat) ** - (1 / b)
+
+    psi_r = a * gs * VPD / gSR_val(x, gamma, b, d_r, z_r, RAI, lai) + psi_x
+
+    psi_l_temp = gammainccinv(1 / w_exp,
+                         - 1.6 * gs * VPD * w_exp / (gammafunc(1 / w_exp) * Kmax * psi_63) +
+                         gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp))
+
+    psi_l = psi_63 * psi_l_temp ** (1 / w_exp)
+    grl_psil = grl_val(psi_l, psi_63, w_exp, Kmax)
+    grl_psir = grl_val(psi_r, psi_63, w_exp, Kmax)
+    gSR = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
+    dEdpsil = grl_psil * gSR / (grl_psir + gSR)
+    gs_max = trans_max / a / VPD
+    Amax = A_here(gs_max, ca, k1, k2, cp)
+
+    d2Edpsil2 = dEdpsil * (- (w_exp / psi_63) * (psi_l / psi_63) ** (w_exp - 1) +
+                           grl_psir * (w_exp / psi_63) * (psi_r / psi_63) ** (w_exp - 1) * grl_psil / (grl_psir + gSR) ** 2)
+
+
+    part1 = dAdgs(t, gs, ca, k1_interp, k2_interp, cp_interp, 1) * dEdpsil / (a * VPD)
+    part2 = - Amax * d2Edpsil2 / (k_max - k_crit) *\
+            np.sqrt((k2 + ca) ** 2 * gs ** 2 + 2 * (k2 - ca + 2 * cp) * gs * k1 + k1 ** 2)
+    return part2 - part1
+
 
 
 # def lam_min_val_meso(lam, trans_max_interp, t, ca, k1_interp, k2_interp, cp_interp, psi_lcrit_interp,

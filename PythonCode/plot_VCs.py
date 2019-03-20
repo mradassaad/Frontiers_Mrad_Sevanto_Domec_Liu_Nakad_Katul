@@ -28,7 +28,7 @@ plt.setp(ax.get_xticklabels(), FontSize=12)
 plt.setp(ax.get_yticklabels(), FontSize=12)
 
 ax.set_xlabel("Water potential, $\psi$, MPa", FontSize=14)
-ax.set_ylabel("Root-leaf conductance, $g_{rl}$, mmol m$^{-2}$ s$^{-1}$", FontSize=12)
+ax.set_ylabel("Root-leaf conductance, $g_{rl}$, mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$", FontSize=12)
 
 legend1 = ax.legend((steep_res, grad_res, steep_vul),
                    ('Steep and resistant', 'Gradual and resistant', 'Steep and vulnerable'),

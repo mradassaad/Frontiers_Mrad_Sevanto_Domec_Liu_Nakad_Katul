@@ -88,8 +88,8 @@ def dydt(t, y):
            dgSR_dx(y[1], gamma, b, d_r, z_r, RAI, lai) * (psi_r - psi_x)
 
     # Comment out following 2 lines if only plant hydraulic effects are sought
-    losses = gamma * y[1] ** c / nu + 0.2 * evap_trans  # mol m-2 d-1
-    dlossesdx = (gamma * c * y[1] ** (c - 1)) / nu + 0.2 * dEdx  # mol m-2 d-1
+    losses = gamma * y[1] ** c / nu + 0.16 * evap_trans  # mol m-2 d-1
+    dlossesdx = (gamma * c * y[1] ** (c - 1)) / nu + 0.16 * dEdx  # mol m-2 d-1
 
     f = - (losses + evap_trans)  # mol m-2 d-1 per unit leaf area per rooting depth
     dfdx = - (dlossesdx)  # mol m-2 d-1
@@ -112,10 +112,10 @@ def bc_wus(ya, yb):  # Water use strategy
 
 # t = np.linspace(0, days, 2000)
 # maxLam = 763e-6*unit0
-Lambda = 2.5 * 1e-3  # mol/mol
+Lambda = 3 * 1e-3  # mol/mol
 # lam_guess = 5*np.ones((1, t.size)) + np.cumsum(np.ones(t.shape)*(50 - 2.67) / t.size)
 lam_guess = 2.5 * 1e-3 * np.ones((1, t.size))  # mol/mol
-x_guess = 0.25*np.ones((1, t.size))
+x_guess = 0.3*np.ones((1, t.size))
 
 y_guess = np.vstack((lam_guess, x_guess))
 
@@ -283,6 +283,13 @@ A_opt = np.zeros(psi_x.shape)
 E_opt = np.zeros(psi_x.shape)
 crits = np.array((psi_l_interp(psi_x), trans_max_interp(psi_x), k_crit_interp(psi_x), k_max_interp(psi_x)))
 #
+
+res_prof = root(gs_val_profit, gl,
+                                args=(t, ca, k1_interp, k2_interp, cp_interp,
+                  trans_max_interp, k_max_interp, k_crit_interp, psi_x,
+                 VPDinterp, psi_63, w_exp, Kmax, psi_sat, gamma, b, d_r, z_r, RAI, lai),
+                                method='hybr')
+
 # for i in range(psi_x.shape[0]):
 #     print(i)
 #     E_crit[i], A_crit[i], P_crit[i], E_opt[i], A_opt[i], P_opt[i], psi_r_opt[i] = \
@@ -305,6 +312,6 @@ inst = {'t': res.x, 'lam': res.y[0], 'x': res.y[1], 'gl': gl, 'A_val': A_val, 'p
 
 import pickle
 
-pickle_out = open("../WUS_comp/result.vulnerable", "wb")
+pickle_out = open("../profit_compare_new/profit_compare.16percent_3lambda", "wb")
 pickle.dump(inst, pickle_out)
 pickle_out.close()
