@@ -103,9 +103,9 @@ The goal then consists of finding the function $g_s(t)$ in terms of $t$ that max
 The biochemical demand for atmospheric CO$_2$ for a C3 leaf is either limited by the Ribulose-1,5-bisphosphate carboxylase/oxygenase (Rubisco) enzyme activity under saturated incoming PAR or by Ribulose-1,5-biphosphate (RuBP) activity under limiting incoming PAR \citep{farquhar_biochemical_1980}. To avoid the use of non-differentiable functions, $A_{demand}$ is approximated using \citep{vico_perspective_2013}:
 \begin{equation}
     \label{eqn:vico_model}
-    A_{demand} = k_1 \frac{c_c - \Gamma^*}{c_c + k_2},
+    A_{demand} = k_1 \frac{c_i - \Gamma^*}{c_i + k_2},
 \end{equation}
-where $c_c$ is the carbon dioxide concentration inside the chloroplast, $k_1$ and $k_2$ are parameters determined from limits imposed on $c_c$ as described elsewhere \citep{vico_perspective_2013}. Namely, $k_1 = \frac{J}{4}$ and $k_2 = \frac{J}{4} \frac{a_2}{V_{c,max}}$, and $\Gamma^*$ is the CO$_2$ compensation point defined by the $c_c$ where carbon dioxide assimilation rate ceases. The carbon dioxide concentration inside the chloroplast is used instead of the one inside the leaf because this model is calculating the carbon demand of the chlorophyll.
+where $c_i$ is the carbon dioxide concentration in the intercellular spaces of the leaf assumed to be equal to the concentration inside the chloroplast (infinite mesophyll conductance), $k_1$ and $k_2$ are parameters determined from limits imposed on $c_i$ as described elsewhere \citep{vico_perspective_2013}. Namely, $k_1 = \frac{J}{4}$ and $k_2 = \frac{J}{4} \frac{a_2}{V_{c,max}}$, and $\Gamma^*$ is the CO$_2$ compensation point defined by the $c_i$ where carbon dioxide assimilation rate ceases. The carbon dioxide concentration inside the chloroplast is used instead of the one inside the leaf because this model is calculating the carbon demand of the chlorophyll.
 
 Equation \ref{eqn:vico_model} is of a Michaelis-Menten type where $k_1$ is interpreted as the maximum rate of carbon dioxide assimilation and $k_2$ prescribes the strength of the carboxylation compared to oxygenation through $a_2$. The $a_2 = K_c (1+O_a/K_o)$ where $K_c$ and $K_o$ are Michaelis-Menten constants for CO$_2$ and O$_2$ respectively and $O_a$ is the atmospheric concentration of oxygen.
 
@@ -129,9 +129,9 @@ where $\varphi = 1 - \frac{\psi_l}{\psi_c}$ is used as a reduction factor and $\
 Combining equations \ref{eqn:vico_model}, \ref{eqn:supply} and \ref{eqn:dewar_mes}, a formulation for $A$ in terms of $g_s$ that is explicitly independent from $c_c$ is obtained and given as:
 \begin{equation}
     \label{eqn:A_noci}
-    A =\frac{1}{2}[(B + c_a - \Gamma^*)g_s + k_1 - \sigma],
+    A = k_1\frac{[(\Gamma^* - c_a)\varphi + k_2 + \Gamma^*]g_s + k_1\varphi - \sigma}{[(\Gamma^* - c_a)\varphi - k_2 - \Gamma^*]g_s + k_1\varphi - \sigma},
 \end{equation}
-where $\sigma = \sqrt{(B + c_a - \Gamma^*)^2g_s^2 + 2{g_s}{k_1}(B - c_a + \Gamma^*) + k_1^2}$ and $B = \frac{\Gamma^* + k_2}{\varphi}$.  Because $\sigma$ is positive, the $A$-$g_s$ relation is a concave function, a necessary condition for optimal behavior as discussed elsewhere \citep{katul_stomatal_2009}.
+where $\sigma = \sqrt{[(c_a - \Gamma^*)\varphi + k_2 + \Gamma^*]^2g_s^2 + 2{\varphi}{k_1}[(\Gamma^* - c_a)\varphi + k_2 + \Gamma^*]g_s + k_1^2\varphi^2}$.  Because $\sigma$ is positive, the $A$-$g_s$ relation is a concave function, a necessary condition for optimal behavior as discussed elsewhere \citep{katul_stomatal_2009}.
 
 To sum up, when the temporal variations in $T_a$ and PAR are specified along with $c_a$ and $O_a$, then $g_s$ is the only independent variable in equation \ref{eqn:A_noci}.
 
@@ -258,8 +258,8 @@ Equation \ref{eqn:control} provides a functional dependence between $g_s$, $\lam
 \begin{equation}
     \label{eqn:gs_vs_env_lambda}
     \begin{split}
-        g_s = & - \frac{k_1 (B - c_a + \Gamma^*)}{(B+c_a - \Gamma^*)^2} \\
-        & +\frac{\sqrt{a\, \text{VPD}\, \lambda\, B\,k_1^2 (c_a-\Gamma^*)(B - \Gamma^* +c_a-2 a\, \text{VPD}\, \lambda)^2(B - \Gamma^* +c_a-a\, \text{VPD}\, \lambda)}}{a\, \text{VPD}\, \lambda (B - \Gamma^* +c_a)^2(B - \Gamma^* +c_a-a\, \text{VPD}\, \lambda)} ,
+        g_s = & - \frac{k_1 (k_2-c_a+2 \Gamma^*)}{(k_2+c_a)^2} \\
+        & +\frac{\sqrt{a\, \text{VPD}\, \lambda\, k_1^2 (c_a-\Gamma^*)(k_2+\Gamma^*)(k_2+c_a-2 a\, \text{VPD}\, \lambda)^2(k_2+c_a-a\, \text{VPD}\, \lambda)}}{a\, \text{VPD}\, \lambda (B - \Gamma^* +c_a)^2(B - \Gamma^* +c_a-a\, \text{VPD}\, \lambda)} ,
     \end{split}
 \end{equation}
 where $g_s$ is defined per leaf area as before. Sensitivity analysis reveals that the most influential atmospheric variable is VPD. The $g_s$ vs $\lambda$ phase space is featured for multiple VPD values (figure \ref{fig:gs_E_lam}a).  The $T_a$ and PAR and therefore $k_1$, $k_2$, and $\Gamma^*$ are set to their noon values (figure \ref{fig:environment}).
@@ -341,18 +341,22 @@ Second, it is noted that the profit maximization approach results in a similar $
 
 \section{Discussion and Future Work}
 
-The work here extends earlier optimization approaches by adding explicitly the hydrologic balance as a constraint to be satisfied at every instant, biotic and abiotic competition for water, and variability in environmental drivers thereby allowing the marginal water use efficiency to be predicted on sub-daily time scales via the co-state equation.  Plant hydraulic limits are imposed as new constraints through VCs using a dynamic optimality approach to $g_s$ \citep{manzoni_optimization_2013}. This is an improvement that goes beyond including only soil water balance as a constraint to be satisfied at all times.
-The profit maximization approach was developed for conditions where soil moisture does not change appreciably in time, and soil-plant hydraulics do not limit water uptake. In these conditions the conventional optimality solutions for constant marginal water use efficiencies  \citep{katul_stomatal_2009} are recovered with our dynamic optimality approach, but with this approach gain access to predicting plant behavior and a multitude of factors affecting stomatal conductance under drying conditions. The advantage of the dynamic optimality approach lies in the ease with which one could add additional constraints that are pertinent in different environments. One could assess limitations on $g_s$ set by the maintenance of phloem turgor through osmoregulation \citep{sevanto_how_2014} or soil salinity for well-watered conditions. Also, additional constraints such as the energy balance can be readily included as has been accomplished in recent studies using a similar framework \citep{roth2018fossil}.  The inclusion of additional hydraulic constraint to the hydrologic balance was explored in this work but only indirectly via a 'hard' threshold. This addition can be formally treated by introducing an additional Lagrange multiplier thereby offering a smoother transition towards hydraulic constraints, which makes a better comparison with profit maximization. The dynamic optimality principles as described here require no a priori measurements of the Lagrange multipliers because they emerge solely from the solution of the Euler-Lagrange equations \citep{witelski_variational_2015} provided appropriate boundary conditions can be specified.
+The work here extends earlier optimization approaches by adding explicitly the hydrologic balance as a constraint to be satisfied at every instant, biotic and abiotic competition for water, and variability in environmental drivers thereby allowing the marginal water use efficiency to be predicted on sub-daily time scales via the co-state equation (equation \ref{eqn:co_state}).  Plant hydraulic limits are imposed as new constraints through VCs using a dynamic optimality approach to $g_s$ \citep{manzoni_optimization_2013}. This is an improvement that goes beyond including only soil water balance as a constraint to be satisfied at all times.
+The first optimization approaches to modelling stomatal behavior were developed for conditions where soil moisture does not change appreciably in time, and soil-plant hydraulics do not limit water uptake \citep{cowan_stomatal_1977, cowan_stomatal_1978}. In these conditions the conventional optimality solutions for constant marginal water use efficiencies  \citep{katul_stomatal_2009} are recovered with our dynamic optimality approach, but with this approach gain access to predicting plant behavior and a multitude of factors affecting stomatal conductance under drying conditions. The advantage of the dynamic optimality approach lies in the ease with which one could add additional constraints that are pertinent in different environments. One could assess limitations on $g_s$ set by the maintenance of phloem turgor through osmoregulation \citep{sevanto_how_2014} or soil salinity for well-watered conditions. Also, additional constraints such as the energy balance can be readily included as has been accomplished in recent studies using a similar framework \citep{roth2018fossil}.  The inclusion of additional hydraulic constraint to the hydrologic balance was explored in this work but only indirectly via a 'hard' threshold. This addition can be formally treated by introducing an additional Lagrange multiplier thereby offering a smoother transition towards hydraulic constraints, which makes a better comparison with profit maximization. The dynamic optimality principles as described here require no a priori measurements of the Lagrange multipliers because they emerge solely from the solution of the Euler-Lagrange equations \citep{witelski_variational_2015} provided appropriate boundary conditions can be specified.
 
- To maintain familiarity with the ecological interpretation of the Lagrange multiplier $\lambda$, plant hydraulic limits on $E$ were set here as a 'threshold' response. Specifically, it is only when the unrestricted $g_s$ and VPD dynamics exceed $E_{max}$ do limits on $g_s$ kick in. This view implies that water uptake is 'slaved' to the carbon demands of the plant until a point is reached where soil or VC limitations dictate the delivery of water to the leaf.  However, there is evidence that a finite safety margin between $E$ and $E_{max}$ and between $\psi_l$ and $\psi_{l, max}$ exists even preceding $g_s = 0$ \citep{mcdowell_mechanisms_2008, plaut_hydraulic_2012}. This shortcoming of the model here can be rectified in the future as discussed later on. This first step however is part of recent improvements made with regards to modelling $g_s$ under drought that quantitatively include the effects of VCs \citep{sperry_what_2015, sperry_predicting_2017}. Even with this work's liberal approach to hydraulic limitations, it has been shown how iso- to anisohydric responses to drought emerge through the responses of midday $g_s$ and $\psi_l$ to $\psi_x$ (figures \ref{fig:WUS_no_comp}, \ref{fig:WUS_comp}). Our modeling results show that this behavior also emerges from plants having acclimated to competition for water at the rooting zone. There is no experimental evicdence on whether this truly occurs. Therefore, this novel hypothesis requires empirical testing.
+ To maintain familiarity with the ecological interpretation of the Lagrange multiplier $\lambda$, plant hydraulic limits on $E$ were set here as a 'threshold' response. Specifically, it is only when the unrestricted $g_s$ and VPD dynamics exceed $E_{max}$ do limits on $g_s$ kick in. This view implies that water uptake is 'slaved' to the carbon demands of the plant until a point is reached where soil or VC limitations dictate the delivery of water to the leaf.  However, there is evidence that a finite safety margin between $E$ and $E_{max}$ and between $\psi_l$ and $\psi_{l, max}$ exists even preceding $g_s = 0$ \citep{mcdowell_mechanisms_2008, plaut_hydraulic_2012}. This shortcoming of the model here can be rectified in the future as discussed later on. This first step however is part of recent improvements made with regards to modelling $g_s$ under drought that quantitatively include the effects of VCs \citep{sperry_what_2015, sperry_predicting_2017}. Our results show emergence of iso- and aniso-hydric responses to drought through the responses of midday $g_s$ and $\psi_l$ to $\psi_x$ (figures \ref{fig:WUS_no_comp}, \ref{fig:WUS_comp}). Our modeling results show that this behavior also emerges from plants having acclimated to competition for water at the rooting zone. There is no experimental evidence on whether this truly occurs. Therefore, this novel hypothesis requires empirical testing.
 
-The model also predicts that during the initial stages of a drought, $g_s$ and $E$ are relatively unchanged in the absence of competition (figure \ref{fig:WUS_no_comp}). While this is consistent in the case of $E$ with anisohydric species \citep{hochberg_iso/anisohydry:_2018}, $g_s$ always shows significant decline in field experiments right after the onset of drought. This is exacerbated by increases in evaporative demands through VPD as dry spells persist. In our work, the increase in VPD is suppressed because our input data repeated the averaged environmental conditions to allow isolation of effects intrinsic to the soil-root-leaf hydraulics. The proposed model does predict declines in $E$ in the presence of competition (figure \ref{fig:WUS_comp}). Starting from a higher $E$ value at drought onset in the presence of plant competition ensures maximal $\int_0^T A dt$. Moreover, it is also a response to the fact that even if the modeled plant does limit transpiration, water use by competitive agents (biotic or abiotic) could still cause cavitation in its water pathway albeit over a longer time period. It is also likely, although not captured in the model here, that plants do avoid potential cavitation by pre-emptively reducing $E$ before its critical value $E_{max}$ is reached. 
+The model also predicts that during the initial stages of a drought, $g_s$ and $E$ are relatively unchanged in the absence of competition (figure \ref{fig:WUS_no_comp}). While this is consistent in the case of $E$ with anisohydric species \citep{hochberg_iso/anisohydry:_2018}, $g_s$ always shows significant decline in field experiments right after the onset of drought. This is exacerbated by increases in evaporative demands through VPD as dry spells persist. In our work, the increase in VPD is suppressed because our input data repeated the averaged environmental conditions to allow isolation of effects intrinsic to the soil-root-leaf hydraulics. The proposed model does predict declines in $E$ in the presence of competition (figure \ref{fig:WUS_comp}). Starting from a higher $E$ value at drought onset in the presence of plant competition ensures maximal $\int_0^T A dt$. Moreover, it is also a response to the fact that even if the modeled plant does limit transpiration, water use by competitive agents (biotic or abiotic) could still cause cavitation in its water pathway albeit over a longer time period. It is also likely, although not captured in the model here, that plants do avoid potential cavitation by pre-emptively reducing $E$ before its critical value $E_{crit}$ is reached (see \textit{Juniperus monosperma} in figure 5b in \citet{garciaforner_responses_2016}).  The necessity of modelling this effect is seen by observing trends of $c_i / c_a$ and PLC...
 
-This precautionary measure on $E$ is however captured in a recently developed framework \citep{sperry_pragmatic_2016, sperry_predicting_2017} and a comparison with the proposed model here is shown (figure \ref{fig:profit_compare}). The aforementioned framework is called the profit maximization approach. It stipulates that leaf economics are governed by the drive to instantaneously maximize a profit term. Profit in that context was introduced as the difference between normalized gain and loss terms (equations \ref{eqn:rel_gain}, \ref{eqn:rel_loss}). Because these two normalized formulations are expressed in terms of $A$ and soil-leaf conductance, they are purely intrinsic to the plant. Moreover, because external soil water sinks and sources directly affect plant conductance through rhizosphere water potential, the plant does respond to competitive actors albeit indirectly. The profit maximization approach is therefore suitable for larger scale land-atmosphere exchange models due to the computationally inexpensive yet realistic prediction of $g_s$ responses to drought. In the comparison in figure \ref{fig:profit_compare}, it is seen that for different competition types and WUS, the profit maximization approach predicts a singular plant response while the dynamic optimality approach predicts a broader spectrum of $g_s$ responses. As predicted by the proposed model here, $g_s$ increases for more aggressive WUS (smaller $\lambda(T)$) and more aggressive competition (larger competition access). For the specified competitive plant (namely, a vulnerable plant with $\psi_{63} = -1.5$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), the proposed model cannot reproduce the response predicted by the profit maximization approach. However, a match does emerge for more resistant plant competitions (not shown). Another difference is that while the profit maximization approach predicts similar responses of morning, midday, and evening $g_s$ to decreasing $\psi_x$, the dynamic optimality approach results in different sensitivities giving rise to changes in midday stomatal closures. We expect the two approaches to better converge in subsequent work where plant transpiration limitations are sensed continuously as compared to a threshold response considered here.
+This precautionary measure on $E$ is however captured in a recently developed framework \citep{sperry_pragmatic_2016, sperry_predicting_2017} and a comparison with the proposed model here is shown (figure \ref{fig:profit_compare}). The aforementioned framework is called the profit maximization approach. It stipulates that leaf economics are governed by the drive to instantaneously maximize a profit term. Profit in that context was introduced as the difference between normalized gain and loss terms (equations \ref{eqn:rel_gain}, \ref{eqn:rel_loss}). Because these two normalized formulations are expressed in terms of $A$ and soil-leaf conductance, they are purely intrinsic to the plant. Moreover, because external soil water sinks and sources directly affect plant conductance through rhizosphere water potential, the plant does respond to competitive actors albeit indirectly. The profit maximization approach is therefore suitable for larger scale land-atmosphere exchange models due to the computationally inexpensive yet realistic prediction of $g_s$ responses to drought. In the comparison in figure \ref{fig:profit_compare}, it is seen that for different competition types and WUS, the profit maximization approach predicts a singular plant response while the dynamic optimality approach predicts a broader spectrum of $g_s$ responses. As predicted by the proposed model here, $g_s$ increases for more aggressive WUS (smaller $\lambda(T)$) and more aggressive competition (larger competition access). For the specified VC (namely, a vulnerable plant with $\psi_{63} = -1.5$ MPa, $s=5.4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), the proposed model can reproduce the response predicted by the profit maximization approach only for a certain WUS, competition type (competitive plant VC) and access, and/or the inclusion of specific non-stomatal limitations (not shown).
 
-There exists evidence that stomatal opening responds more strongly to reductions in soil moisture content $x$ than to changes in leaf water potential $\psi_l$. Strikingly, experiments on an apple orchard indicated higher xylem water potentials (less negative) in unwatered trees compared to their irrigated counterparts pointing to a case of over-regulation of stomatal aperture \citep{jones1983experimental}. Moreover, experiments on cowpea (\textit{Vigna unguiculata}) show this large dependence of stomatal opening on soil moisture in conjunction with little to no effect by leaf water potential and the authors hypothesize the presence of "information transfer" from root to shoot as being the cause of stomatal response to soil drying \citep{bates1981stomatal}. Indeed, since then research on ABA-based chemical signalling from the roots has flourished providing direct evidence for this dynamic \citep{davies1991root}. This is to say that stomatal closure need not be solely as a response to decreased plant conductive capacity. This means that reductions in $g_s$ should precede the attainment of critical $\psi_l$ (figure \ref{fig:WUS_no_comp}). Such behavior can be reproduced by including non-stomatal limitations to carbon gain $A$ such as mesophyll conductance. However, this will frame the scope of future work.
+% Another difference is that while the profit maximization approach predicts similar responses of morning, midday, and evening $g_s$ to decreasing $\psi_x$, the dynamic optimality approach results in different sensitivities giving rise to changes in midday stomatal closures. We expect the two approaches to better converge in subsequent work where plant transpiration limitations are sensed continuously as compared to a threshold response considered here.
 
-To mechanistically disentangle the impacts of plant hydraulic traits (mainly the shape of the VCs) and water use strategies, the work here focused on the stomatal behavior under given meteorological, edaphic, and phenological conditions. Variability in these environmental conditions is also observed to affect stomatal behavior across time and space \citep{feng2018beyond,novick2019beyond}. However, at long-time scales, the impact of such biome-specific environmental conditions can be reflected by the WUS possibly as a result of adaptation. For short-time scales such as a dry-down period, the proposed dynamic optimality approach will allow exploring the compounded stomatal response by integrating the aforementioned mechanistic constraints with variations of related environmental conditions during a drought. Variability in LAI and RAI as well as rooting depth can be readily accommodated in this proposed approach but are not considered explicitly here. More importantly, our results suggest that the stomatal control strategy is influenced by both the plant vulnerability curve and the environment. The iso-anisohyrdy framework has been used to predict plant mortality mechanisms, even if recent studies suggest a more complex picture (refs). Supporting our results, it has been shown experimentally that the metrics of iso- and anisohyrdy depend on the environment when comparing plants with similar vulnerability curves (Hochberg et al). It is possible, however, that there is a connection between VC shape and WUS.  It is likely that VC shapes and WUS are not independent and co-evolved to maximize fitness for a set of environmental and edaphic conditions. Future work seeks to explore this possible connection using a stochastic version of the dynamic optimality approach here. Based on our results, the exponential VC is theoretically completely plausible, and could give advantage in WUS over the S-shaped curves in certain situations, even if recent experiments suggest that this shape might be due to a measurement artifact (Cochard et al.) 
+There exists evidence that stomatal opening responds more strongly to reductions in soil moisture content $x$ than to changes in leaf water potential $\psi_l$. Strikingly, experiments on an apple orchard indicated higher xylem water potentials (less negative) in unwatered trees compared to their irrigated counterparts pointing to a case of over-regulation of stomatal aperture \citep{jones1983experimental}. Moreover, experiments on cowpea (\textit{Vigna unguiculata}) show this large dependence of stomatal opening on soil moisture in conjunction with little to no effect by leaf water potential and the authors hypothesize the presence of "information transfer" from root to shoot as being the cause of stomatal response to soil drying \citep{bates1981stomatal}. Indeed, since then research on ABA-based chemical signalling from the roots has flourished providing direct evidence for this dynamic \citep{davies1991root}. This is to say that stomatal closure need not be solely as a response to decreased plant conductive capacity. This means that reductions in $g_s$ should precede the attainment of critical $\psi_l$ (figure \ref{fig:gmax_Emax_psix}). This will frame the scope of future work.
+
+To mechanistically disentangle the impacts of plant hydraulic traits (mainly the shape of the VCs) and water use strategies, the work here focused on the stomatal behavior under given meteorological, edaphic, and phenological conditions. Variability in these environmental conditions is also observed to affect stomatal behavior across time and space \citep{feng2018beyond,novick2019beyond}. However, at long-time scales, the impact of such biome-specific environmental conditions can be reflected by the WUS possibly as a result of adaptation. For short-time scales such as a dry-down period, the proposed dynamic optimality approach will allow exploring the compounded stomatal response by integrating the aforementioned mechanistic constraints with variations of related environmental conditions during a drought. Variability in LAI and RAI as well as rooting depth can be readily accommodated in this proposed approach but are not considered explicitly here. More importantly, our results suggest that the stomatal control strategy is influenced by both the plant vulnerability curve and the environment. The iso-anisohyrdy framework has been used to predict plant mortality mechanisms, even if recent studies suggest a more complex picture \citep{meinzer_dynamics_2014,martinezvilalta_water_2017}. Supporting our results, it has been shown experimentally that the metrics of iso- and anisohyrdy depend on the environment when comparing plants with similar vulnerability curves \citep{hochberg_iso/anisohydry:_2018}. It is possible, however, that there is a connection between VC shape and WUS.  It is likely that VC shapes and WUS are not independent and co-evolved to maximize fitness for a set of environmental and edaphic conditions. Future work seeks to explore this possible connection using a stochastic version of the dynamic optimality approach here. Based on our results, the more gradual VC (with lower Weibull parameter $s=2$) could give advantage in WUS over the steeper curves (with $s=5.4$) in certain situations. This sheds light on the importance of determining the shape parameter $s$ of vulnerability curves in determining the stomatal response of trees to drought (Compare Weibull shape parameter of \textit{Pinus edulis} and \textit{Juniperus monosperman} in Table 3 of \citet{plaut_hydraulic_2012}).
+
+The goal of this work is to propose a framework that can easily accommodate multiple constraints and drivers of stomatal behaviour.b The addition of extra constraints will necessitate the introduction of multiple Lagrange multipliers. This however will not be an inconvenience since the value of these Lagrange multipliers need not be determined a priori as was the case in this study. On the contrary, the relative magnitude of these Lagrange multipliers will indicate which constraints more strongly shape the response of stomatal aperture to soil drying under different environmental conditions. Such an approach has promise in disentangling the topic of iso- and aniso-hydric stomatal responses to drying which lumps a multitude of physiological constraints on sustained water use.   Future work will include leaf energy balance, the maintenance of phloem turgor and osmoregulation, and the influence of chemical signalling from a layered rooting system to model the results of the many split root experiments conducted in the past \citep{blackman1985root, zhang1987control}. 
 
 % why it is appropriate to call a target terminal lambda as a water use strategy. and explain rise of $\lambda$ in comparison figures in term of affording a more aggressive WUS.
 
@@ -405,19 +409,27 @@ To mechanistically disentangle the impacts of plant hydraulic traits (mainly the
     \label{fig:environment}
 \end{figure}
 
+% \begin{figure}[h]
+%     \begin{center}
+%          \includegraphics[scale=0.5]{g_E_lam_noon.pdf}   
+%     \end{center}
+%     \caption{a) Phase space of stomatal conductance $g_s$ vs the marginal water use efficiency $\lambda$ as a result of equation \ref{eqn:control} for different vapor pressure deficits (VPD). Other environmental conditions correspond to those shown in figure \ref{fig:environment} at noon and in table \ref{tab:props}. An increase in VPD or $\lambda$ both decrease $g_s$ with the other kept at constant. b) Transpiration $E$ corresponding to the curves in the phase space in panel a. An increase in $\lambda$ always leads to a decrease in $E$ when VPD is kept constant however the change in $E$ with changing VPD is more nuanced and depends on the value of $\lambda$. The solid blue arrows show how the value of $\lambda$ determines $E$ when transpiration is demand driven. When transpiration is supply limited, the maximum $E$ possible determines $\lambda$ as illustrated by the dashed blue arrows. Red horizontal arrows show the trends in $\lambda$ with changing VPD for supply limited transpiration of a plant with vulnerability curve (VC) parameters $\psi_{63}=-3$ MPa and $s=4$. The upper red arrow, showing constant $E$ at soil water potential $\psi_x = -0.42$ MPa, shows how $\lambda$ increases as the air dries from VPD$=4$ mmol mol$^{-1}$ to VPD$=16$ mmol mol$^{-1}$. The trend reverses as VPD continues increasing to $32$ mmol mol$^{-1}$. At $\psi_x = -0.64$ MPa, the trend in $\lambda$ reverses as shown by the lower red line. One can then trace these $\lambda$ trends to $g_s$ in panel a and infer magnitudes of midday stomatal closure and day to day $g_s$ sensitivity to drought.}
+%     \label{fig:gs_E_lam}
+% \end{figure}
+
 \begin{figure}[h]
     \begin{center}
-         \includegraphics[scale=0.5]{g_E_lam_noon.pdf}   
+         \includegraphics[scale=0.75]{grl.pdf}   
     \end{center}
-    \caption{a) Phase space of stomatal conductance $g_s$ vs the marginal water use efficiency $\lambda$ as a result of equation \ref{eqn:control} for different vapor pressure deficits (VPD). Other environmental conditions correspond to those shown in figure \ref{fig:environment} at noon and in table \ref{tab:props}. An increase in VPD or $\lambda$ both decrease $g_s$ with the other kept at constant. b) Transpiration $E$ corresponding to the curves in the phase space in panel a. An increase in $\lambda$ always leads to a decrease in $E$ when VPD is kept constant however the change in $E$ with changing VPD is more nuanced and depends on the value of $\lambda$. The solid blue arrows show how the value of $\lambda$ determines $E$ when transpiration is demand driven. When transpiration is supply limited, the maximum $E$ possible determines $\lambda$ as illustrated by the dashed blue arrows. Red horizontal arrows show the trends in $\lambda$ with changing VPD for supply limited transpiration of a plant with vulnerability curve (VC) parameters $\psi_{63}=-3$ MPa and $s=4$. The upper red arrow, showing constant $E$ at soil water potential $\psi_x = -0.42$ MPa, shows how $\lambda$ increases as the air dries from VPD$=4$ mmol mol$^{-1}$ to VPD$=16$ mmol mol$^{-1}$. The trend reverses as VPD continues increasing to $32$ mmol mol$^{-1}$. At $\psi_x = -0.64$ MPa, the trend in $\lambda$ reverses as shown by the lower red line. One can then trace these $\lambda$ trends to $g_s$ in panel a and infer magnitudes of midday stomatal closure and day to day $g_s$ sensitivity to drought.}
-    \label{fig:gs_E_lam}
+    \caption{Loss of conductance curves for the three plants simulated throughout this work. The steep and resistant vulnerability curve has parameters $\psi_{63} = -4.3$ MPa, $s=5.4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$, the gradual and resistant has $\psi_{63} = -4.3$ MPa, $s=2$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$, and the steep and vulnerable has $\psi_{63} = -1.5$ MPa, $s=5.4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$.}
+    \label{fig:grl}
 \end{figure}
 
 \begin{figure}[h]
     \begin{center}
         \includegraphics[scale=0.5]{g_psi_E_psix.pdf}
     \end{center}
-    \caption{a) Soil to root conductance of the rhizosphere ($g_{sr}$) and root to leaf conductance of the plant ($g_{rl}$) that maximize transpiration $E$ for difference soil water potentials $\psi_x$. Soil is sandy loam and particular hydraulic parameters are shown in table \ref{tab:props}. Three vulnerability curve (VC) examples give different $g_{rl}$ trends. b) Maximizing root and leaf water potential ($\psi_r$ and $\psi_l$, respectively) for the three VCs and for the particular soil type. The exponential VC ($s=1$) can maintain a gap between $\psi_r$ and $\psi_l$ as $\psi_x$ decreases unlike the other two VCs. c) This leads to the exponential VC maintaining a higher $E$ at dry soil and even an order of magnitude larger $E$ compared to the VC with $\psi_{63}=-1.5$ MPa and $s=4$.}
+    \caption{a) Soil to root conductance of the rhizosphere ($g_{sr}$) and root to leaf conductance of the plant ($g_{rl}$) that critical transpiration rate $E_{crit}$ for difference soil water potentials $\psi_x$. Soil is sandy loam and particular hydraulic parameters are shown in table \ref{tab:props}. Three vulnerability curve (VC) examples give different $g_{rl}$ trends. The VCs are described and plotted in figure \ref{fig:grl}. b) Critical root and leaf water potentials ($\psi_r$ and $\psi_l$, respectively) for the three VCs and for the particular soil type. The gradual and resistant VC ($s=2$) can maintain a gap between $\psi_r$ and $\psi_l$ as $\psi_x$ decreases unlike the other two VCs. c) The critical transpiration rates $E_{crit}$ for the three VCs. Details on how these curves were derived are available in the main text}
     \label{fig:gmax_Emax_psix}
 \end{figure}
 
@@ -425,7 +437,7 @@ To mechanistically disentangle the impacts of plant hydraulic traits (mainly the
     \begin{center}
          \includegraphics[scale=0.65]{WUS_no_comp.pdf} 
     \end{center}
-    \caption{Results of a simulation where at time $t=0$, soil moisture $x(0) =0.22$. There is no competitive soil water users and the terminal marginal water use efficiency is set at $\lambda(10) = 6$ mol mol$^{-1}$. a) Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with $t$ and b) $\lambda$ with $t$. Trends are shown for a resistant plant ($\psi_{63} = -3$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), a vulnerable plant ($\psi_{63} = -1.5$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), and an exponential vulnerability curve (VC; $\psi_{63} = -1$ MPa, $s=1$, and $g_{rl,max} = 8$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. c) Carbon assimilation rate ($A$) and d) transpiration rate ($E$) with $t$. e) Midday $g_s$ and f) Midday leaf water potential $\psi_l$ with soil water potential $\psi_x$.}
+    \caption{Results of a simulation where at time $t=0$, soil moisture $x(0) =0.25$. There are no competitive soil water users and the terminal marginal water use efficiency is set at $\lambda(10) = 1.6$ mmol mol$^{-1}$. a) Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with $t$ and b) $\lambda$ with $t$. Trends are shown for the three vulnerability curves (VCs) described and plotted in figure \ref{fig:grl}. Other plant and soil parameters are listed in the table \ref{tab:props}. c) Carbon assimilation rate ($A$) and d) transpiration rate ($E$) with $t$. e) Midday $g_s$ and f) Midday leaf water potential $\psi_l$ with soil water potential $\psi_x$.}
     \label{fig:WUS_no_comp}
 \end{figure}
 
@@ -433,7 +445,7 @@ To mechanistically disentangle the impacts of plant hydraulic traits (mainly the
     \begin{center}
          \includegraphics[scale=0.65]{WUS_comp.pdf}   
     \end{center}
-    \caption{Results of a simulation where at time $t=0$, soil moisture $x(0) =0.22$. The terminal marginal water use efficiency is set at $\lambda(10) = 8$ mol mol$^{-1}$. The competitive water sinks are soil free drainage and competing plants with similar vulnerability curves (VCs) to those modeled. The competing plants have access to only 20\% of the root zone water of each modeled plant. a) Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with $t$ and b) $\lambda$ with $t$. Trends are shown for a resistant plant ($\psi_{63} = -3$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), a vulnerable plant ($\psi_{63} = -1.5$ MPa, $s=4$, and $g_{rl,max} = 2$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$), and an exponential VC ($\psi_{63} = -1$ MPa, $s=1$, and $g_{rl,max} = 8$ mmol m$^{-2}$ MPa$^{-1}$ s$^{-1}$). Other plant and soil parameters are listed in the appendix. The plant is Pinus radiata and soil is sandy loam. c) Carbon assimilation rate ($A$) and d) transpiration rate ($E$) with $t$. e) Midday $g_s$ and f) Midday leaf water potential $\psi_l$ with soil water potential $\psi_x$.}
+    \caption{Results of a simulation where at time $t=0$, soil moisture $x(0) =0.25$. The terminal marginal water use efficiency is set at $\lambda(10) = 2.5$ mmol mol$^{-1}$. The competitive water sinks are soil free drainage and competing plants with similar vulnerability curves (VCs) and water use strategy (WUS) to those modeled. The competing plants have access to only 20\% of the root zone water of each modeled plant. a) Half-hourly (black) and midday (red) trends of stomatal conductance ($g_s$) with $t$ and b) $\lambda$ with $t$. Trends are shown for the three vulnerability curves (VCs) described and plotted in figure \ref{fig:grl}. Other plant and soil parameters are listed in the table \ref{tab:props}. c) Carbon assimilation rate ($A$) and d) transpiration rate ($E$) with $t$. e) Midday $g_s$ and f) Midday leaf water potential $\psi_l$ with soil water potential $\psi_x$.}
     \label{fig:WUS_comp}
 \end{figure}
 
@@ -460,7 +472,7 @@ To mechanistically disentangle the impacts of plant hydraulic traits (mainly the
         Symbol & Description & Value & Unit \\
         \hline
         \multicolumn{4}{l}{}\\
-        \multicolumn{4}{l}{\textit{Soil and root properties}}\\
+        \multicolumn{4}{l}{\textit{Soil and root hydraulic properties}}\\
         \hline
         % \multicolumn{4}{l}{}\\
         $\psi_{sat}$ & Saturation water potential & -1.5 & kPa\\
@@ -469,38 +481,37 @@ To mechanistically disentangle the impacts of plant hydraulic traits (mainly the
         $g_{sr,max}$ & Maximum ground area specific soil-root conductance & $0.72 * 10^{-3}$ & kg s m$^{-3}$ \\
         $g_{sr}$ & Ground area specific soil-root conductance & & kg s m$^{-3}$\\
         $b$ & Power law dependence parameter with $\psi_x$ & 3.1 & \\
-        $RAI$ & Root area index & $5 \rightarrow 10$ & m$^{2}$ m$^{-2}$\\
+        $RAI$ & Root area index & 10 & m$^{2}$ m$^{-2}$\\
         $D_r$ & Average fine root diameter & 1 & mm \\
-        $Z_r$ & Average rooting depth & 0.3 & m\\ 
+        $Z_r$ & Effective rooting depth & 0.3 & m\\ 
         $U$ & Uncontrolled losses of soil water & & mmol m$^{-2}$ s$^{-1}$\\
         \hline
         \multicolumn{4}{l}{}\\
-        \multicolumn{4}{l}{\textit{Above-ground plant properties}}\\
+        \multicolumn{4}{l}{\textit{Above-ground plant hydraulic properties}}\\
         \hline
         $g_{rl,max}$ & Maximum leaf area specific root-leaf conductance & 2 & mmol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
-        $g_{rl}$ & Leaf area specific root-leaf conductance & & mmol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
-        $\psi_{63}$ & water potential at which $g_{rl} \approx 0.34 g_{rl,max}$ & $-3 \rightarrow -1$ & MPa \\
-        $s$ & Shape parameter of the vulnerability curve & $1 \rightarrow 4$ &  \\
-        $g_s$ & Leaf area specific stomatal conductance & & mmol m$^{-2}$ s$^{-1}$ \\
+        $g_{rl}$ & Leaf area specific root-leaf conductance & see figure \ref{fig:grl} & mmol m$^{-2}$ s$^{-1}$ MPa$^{-1}$ \\
+        $\psi_{63}$ & water potential at which $g_{rl} \approx 0.37 g_{rl,max}$ & see figure \ref{fig:grl} & MPa \\
+        $s$ & Shape parameter of the vulnerability curve & see figure \ref{fig:grl} &  \\
+        $g_s$ & Leaf area specific stomatal conductance & see figures \ref{fig:WUS_no_comp}, \ref{fig:WUS_comp} & mmol m$^{-2}$ s$^{-1}$ \\
         LAI & Leaf area index & 1.5 & m$^{2}$ m$^{-2}$\\
         \hline
         \multicolumn{4}{l}{}\\
         \multicolumn{4}{l}{\textit{Environmental properties}}\\
         \hline
-        VPD & Vapor Pressure Deficit & $4 \rightarrow 32$ & mmol mol$^{-1}$\\
-        $T_a$ & Atmospheric temperature & $284 \rightarrow 294$ & K \\
-        PAR & Incoming photosynthetically active radiation & $0 \rightarrow 4000$ & $\mu$mol m$^{-2}$ s$^{-1}$ \\
+        VPD & Vapor Pressure Deficit & see figure \ref{fig:environment} & mmol mol$^{-1}$\\
+        $T_a$ & Atmospheric temperature & see figure \ref{fig:environment} & K \\
+        PAR & Incoming photosynthetically active radiation & see figure \ref{fig:environment} & $\mu$mol m$^{-2}$ s$^{-1}$ \\
         \hline
         \multicolumn{4}{l}{}\\
         \multicolumn{4}{l}{\textit{Optimization results}}\\
         \hline
-        $E$ & Leaf area specific transpiration rate & & mmol m$^{-2}$ s$^{-1}$\\
-        $A$ & Leaf area specific carbon assimilation rate & & mmol m$^{-2}$ s$^{-1}$\\
-        $\lambda$ & Lagrange multiplier of the soil water balance constraint & & mmol mol$^{-1}$\\
-        $L$ & Augmented lagrangian & & mmol m$^{-2}$ s$^{-1}$\\
+        $E(t)$ & Leaf area specific transpiration rate & & mmol m$^{-2}$ s$^{-1}$\\
+        $A(t)$ & Leaf area specific carbon assimilation rate & & mmol m$^{-2}$ s$^{-1}$\\
+        $\lambda (t)$ & Lagrange multiplier of the soil water balance constraint & & mmol mol$^{-1}$\\
+        $L(t)$ & Augmented lagrangian & & mmol m$^{-2}$ s$^{-1}$\\
         $J$ & Objective function to be maximized & & mmol m$^{-2}$\\
         $T$ & Drydown period & 10 & days\\
-        $H$ & Hamiltonian & & mmol m$^{-2}$ s$^{-1}$\\
     \end{tabular}
     \caption{Symbols of soil, plant, and environmental properties along with their description, typical values, and units. Values for specific simulations will be mentioned in the simulation description and in the corresponding figure caption.}
     \label{tab:props}
@@ -535,115 +546,8 @@ G. Katul, A. Mrad, M. Nakad, and J.C. Domec acknowledge support from the U.S. Na
 \section*{Acknowledgments}
 This work used eddy covariance data acquired and shared by the FLUXNET community, including these networks: AmeriFlux, AfriFlux, AsiaFlux, CarboAfrica, CarboEuropeIP, CarboItaly, CarboMont, ChinaFlux, Fluxnet-Canada, GreenGrass, ICOS, KoFlux, LBA, NECC, OzFlux-TERN, TCOS-Siberia, and USCCC. The ERA-Interim reanalysis data are provided by ECMWF and processed by LSCE. The FLUXNET eddy covariance data processing and harmonization was carried out by the European Fluxes Database Cluster, AmeriFlux Management Project, and Fluxdata project of FLUXNET, with the support of CDIAC and ICOS Ecosystem Thematic Center, and the OzFlux, ChinaFlux and AsiaFlux offices.
 
-\section*{Appendix 1: Mesophyll conductance equations}
-Mesophyll conductance $g_m$ becomes a significant barrier to carbon assimilation as drought proceeds. $g_m$ buffers chloroplast CO$_2$ concentration $c_c$ and intercellular space CO$_2$ concentration $c_i$ as described in equation \ref{eqn:dewar_mes}. In that equation, the relation between $c_c$ and $c_i$ is determined using the parameter $\phi$. We hereby use a parameterization of $\phi$ that is linear with leaf water potential $\psi_l$ as described elsewhere \citep{dewar2018new}:
-\begin{equation}
-    c_c - \Gamma^* = \phi (c_i - \Gamma^*).
-\end{equation}
-$\psi_{crit}$ is the critial leaf water pressure again defined at the point where soil to leaf conductance is 5\% of its maximum value at the current soil water potential $\psi_x$.
 
-The carbon demand equation (equation \ref{eqn:A_noci}) depends on a parameter $B=(k2 + \Gamma^*)/\phi$. In this case, $A$ depends not only on $g_s$ but also on $\psi_l$ and $\psi_{crit}$ that are both functions of soil moisture. This is in contrast to the case when mesophyll conductance was neglected. The additional of a non-stomatal limitation such as the mesophyll conductance will alter the solutions of the Euler-Lagrange equations ($\frac{\partial L}{\partial g_s}=0$ and $\frac{d \lambda}{dt}=-\lambda \frac{\partial L}{\partial x}$).
-In particular, equation \ref{eqn:gs_vs_env_lambda} becomes:
-\begin{equation}
-    \label{eqn:gs_meso}
-    \begin{split}
-        0 &= \frac{\partial A(g_s, B)}{\partial g_s} - \lambda \frac{\partial E}{\partial g_s}\\
-        &= \frac{\partial A}{\partial g_s} \frac{\partial g_s}{\partial g_s} + \frac{\partial A}{\partial B} \frac{\partial B}{\partial g_s} - 1.6 \lambda \text{VPD}\\
-        &= \frac{\partial A}{\partial g_s} + \frac{\partial A}{\partial B} \frac{\partial B}{\partial g_s} - 1.6 \lambda \text{VPD}\\.
-    \end{split} 
-\end{equation}
-From equation \ref{eqn:B_gs}, we know that equation \ref{eqn:gs_meso} is a function of three unknowns: $g_s$, $\psi_l$, and $\psi_r$. This marks the contrast in the analysis that includes mesophyll conductance compared to the analysis that excludes it.
-
-Another equation is:
-\begin{equation}
-    \label{eqn:balance_supply_sr}
-    1.6 g_s \text{VPD} = g_{sr}(\psi_x)(\psi_x - \psi_r),
-\end{equation}
-where water demand from the atmosphere and supply through the rhizosphere are balanced. The third equation comes by balancing atmospheric water demand with root to leaf supply:
-\begin{equation}
-    \label{eqn:balance_supply_rl}
-    \begin{split}
-        1.6 g_s \text{VPD} &= \int_{\psi_l}^{\psi_r} g_{rl}(\psi) d\psi\\
-        &= g_{rl,max}\frac{\psi_{63}}{s} \Bigg\{\text{Gamma}\Bigg[\frac{1}{s}, \Big(\frac{\psi_l}{\psi_{63}}\Big)^s\Bigg] - \text{Gamma}\Bigg[\frac{1}{s}, \Big(\frac{\psi_r}{\psi_{63}}\Big)^s\Bigg] \Bigg\},\\
-    \end{split}
-\end{equation}
-where Gamma with two parameters denotes the upper incomplete gamma function defined as $\text{Gamma}(a,x) = \int_x^\infty t^{a-1} e^{-t} dt$. Equations \ref{eqn:gs_meso}, \ref{eqn:balance_supply_sr}, and \ref{eqn:balance_supply_rl} are to be solved simultaneously. Observe that if one sets $\phi=1$, equation \ref{eqn:gs_vs_env_lambda} is recovered from equation \ref{eqn:gs_meso} because $\partial B / \partial g_s = 0$.
-
-Moreover, even in the absence of uncontrolled losses, taking mesophyll conductance into account means that $\lambda$ is no longer a constant:
-\begin{equation}
-    \label{eqn:lam_meso}
-    \frac{d \lambda}{dt} =-\lambda \frac{\partial L}{\partial x}\\
-    = - \lambda \frac{\partial A}{\partial x}
-    = - \lambda \frac{\partial A}{\partial B} \frac{\partial B}{\partial x},
-\end{equation}
-where $\partial g_s / \partial x=0$ because $g_s$ is an independent variable that emerges as a result of the optimization.
-
-\section*{Appendix 2: Necessary partial derivatives for Appendix 1}
-
-To obtain equation \ref{eqn:gs_meso}, it is necessary to obtain $\partial \psi_l / \partial g_s$ and $\partial \psi_r / \partial g_s$ as a function of known quantities. To find the latter, we recognize from equation \ref{eqn: mass_cons} that $E = 1.6\: \text{LAI }\, g_s\, \text{VPD} = g_{sr}(\psi_x)\, (\psi_x - \psi_r) $. Taking the derivative with respect to $g_s$, one obtains after algebraic manipulation:
-\begin{equation}
-    \label{eqn:psir_gs}
-    \frac{\partial \psi_r}{\partial g_s} = - \frac{1.6 \, \text{VPD}}{g_{sr}(\psi_x)}.
-\end{equation}
-
-One can also equate $E = 1.6\: \text{LAI }\, g_s\, \text{VPD} = \int_{\psi_l}^{\psi_r} g_{rl}(\psi) d\psi $ and take again the partial derivative with respect to $g_s$ and use the result from equation \ref{eqn:psir_gs} to obtain:
-\begin{equation}
-    \label{eqn:psil_gs}
-    \frac{\partial \psi_l}{\partial g_s} = - \frac{1.6 \, \text{VPD}}{g_{rl}(\psi_l)} \Bigg[\frac{g_{sr}(\psi_x) + g_{rl}(\psi_r)}{g_{sr}(\psi_x)} \Bigg].
-\end{equation}
-
-Subsequently, the derivative of parameter $\phi = 1 - \psi_l / \psi_{crit}$ is:
-\begin{equation}
-    \label{eqn:phi_gs}
-    \frac{\partial \phi}{\partial g_s} = - \frac{\partial \psi_l}{\partial g_s} \times \frac{1}{\psi_{crit}(\psi_x)} = \frac{1.6 \, \text{VPD}}{g_{rl}(\psi_l)} \Bigg[\frac{g_{sr}(\psi_x) + g_{rl}(\psi_r)}{g_{sr}(\psi_x)} \Bigg] \times \frac{1}{\psi_{crit}(\psi_x)}.
-\end{equation}
-
-In turn, the derivative of parameter $B = (\Gamma^* + k2) / \phi$ is:
-\begin{equation}
-    \label{eqn:B_gs}
-    \frac{\partial B}{\partial g_s} = \frac{\partial B}{\partial \phi} \frac{\partial \phi}{\partial g_s} = -\frac{\Gamma^* + k2}{\phi^2} \frac{\partial \phi}{\partial g_s}.
-\end{equation}
-As such, $\partial B / \partial g_s$ is a function of both $\psi_l$ and $\psi_r$.
-
-The time variation of $\lambda$ with $t$ (equation \ref{eqn:lam_meso}) necessitates finding $\partial B / \partial x$ which in turn depends on finding $\partial \psi_l / \partial x$. We again make use of the balance between atmospheric water demand and rhizosphere water supply $E = 1.6\: \text{LAI }\, g_s\, \text{VPD} = g_{sr}(\psi_x)\, (\psi_x - \psi_r) $ and take the derivative with respect to $x$ to obtain after albetgraic manipulation:
-\begin{equation}
-    \label{eqn:psir_x}
-    \frac{\partial \psi_r}{\partial x} = \frac{\partial \psi_x}{\partial x}\Bigg[ \frac{\partial g_{sr}(\psi_x)}{\partial \psi_x} \frac{\psi_x - \psi_r}{g_{sr}(\psi_x)} + 1 \Bigg].
-\end{equation}
-
-We proceed to balancing atmospheric demand with supply from root to leaf $E = 1.6\: \text{LAI }\, g_s\, \text{VPD} = \int_{\psi_l}^{\psi_r} g_{rl}(\psi) d\psi $ and take again the partial derivative with respect to $x$ and use the result from equation \ref{eqn:psir_x} to obtain:
-\begin{equation}
-    \label{eqn:psil_x}
-    \frac{\partial \psi_l}{\partial x} = \frac{g_{rl}(\psi_r)}{g_{rl}(\psi_l)}\frac{\partial \psi_x}{\partial x}\Bigg[ \frac{\partial g_{sr}(\psi_x)}{\partial \psi_x} \frac{\psi_x - \psi_r}{g_{sr}(\psi_x)} + 1 \Bigg].
-\end{equation}
-
-Subsequently, the derivative of parameter $\phi = 1 - \psi_l / \psi_{crit}$ with respect to $x$ is:
-\begin{equation}
-    \label{eqn:phi_x}
-    \begin{split}
-        \frac{\partial \phi}{\partial x} &= - \frac{\partial \psi_l}{\partial x} \times \frac{1}{\psi_{crit}(\psi_x)} + \frac{\psi_l}{\psi_{crit}^2(\psi_x)} \frac{\partial \psi_{crit}}{\partial x}\\
-        &= - \frac{g_{rl}(\psi_r)}{g_{rl}(\psi_l)}\frac{\partial \psi_x}{\partial x}\Bigg[ \frac{\partial g_{sr}(\psi_x)}{\partial \psi_x} \frac{\psi_x - \psi_r}{g_{sr}(\psi_x)} + 1 \Bigg] \times \frac{1}{\psi_{crit}(\psi_x)}+ \frac{\psi_l}{\psi_{crit}^2(\psi_x)} \frac{\partial \psi_{crit}}{\partial x},\\
-    \end{split}
-\end{equation}
-where $\partial \psi_{crit} / \partial x$ is solved numerically.
-
-In turn, the derivative of parameter $B = (\Gamma^* + k2) / \phi$ with respect to $x$ is:
-\begin{equation}
-    \label{eqn:B_x}
-    \frac{\partial B}{\partial x} = \frac{\partial B}{\partial \phi} \frac{\partial \phi}{\partial x} = -\frac{\Gamma^* + k2}{\phi^2} \frac{\partial \phi}{\partial x}.
-\end{equation}
-Again, $\partial B / \partial x$ is a function of both $\psi_l$ and $\psi_r$.
-
-Equations \ref{eqn:gs_meso} and \ref{eqn:lam_meso} also require $\partial A / \partial g_s$ and $\partial A / \partial B$ which are computed using equation \ref{eqn:A_noci} to get:
-\begin{equation}
-    \label{eqn:A_gs}
-    \frac{\partial A}{\partial g_s} = \frac{1}{2}\Bigg[B + c_a - \Gamma^* - \frac{(B + c_a - \Gamma^*)^2 g_s + (B - c_a + \Gamma^*) k_1}{ \sqrt{(B + c_a - \Gamma^*)^2 g_s^2 + 2 (B - c_a + \Gamma^*) g_s k_1 + k_1^2}} \Bigg],
-\end{equation}
-and:
-\begin{equation}
-    \label{eqn:A_B}
-    \frac{\partial A}{\partial B} = \frac{1}{2}\Bigg[g_s - \frac{(B + c_a - \Gamma^*) g_s^2 + g_s k_1}{ \sqrt{(B + c_a - \Gamma^*)^2 g_s^2 + 2 (B - c_a + \Gamma^*) g_s k_1 + k_1^2}} \Bigg],
-\end{equation}
+\section*{Appendix: Mathematical derivations}
 % Please see the availability of data guidelines for more information, at https://www.frontiersin.org/about/author-guidelines#AvailabilityofData
 
 \bibliographystyle{frontiersinSCNS_ENG_HUMS} % for Science, Engineering and Humanities and Social Sciences articles, for Humanities and Social Sciences articles please include page numbers in the in-text citations
