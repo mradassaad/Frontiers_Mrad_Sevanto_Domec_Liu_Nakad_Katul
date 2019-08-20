@@ -1,0 +1,137 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% This is just an example/guide for you to refer to when producing your supplementary material for your Frontiers article.                                 %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%%% Version 2.5 Generated 2018/06/15 %%%
+%%% You will need to have the following packages installed: datetime, fmtcount, etoolbox, fcprefix, which are normally inlcuded in WinEdt. %%%
+%%% In http://www.ctan.org/ you can find the packages and how to install them, if necessary. %%%
+%%%  NB logo1.jpg is required in the path in order to correctly compile front page header %%%
+
+\documentclass[utf8]{frontiers_suppmat} % for all articles
+\usepackage{url,hyperref,lineno,microtype}
+\usepackage[onehalfspacing]{setspace}
+
+
+
+% Leave a blank line between paragraphs instead of using \\
+
+\begin{document}
+\onecolumn
+\firstpage{1}
+
+\title[Appendix]{{\helveticaitalic{Appendix}}:
+\\ \helvetica{A dynamic optimality principle for water use strategies explains isohydric to anisohydric plant responses to drought}} %Please insert the title of your article here
+
+
+\maketitle
+
+
+\section*{Appendix 1: Deriving the Euler-Lagrange equations}
+
+Section 2.6 presents the Euler-Lagrange equations. These are the equations to be solved for the optimal time variation in stomatal aperture in terms of carbon gain. These emerge from maximizing the objective function shown in section 2.3 ($J_{WUS}$). The starting premise of the maximization of $J_{WUS}$ is that if one perturbs $J_{WUS}$ in any direction away from its optimum $J_{WUS,opt}$, one would get: $J_{WUS} < J_{WUS,opt}$. This assumes that the optimum is a maximum. To ensure this condition, perturbations about the variables of the augmented Lagrangian $L$ are introduced:
+\begin{enumerate}
+    \item $\widetilde{x}(t) = x_{opt}(t) + \epsilon h(t)$, where the tilde is the perturbed value of the soil moisture $x$, $\epsilon$ is a very small real number, $x_opt$ is the optimal value of x whose existence is at this point only assumed, and $h$ is a perturbation around the the optimal value of $x$ and is also a function of time.
+    \item $\widetilde{x'}(t) = x'_{opt}(t) + \epsilon h'(t)$, where the prime is the time derivative of the concerned function.
+    \item $\widetilde{\lambda}(t) = \lambda_{opt}(t) + \epsilon \gamma(t)$, where $\gamma(t)$ is the perturbation around the optimum $\lambda(t)$.
+    \item $\widetilde{g_s}(t) = g_{s,opt}(t) + \epsilon G(t)$, where $G(t)$ is the perturbation around the optimum $g_s(t)$.
+\end{enumerate}
+Expanding $J_{WUS}$ as a Taylor series with $\epsilon \rightarrow 0$:
+\begin{equation}
+    \label{eqn:objective_taylor}
+    \widetilde{J}_{WUS}(t) = J_{WUS,opt}(t) + \epsilon \frac{d\, J_{WUS}}{d \epsilon}(t) |_{\epsilon = 0} + O(\epsilon^2),
+\end{equation}
+where, in the second term after equality in equation \ref{eqn:objective_taylor}, $\epsilon$ factors the 'first variation' $\frac{d\, J_{WUS}}{d \epsilon}(t) |_{\epsilon = 0}$ which equals zero at the optimum.
+\begin{equation}
+    \label{eqn:first_variation}
+    \frac{d\, J_{WUS}}{d \epsilon}(t) = \int_0^T \Big(\frac{\partial L}{\partial x} h + \frac{\partial L}{\partial x'} h' + \frac{\partial L}{\partial \lambda} \gamma + \frac{\partial L}{\partial g_s} G \Big) dt + \frac{\partial J_T}{\partial x}|_{t=T} h(T),
+\end{equation}
+where the perturbation about the terminal gain $J_T$ only exists as a perturbation about $x$ because of the expression in equation 4 of the main text. However, different expressions include might include perturbations around the other variables. As a rule, one avoids the time derivative of perturbations such as $h'(t)$ in equation \ref{eqn:first_variation} by integrating by parts:
+\begin{equation}
+    \label{eqn:IBP}
+    \int_0^T \frac{\partial L}{\partial x'} h' dt = \frac{\partial L}{\partial x'} h |_{t=0}^{t=T} - \int_0^T \frac{d(\partial L / \partial x')}{dt} h dt.
+\end{equation}
+Since the boundary condition $x(0)$ is a fixed number determined through measurement of the soil water content at the beginning of drought, $h(0)=0$ which means that there is no perturbation around $x$ at $t=0$. So one ends up with the following expression involving $h(t)$ from equation \ref{eqn:first_variation},
+\begin{equation}
+    \frac{\partial L}{\partial x'} h(t) = \frac{\partial J_T}{\partial x}|_{t=T} h(T),
+\end{equation}
+from which one obtains the boundary conditions (equation 17 of the main text). The last piece of information required is the fundamental theorem of the calculus of variations. It states that for a general function y(x), if $\int_a^b y(x)p(x) = 0$, $\forall p(x)$ and $p(x)$ is the perturbation, then it is necessary that $y(x)=0$ when $a<x<b$. Applying this theorem to equation \ref{eqn:first_variation}, one gets:
+\begin{itemize}
+    \item $\frac{\partial L}{\partial x} - \frac{d(\partial L / \partial x')}{dt} = 0$ using equation \ref{eqn:IBP}, this gives equation 16 of the main text.
+    \item  $\frac{\partial L}{\partial \lambda} = 0$ which gives equation 8 of the main text.
+    \item  $\frac{\partial L}{\partial g_s} = 0$ which gives equation 15 of the main text.
+\end{itemize}
+
+\section*{Appendix 2: Deriving the soil-root-atmosphere conductance}
+
+The soil-root-atmosphere conductance include both the conductances of soil to root and root to leaf in series. It is defined as the marginal increase in transpiration rate $E$ with an increase in leaf water potential $\psi_l$. One can write:
+\begin{equation}
+    \label{eqn:g_sl}
+    g_{sl} = \frac{\partial E}{\partial \psi_l},
+\end{equation}
+where $g_{sl}$ is the soil to leaf water conductance. Because of mass conservation, $E$ is equal to water flow from soil to root ($E_{sr}$) and from root to leaf ($E_{rl}$) (equation 13 of the main text).
+Taking the derivative of $E_{sr}$ with respect to $\psi_l$:
+\begin{equation}
+    \label{eqn:Esr_psil}
+    g_{sl} (\psi_l) = - g_{sr} (\psi_x) \frac{\partial \psi_r}{\partial \psi_l} (\psi_l).
+\end{equation}
+Taking the derivative of $E_{rl}$ with respect to $\psi_l$:
+\begin{equation}
+    \label{eqn:Erl_psil}
+    g_{sl} (\psi_l) = g_{rl} (\psi_r) \frac{\partial \psi_r}{\partial \psi_l} (\psi_l) - g_{rl} (\psi_l).
+\end{equation}
+Equating $g_{sl}$ from both equations \ref{eqn:Esr_psil}, \ref{eqn:Erl_psil}:
+\begin{equation}
+    \label{eqn:psir_psil}
+    \frac{\partial \psi_r}{\partial \psi_l} (\psi_l) = \frac{g_{rl} (\psi_l)}{g_{rl} (\psi_r) + g_{rl} (\psi_r)}.
+\end{equation}
+One now obtains a closed form relation for $g_{sl}$:
+\begin{equation}
+    \label{eqn:gsl_complete}
+    g_{sl} (\psi_l) = \frac{g_{rl} (\psi_l) g_{sr} (\psi_x)}{g_{rl} (\psi_r) + g_{sr} (\psi_x)}.
+\end{equation}
+One can also find the maximum possible soil to leaf conductance at different soil moisture values by replacing all water potential in equation \ref{eqn:gsl_complete} with $\psi_x$ as follows:
+\begin{equation}
+    \label{eqn:gsl_max}
+    g_{sl,max} = \frac{g_{rl} (\psi_x) g_{sr} (\psi_x)}{g_{rl} (\psi_x) + g_{sr} (\psi_x)}.
+\end{equation}
+Now, the critical leaf water potential $\psi_{l,crit}$ is found by equating $g_{sl}(\psi_l) = 0.05 g_{sl,max}$ from equations \ref{eqn:gsl_complete}, \ref{eqn:gsl_max}.
+
+
+
+\section*{Appendix 3: the effect of competitive plant transpiration on $\lambda$}
+Equation 24 of the main text expresses $d \lambda / dt$ as a function of $\partial E_{comp} / \partial x$ where $E_{comp}$ is the competitive plant's water use from the modeled plant's rooting zone water. As explained in the paragraph following equation 23 of the main text, $E_{comp}=0.2E$ based on the assumption that both modeled plant and competitive plant have the same VC and have the same rooting zone water content. Therefore, we can write:
+\begin{equation}
+    \label{eqn:E_comp}
+    E_{comp} = g_{sr,comp}(\psi_x)(\psi_x - \psi_{r,comp}),
+\end{equation}
+where $\psi_x$ corresponds to the water potential in the vicinity of the modeled plant's rooting zone and $\psi_{r,comp}$ is the effective root water potential of the competitive plant. $g_{sr,comp} = 0.2 g_{sr}$ because competitive RAI is less than modeled plant RAI in the rooting zone of interest (equation 11 of the main text) such that the competitive plant only has access to 20\% of the modeled plant's rooting zone water (equations 23, 24 of the main text). Since $\psi_{r,comp}$ responds to the competitive plant's rooting zone water content and not on the model plant's, we write $\partial \psi_{r,comp} / \partial x = 0$ because $x$ is the modeled plant's rooting zone water content. Therefore:
+\begin{equation}
+    \label{eqn:Ecomp_x}
+    \frac{\partial E_{comp}}{\partial x} = 0.2 \frac{\partial \psi_x}{\partial x} \Bigg[ \frac{\partial g_{sr}}{\partial \psi_x} (\psi_x - \psi_{r,comp}) + g_{sr}(\psi_x) \Bigg].
+\end{equation}
+
+Note how the result of equation \ref{eqn:Ecomp_x} is different from $\partial E / \partial x = 0$ where $E$ is the modeled plant's transpiration rate.
+% All supplementary files are deposited to FigShare for permanent storage during the production stage of the article and receive a DOI. For more information on Supplementary Material and for details on the different file types accepted, please see \href{http://home.frontiersin.org/about/author-guidelines#SupplementaryMaterial}{the Supplementary Material section} of the Author Guidelines.
+
+% Figures, tables, and images will be published under a Creative Commons CC-BY licence and permission must be obtained for use of copyrighted material from other sources (including re-published/adapted/modified/partial figures and images from the internet). It is the responsibility of the authors to acquire the licenses, to follow any citation instructions requested by third-party rights holders, and cover any supplementary charges.
+
+%% Figures, tables, and images will be published under a Creative Commons CC-BY licence and permission must be obtained for use of copyrighted material from other sources (including re-published/adapted/modified/partial figures and images from the internet). It is the responsibility of the authors to acquire the licenses, to follow any citation instructions requested by third-party rights holders, and cover any supplementary charges.
+
+
+
+%%% There is no need for adding the file termination, as long as you indicate where the file is saved. In the examples below the files (logo1.eps and logos.eps) are in the Frontiers LaTeX folder
+%%% If using *.tif files convert them to .jpg or .png
+%%%  NB logo1.eps is required in the path in order to correctly compile front page header %%%
+
+
+%%% If you are submitting a figure with subfigures please combine these into one image file with part labels integrated.
+%%% If you don't add the figures in the LaTeX files, please upload them when submitting the article.
+%%% Frontiers will add the figures at the end of the provisional pdf automatically
+%%% The use of LaTeX coding to draw Diagrams/Figures/Structures should be avoided. They should be external callouts including graphics.
+
+
+%\bibliographystyle{frontiersinSCNS_ENG_HUMS} %  for Science, Engineering and Humanities and Social Sciences articles, for Humanities and Social Sciences articles please include page numbers in the in-text citations
+%\bibliographystyle{frontiersinHLTH&FPHY} % for Health and Physics articles
+%\bibliography{test}
+
+\end{document}
