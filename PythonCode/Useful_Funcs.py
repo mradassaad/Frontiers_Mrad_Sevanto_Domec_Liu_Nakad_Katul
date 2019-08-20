@@ -39,6 +39,22 @@ def max_val(k_opt, H_a, H_d, Tl, T_opt):
     return k_opt * (H_d * exp_Ha_val) / (H_d - H_a * (1 - exp_Hd_val))
 
 
+def max_val_j_25(k_25, Tl):
+
+    R = 8.314  # J/mol/K
+    part_1 = 1 + np.exp((-4534)/ (298.2 * R))
+    part_2 = np.exp((50300 / (298.2 * R)) * (1 - 298.2 / Tl))
+    part_3 = 1 + np.exp((495 * Tl - 152044) / (R * Tl))
+    return k_25 * part_1 * part_2 / part_3
+
+def max_val_v_25(k_25, Tl):
+
+    R = 8.314  # J/mol/K
+    part_1 = 1 + np.exp(-4424 / (298.2 * R))
+    part_2 = np.exp((73637 / (298.2 * R)) * (1 - 298.2 / Tl))
+    part_3 = 1 + np.exp((486 * Tl - 149252) / (R * Tl))
+    return k_25 * part_1 * part_2 / part_3
+
 
 def RNtoPAR(RN):
     """
@@ -134,10 +150,14 @@ def Interstorm(df, drydownid):
     id2 = id1+drydownlength[drydownlength > 30]-1  # end day of each dry down period
     st = list(df['TIMESTAMP_START'][id1*nobsinaday-1])
     et = list(df['TIMESTAMP_START'][id2*nobsinaday-1])
-#    print([st,et])
+#     print([st,et])
     print('Selected period: '+str(st[drydownid])+' to '+str(et[drydownid]))
-    return df[(df['TIMESTAMP_START'] >=
-               st[drydownid]) & (df['TIMESTAMP_START'] < et[drydownid])]
+   
+    import pandas as pd
+    from datetime import datetime
+#     import pdb; pdb.set_trace()
+    
+    return df[(pd.to_datetime(df['TIMESTAMP_START'], format='%m/%d/%Y %H:%M') >= datetime.strptime(st[drydownid], '%m/%d/%Y %H:%M')) &  (pd.to_datetime(df['TIMESTAMP_START'], format='%m/%d/%Y %H:%M') < datetime.strptime(et[drydownid], '%m/%d/%Y %H:%M'))]
 
 
 def dailyAvg(data, windowsize):
@@ -740,21 +760,36 @@ def gs_val_profit(gs, t, ca, k1_interp, k2_interp, cp_interp,
 
 
 def psil_crit_val(psi_l, psi_x, psi_sat, gamma, b, d_r, z_r, RAI, lai, Kmax, psi_63, w_exp, frac=0.05):
+    import warnings
     x = (psi_x / psi_sat) ** (-1 / b)
     soil_root = gSR_val(x, gamma, b, d_r, z_r, RAI, lai)
-
+#     with warnings.catch_warnings():
+#         warnings.filterwarnings('error', category=RuntimeWarning)
+#         try:
+#             res_psir = root(lambda psi_r: Kmax * psi_63 * gammafunc(1 / w_exp) / w_exp *
+#                                   (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) -
+#                                    gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp)) -
+#                                   soil_root * (psi_r - psi_x),
+#                     (psi_l + psi_x) / 2,
+#                method='hybr')
+#             psi_r = res_psir.get('x')
+#         except RuntimeWarning:
+#             import pdb; pdb.set_trace()
+#             import sys
+#             sys.exit()
     res_psir = root(lambda psi_r: Kmax * psi_63 * gammafunc(1 / w_exp) / w_exp *
                                   (gammaincc(1 / w_exp, (psi_r / psi_63) ** w_exp) -
                                    gammaincc(1 / w_exp, (psi_l / psi_63) ** w_exp)) -
                                   soil_root * (psi_r - psi_x),
                     (psi_l + psi_x) / 2,
                method='hybr')
-    psi_r = res_psir.get('x')
-
+    psi_r = res_psir.get('x')    
+    print('psil_crit_val status:' + res_psir.message)
     X_part1 = grl_val(psi_r, psi_63, w_exp, Kmax) + soil_root
     X_part2 = grl_val(psi_x, psi_63, w_exp, Kmax) + soil_root
 
     X = frac * grl_val(psi_x, psi_63, w_exp, Kmax) / Kmax * X_part1 / X_part2
+        
 
-
+#     import pdb; pdb.set_trace()
     return psi_l - psi_63 * (- np.log(X)) ** (1 / w_exp)

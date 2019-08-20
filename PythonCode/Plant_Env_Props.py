@@ -31,7 +31,7 @@ a = 1.6
 #%%----------------------------PLANT CONSTANTS-------------------------
 n = 0.5  # m3/m3
 d_r = 1e-3  # fine root diameter in meters
-z_r = 0.3  # m
+z_r = 1  # m
 RAI = 10  # root area index
 lai = 1.5
 m_w = 0.018  # kg/mol
@@ -78,13 +78,13 @@ alpha = nu * a / (n * z_r)  # m2/mol
 # psi_63=4.3 MPa and s=5.4 for ponderosa pine according to Hubbard et al. PCE 2001 grown in Utah nurseries
 # grown between 20 and 28 degrees C and 40-60% humidity
 # Kmax assumed that we have 20 mmol m-1 s-1 MPa-1 for a 10 m tall tree
-psi_63 = 5.4  # Pressure at which there is 64% loss of conductivity, MPa
+psi_63 = 4.3  # Pressure at which there is 64% loss of conductivity, MPa
 w_exp = 2  # Weibull exponent
 Kmax = 2e-3 * unit0  # Maximum plant stem water leaf area-averaged conductivity, mol/m2/d/MPa
 reversible = 0
 # ----------------- Compute transpiration maxima -----------
 
-xvals = np.arange(0.09, 0.8, 0.005)
+xvals = np.arange(0.06, 0.8, 0.005)
 psi_x_vals = psi_sat * xvals ** -b
 soil_root = gSR_val(xvals, gamma, b, d_r, z_r, RAI, lai)
 
@@ -109,11 +109,11 @@ k_crit_vals = 0.05 * k_max_vals
 dpsil_dx_vals = np.gradient(psi_l_vals, xvals)
 dpsir_dx_vals = np.gradient(psi_r_vals, xvals)
 
-trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic')  # per unit LEAF area
-psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic')
-psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic')
-k_crit_interp = interp1d(psi_x_vals, k_crit_vals, kind='cubic')
-k_max_interp = interp1d(psi_x_vals, k_max_vals, kind='cubic')
+trans_max_interp = interp1d(psi_x_vals, trans_vals, kind='cubic', bounds_error=False, fill_value=(trans_vals[-1],0))  # per unit LEAF area
+psi_l_interp = interp1d(psi_x_vals, psi_l_vals, kind='cubic', bounds_error=False, fill_value=(psi_l_vals[-1],psi_l_vals[0]))
+psi_r_interp = interp1d(psi_x_vals, psi_r_vals, kind='cubic', bounds_error=False, fill_value=(psi_r_vals[-1],psi_r_vals[0]))
+k_crit_interp = interp1d(psi_x_vals, k_crit_vals, kind='cubic', bounds_error=False, fill_value=(k_crit_vals[-1],0))
+k_max_interp = interp1d(psi_x_vals, k_max_vals, kind='cubic', bounds_error=False, fill_value=(k_max_vals[-1],0))
 
 dpsil_dx_interp = interp1d(psi_x_vals, dpsil_dx_vals, kind='cubic')
 dpsir_dx_interp = interp1d(psi_x_vals, dpsir_dx_vals, kind='cubic')
@@ -142,7 +142,7 @@ VPDavg = VPDfull[0:48*AvgNbDay]
 VPDavg = VPDavg.reshape((AvgNbDay, 48))
 VPDavg = np.average(VPDavg, axis=0)
 
-days = 10
+days = 110
 tlen = 48 * days
 
 t = np.linspace(0, days, tlen)
@@ -190,15 +190,15 @@ plant = {'Plant_type': "Pinus radiata fert.", 'lai': lai, 'nu': nu, 'v_opt': v_o
 
 import pickle
 
-pickle_out = open("../WUS_no_comp/environment", "wb")
+pickle_out = open("../Long_Drought/environment", "wb")
 pickle.dump(env, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../WUS_no_comp/soil", "wb")
+pickle_out = open("../Long_Drought/soil", "wb")
 pickle.dump(soil, pickle_out)
 pickle_out.close()
 
-pickle_out = open("../WUS_no_comp/low_s", "wb")
+pickle_out = open("../Long_Drought/plant_ponderosa", "wb")
 pickle.dump(plant, pickle_out)
 pickle_out.close()
 
